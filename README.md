@@ -1,7 +1,20 @@
-# Sample Hardhat 3 Beta Project (minimal)
+# Decentralized E-Voting Mobile Application
 
-This project has a minimal setup of Hardhat 3 Beta, without any plugins.
+This project is a **blockchain-based electronic voting system** designed as a university final year project.
+The goal is to build a **secure and transparent mobile voting application** where votes are recorded immutably on a blockchain.
 
-## What's included?
+## Project Overview
 
-The project includes native support for TypeScript, Hardhat scripts, tasks, and support for Solidity compilation and tests.
+The system allows eligible voters to cast their vote using a mobile application.
+Votes are recorded on a blockchain through smart contracts, ensuring transparency and preventing vote tampering.
+
+The application also includes **QR-based voter check-in at polling stations**, allowing voters to verify their eligibility before voting.
+
+## Key Features
+
+• Wallet-based voting authentication
+• QR code voter check-in
+• Immutable vote storage on blockchain
+• Smart contract–based election management
+• Real-time election results retrieval
+
