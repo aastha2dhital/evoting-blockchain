@@ -1,9 +1,12 @@
 package com.example.evotingmobileapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.admin.CreateElectionScreen
 import com.example.evotingmobileapp.screens.BlockchainScreen
 import com.example.evotingmobileapp.screens.DashboardScreen
 import com.example.evotingmobileapp.screens.LoginScreen
@@ -12,7 +15,6 @@ import com.example.evotingmobileapp.screens.VotingScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
-
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route
@@ -30,22 +32,7 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable(Screen.Dashboard.route) {
-            DashboardScreen(
-                onNavigateToVoting = {
-                    navController.navigate(Screen.Voting.route)
-                },
-                onNavigateToResults = {
-                    navController.navigate(Screen.Results.route)
-                },
-                onNavigateToBlockchain = {
-                    navController.navigate(Screen.Blockchain.route)
-                },
-                onLogout = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Dashboard.route) { inclusive = true }
-                    }
-                }
-            )
+            DashboardScreen(navController = navController)
         }
 
         composable(Screen.Voting.route) {
@@ -72,6 +59,14 @@ fun AppNavGraph(navController: NavHostController) {
                 onBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable(Screen.CreateElection.route) {
+            val adminViewModel: AdminViewModel = viewModel()
+
+            CreateElectionScreen(
+                adminViewModel = adminViewModel
             )
         }
     }

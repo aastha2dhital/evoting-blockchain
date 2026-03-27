@@ -6,4 +6,5 @@ sealed class Screen(val route: String) {
     object Voting : Screen("voting")
     object Results : Screen("results")
     object Blockchain : Screen("blockchain")
+    object CreateElection : Screen("create_election")
 }
