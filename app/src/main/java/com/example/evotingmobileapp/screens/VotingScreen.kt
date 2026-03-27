@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -29,7 +28,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,13 +39,17 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.evotingmobileapp.admin.AdminViewModel
 
 @Composable
 fun VotingScreen(
+    adminViewModel: AdminViewModel,
     onBackClick: () -> Unit,
     onSubmitVote: () -> Unit
 ) {
-    val candidates = listOf("Alice", "Bob", "Charlie")
+    val elections = adminViewModel.getCreatedElections()
+    val latestElection = elections.lastOrNull()
+
     var selectedCandidate by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -58,13 +60,41 @@ fun VotingScreen(
                         text = "Cast Your Vote",
                         fontWeight = FontWeight.Bold
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                }
             )
         }
     ) { innerPadding ->
+
+        if (latestElection == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "No election available.",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = onBackClick,
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Back")
+                    }
+                }
+            }
+
+            return@Scaffold
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -75,9 +105,7 @@ fun VotingScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -93,25 +121,12 @@ fun VotingScreen(
                         .padding(20.dp)
                 ) {
                     Column {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.CheckCircle,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp)
-                            )
-
-                            Spacer(modifier = Modifier.size(10.dp))
-
-                            Text(
-                                text = "Select a Candidate",
-                                color = Color.White,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Text(
+                            text = latestElection.title,
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -124,11 +139,13 @@ fun VotingScreen(
                 }
             }
 
-            candidates.forEach { candidate ->
+            latestElection.candidates.forEach { candidate ->
                 CandidateOption(
                     name = candidate,
                     selected = selectedCandidate == candidate,
-                    onSelect = { selectedCandidate = candidate }
+                    onSelect = {
+                        selectedCandidate = candidate
+                    }
                 )
             }
 
@@ -150,7 +167,7 @@ fun VotingScreen(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = null
+                    contentDescription = "Back"
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text("Back")

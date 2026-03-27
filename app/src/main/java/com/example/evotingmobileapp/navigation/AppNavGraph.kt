@@ -15,11 +15,12 @@ import com.example.evotingmobileapp.screens.VotingScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
+    val adminViewModel: AdminViewModel = viewModel()
+
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route
     ) {
-
         composable(Screen.Login.route) {
             LoginScreen(
                 walletConnected = true,
@@ -32,11 +33,20 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable(Screen.Dashboard.route) {
-            DashboardScreen(navController = navController)
+            DashboardScreen(
+                navController = navController
+            )
+        }
+
+        composable(Screen.CreateElection.route) {
+            CreateElectionScreen(
+                adminViewModel = adminViewModel
+            )
         }
 
         composable(Screen.Voting.route) {
             VotingScreen(
+                adminViewModel = adminViewModel,
                 onBackClick = {
                     navController.popBackStack()
                 },
@@ -48,6 +58,7 @@ fun AppNavGraph(navController: NavHostController) {
 
         composable(Screen.Results.route) {
             ResultsScreen(
+                adminViewModel = adminViewModel,
                 onBackClick = {
                     navController.popBackStack()
                 }
@@ -59,14 +70,6 @@ fun AppNavGraph(navController: NavHostController) {
                 onBack = {
                     navController.popBackStack()
                 }
-            )
-        }
-
-        composable(Screen.CreateElection.route) {
-            val adminViewModel: AdminViewModel = viewModel()
-
-            CreateElectionScreen(
-                adminViewModel = adminViewModel
             )
         }
     }
