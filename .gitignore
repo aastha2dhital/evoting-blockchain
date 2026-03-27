@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .idea/
 .gradle/
 .kotlin/
@@ -11,3 +12,12 @@ Thumbs.db
 captures/
 .externalNativeBuild/
 .cxx/
+=======
+node_modules
+artifacts
+cache
+.env
+typechain-types
+coverage
+dist
+>>>>>>> 5285e15d0fbd1e71fd42d629b7ccd18058831966
