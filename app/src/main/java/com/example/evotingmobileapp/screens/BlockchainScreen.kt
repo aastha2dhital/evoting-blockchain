@@ -1,58 +1,59 @@
 package com.example.evotingmobileapp.screens
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.evotingmobileapp.blockchain.BlockchainViewModel
+import androidx.navigation.NavHostController
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BlockchainScreen(
-    onBack: () -> Unit
+fun BlockchainRecordsScreen(
+    navController: NavHostController? = null,
+    modifier: Modifier = Modifier
 ) {
-    val viewModel: BlockchainViewModel = viewModel()
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top
+    ) {
+        Text(
+            text = "Blockchain Records",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
-    val latestBlockState = viewModel.latestBlock.collectAsState()
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Blockchain") }
-            )
-        }
-    ) { padding ->
-
-        Column(
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
         ) {
-
-            Text(
-                text = latestBlockState.value,
-                style = MaterialTheme.typography.bodyLarge
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { viewModel.loadLatestBlock() },
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
-                Text("Load Blockchain Data")
+                Text(
+                    text = "No blockchain records yet.",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "This screen will later show transaction hashes, smart contract records, and on-chain vote receipts.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = onBack,
+        if (navController != null) {
+            Button(
+                onClick = { navController.popBackStack() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Back")

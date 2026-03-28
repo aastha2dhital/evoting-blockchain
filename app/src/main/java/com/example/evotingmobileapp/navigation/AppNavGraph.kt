@@ -7,69 +7,75 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.admin.CreateElectionScreen
-import com.example.evotingmobileapp.screens.BlockchainScreen
+import com.example.evotingmobileapp.receipt.ReceiptScreen
+import com.example.evotingmobileapp.screens.BlockchainRecordsScreen
 import com.example.evotingmobileapp.screens.DashboardScreen
 import com.example.evotingmobileapp.screens.LoginScreen
 import com.example.evotingmobileapp.screens.ResultsScreen
 import com.example.evotingmobileapp.screens.VotingScreen
 
-@Composable
-fun AppNavGraph(navController: NavHostController) {
-    val adminViewModel: AdminViewModel = viewModel()
+object AppRoutes {
+    const val LOGIN = "login"
+    const val DASHBOARD = "dashboard"
+    const val CREATE_ELECTION = "create_election"
+    const val VOTING = "voting"
+    const val RESULTS = "results"
+    const val BLOCKCHAIN_RECORDS = "blockchain_records"
+    const val RECEIPT = "receipt"
+}
 
+@Composable
+fun AppNavGraph(
+    navController: NavHostController,
+    adminViewModel: AdminViewModel = viewModel()
+) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = AppRoutes.LOGIN
     ) {
-        composable(Screen.Login.route) {
+        composable(AppRoutes.LOGIN) {
             LoginScreen(
-                walletConnected = true,
-                walletAddress = "0xA1B2C3D4E5F6",
-                onConnectWallet = {},
-                onLoginAsVoter = {
-                    navController.navigate(Screen.Dashboard.route)
-                }
+                navController = navController
             )
         }
 
-        composable(Screen.Dashboard.route) {
+        composable(AppRoutes.DASHBOARD) {
             DashboardScreen(
                 navController = navController
             )
         }
 
-        composable(Screen.CreateElection.route) {
+        composable(AppRoutes.CREATE_ELECTION) {
             CreateElectionScreen(
+                navController = navController,
                 adminViewModel = adminViewModel
             )
         }
 
-        composable(Screen.Voting.route) {
+        composable(AppRoutes.VOTING) {
             VotingScreen(
-                adminViewModel = adminViewModel,
-                onBackClick = {
-                    navController.popBackStack()
-                },
-                onSubmitVote = {
-                    navController.navigate(Screen.Results.route)
-                }
+                navController = navController,
+                adminViewModel = adminViewModel
             )
         }
 
-        composable(Screen.Results.route) {
+        composable(AppRoutes.RESULTS) {
             ResultsScreen(
-                adminViewModel = adminViewModel,
-                onBackClick = {
-                    navController.popBackStack()
-                }
+                navController = navController,
+                adminViewModel = adminViewModel
             )
         }
 
-        composable(Screen.Blockchain.route) {
-            BlockchainScreen(
-                onBack = {
-                    navController.popBackStack()
-                }
+        composable(AppRoutes.BLOCKCHAIN_RECORDS) {
+            BlockchainRecordsScreen(
+                navController = navController
+            )
+        }
+
+        composable(AppRoutes.RECEIPT) {
+            ReceiptScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
             )
         }
     }

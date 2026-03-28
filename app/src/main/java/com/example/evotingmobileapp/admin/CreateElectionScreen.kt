@@ -6,161 +6,298 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun CreateElectionScreen(
-    adminViewModel: AdminViewModel = viewModel()
+    navController: NavHostController? = null,
+    adminViewModel: AdminViewModel,
+    modifier: Modifier = Modifier
 ) {
-    val uiState by adminViewModel.uiState.collectAsStateWithLifecycle()
+    var title by remember { mutableStateOf("") }
+    var startDateTime by remember { mutableStateOf("") }
+    var endDateTime by remember { mutableStateOf("") }
+    var candidates by remember { mutableStateOf(listOf("", "")) }
+    var errorMessage by remember { mutableStateOf("") }
+    var successMessage by remember { mutableStateOf("") }
 
-    LaunchedEffect(uiState.isElectionCreated) {
-        if (uiState.isElectionCreated) {
-            adminViewModel.resetCreatedState()
+    val formatter = remember {
+        SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault()).apply {
+            isLenient = false
         }
     }
 
-    Column(
-        modifier = Modifier
+    LazyColumn(
+        modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
+            .navigationBarsPadding(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "Create Election",
-            style = MaterialTheme.typography.headlineMedium
-        )
+        item {
+            Spacer(modifier = Modifier.padding(top = 8.dp))
 
-        Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Create Election",
+                style = MaterialTheme.typography.headlineMedium
+            )
 
-        OutlinedTextField(
-            value = uiState.electionTitle,
-            onValueChange = { newTitle ->
-                adminViewModel.updateElectionTitle(newTitle)
-            },
-            label = {
-                Text("Election Title")
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
+            Text(
+                text = "Set the election details and schedule voting using 12-hour time with AM/PM.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)
+            )
+        }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(
-            text = "Candidates",
-            style = MaterialTheme.typography.titleMedium
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        uiState.candidates.forEachIndexed { index, candidateName ->
+        item {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors()
             ) {
                 Column(
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     OutlinedTextField(
-                        value = candidateName,
-                        onValueChange = { updatedName ->
-                            adminViewModel.updateCandidateName(index, updatedName)
+                        value = title,
+                        onValueChange = {
+                            title = it
+                            errorMessage = ""
+                            successMessage = ""
                         },
-                        label = {
-                            Text("Candidate ${index + 1}")
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        label = { Text("Election Title") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = startDateTime,
+                        onValueChange = {
+                            startDateTime = it
+                            errorMessage = ""
+                            successMessage = ""
+                        },
+                        label = { Text("Start (yyyy-MM-dd hh:mm AM/PM)") },
+                        placeholder = { Text("2026-03-27 06:15 PM") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                    if (uiState.candidates.size > 2) {
-                        TextButton(
-                            onClick = {
-                                adminViewModel.removeCandidate(index)
-                            }
+                    OutlinedTextField(
+                        value = endDateTime,
+                        onValueChange = {
+                            endDateTime = it
+                            errorMessage = ""
+                            successMessage = ""
+                        },
+                        label = { Text("End (yyyy-MM-dd hh:mm AM/PM)") },
+                        placeholder = { Text("2026-03-27 08:30 PM") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Candidates",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Text(
+                        text = "Add at least 2 candidates.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    candidates.forEachIndexed { index, candidate ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Remove Candidate")
+                            OutlinedTextField(
+                                value = candidate,
+                                onValueChange = { newValue ->
+                                    candidates = candidates.toMutableList().also {
+                                        it[index] = newValue
+                                    }
+                                    errorMessage = ""
+                                    successMessage = ""
+                                },
+                                label = { Text("Candidate ${index + 1}") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            if (candidates.size > 2) {
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Button(
+                                    onClick = {
+                                        candidates = candidates.toMutableList().also {
+                                            it.removeAt(index)
+                                        }
+                                        errorMessage = ""
+                                        successMessage = ""
+                                    },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Text("Remove")
+                                }
+                            }
                         }
+                    }
+
+                    Button(
+                        onClick = {
+                            candidates = candidates + ""
+                            errorMessage = ""
+                            successMessage = ""
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add Candidate")
                     }
                 }
             }
         }
 
-        OutlinedButton(
-            onClick = {
-                adminViewModel.addCandidate()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Add Candidate")
+        if (errorMessage.isNotBlank()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors()
+                ) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        if (uiState.errorMessage != null) {
-            Text(
-                text = uiState.errorMessage ?: "",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
+        if (successMessage.isNotBlank()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors()
+                ) {
+                    Text(
+                        text = successMessage,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
         }
 
-        if (uiState.successMessage != null) {
-            Text(
-                text = uiState.successMessage ?: "",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium
-            )
+        item {
+            Button(
+                onClick = {
+                    val cleanedTitle = title.trim()
+                    val cleanedCandidates = candidates
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                    val parsedStart = try {
+                        formatter.parse(startDateTime.trim())?.time
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    val parsedEnd = try {
+                        formatter.parse(endDateTime.trim())?.time
+                    } catch (_: Exception) {
+                        null
+                    }
+
+                    when {
+                        cleanedTitle.isBlank() -> {
+                            errorMessage = "Please enter an election title."
+                            successMessage = ""
+                        }
+
+                        cleanedCandidates.size < 2 -> {
+                            errorMessage = "Please enter at least 2 candidates."
+                            successMessage = ""
+                        }
+
+                        parsedStart == null -> {
+                            errorMessage = "Please enter a valid start date and time in this format: yyyy-MM-dd hh:mm AM/PM"
+                            successMessage = ""
+                        }
+
+                        parsedEnd == null -> {
+                            errorMessage = "Please enter a valid end date and time in this format: yyyy-MM-dd hh:mm AM/PM"
+                            successMessage = ""
+                        }
+
+                        parsedEnd <= parsedStart -> {
+                            errorMessage = "End time must be after start time."
+                            successMessage = ""
+                        }
+
+                        else -> {
+                            adminViewModel.createElection(
+                                title = cleanedTitle,
+                                candidates = cleanedCandidates,
+                                startTimeMillis = parsedStart,
+                                endTimeMillis = parsedEnd
+                            )
+
+                            successMessage = "Election created successfully."
+                            errorMessage = ""
+
+                            title = ""
+                            startDateTime = ""
+                            endDateTime = ""
+                            candidates = listOf("", "")
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Create Election")
+            }
         }
 
-        Button(
-            onClick = {
-                adminViewModel.createElection()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = if (uiState.isLoading) "Creating..." else "Create Election"
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Text(
-                text = "Locally created elections: ${uiState.createdElectionCount}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+        item {
+            Spacer(modifier = Modifier.padding(bottom = 16.dp))
         }
     }
 }
