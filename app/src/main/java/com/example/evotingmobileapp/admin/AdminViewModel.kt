@@ -1,65 +1,98 @@
 package com.example.evotingmobileapp.admin
 
 import androidx.lifecycle.ViewModel
+import com.example.evotingmobileapp.data.ElectionRepository
 import com.example.evotingmobileapp.data.InMemoryElectionRepository
 import com.example.evotingmobileapp.data.VoteValidationResult
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-class AdminViewModel : ViewModel() {
-
-    private val repository = InMemoryElectionRepository()
+class AdminViewModel(
+    private val repository: ElectionRepository = InMemoryElectionRepository()
+) : ViewModel() {
 
     val elections: StateFlow<List<Election>> = repository.elections
 
-    private var _latestReceipt: VoteReceipt? = null
-
-    // ✅ ONLY THIS (no duplicate function)
-    val latestReceipt: VoteReceipt?
-        get() = _latestReceipt
+    private val _latestReceipt = MutableStateFlow<VoteReceipt?>(null)
+    val latestReceipt: StateFlow<VoteReceipt?> = _latestReceipt.asStateFlow()
 
     fun createElection(
         title: String,
         candidates: List<String>,
         startTimeMillis: Long,
-        endTimeMillis: Long
+        endTimeMillis: Long,
+        eligibleVoterIdsInput: String = ""
     ) {
+        val cleanedTitle = title.trim()
+
+        val cleanedCandidates = candidates
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
+
+        val cleanedEligibleVoterIds = parseEligibleVoterIds(eligibleVoterIdsInput)
+
         repository.createElection(
-            title = title,
-            candidates = candidates,
+            title = cleanedTitle,
+            candidates = cleanedCandidates,
             startTimeMillis = startTimeMillis,
-            endTimeMillis = endTimeMillis
+            endTimeMillis = endTimeMillis,
+            eligibleVoterIds = cleanedEligibleVoterIds
         )
     }
 
-    fun getElectionById(electionId: String): Election? {
-        return repository.getElectionById(electionId)
-    }
-
     fun checkInVoter(electionId: String, voterId: String): String {
-        return repository.checkInVoter(electionId, voterId)
+        return repository.checkInVoter(
+            electionId = electionId,
+            voterId = voterId.trim()
+        )
     }
 
     fun validateVoting(electionId: String, voterId: String): VoteValidationResult {
-        return repository.validateVoting(electionId, voterId)
+        return repository.validateVoting(
+            electionId = electionId,
+            voterId = voterId.trim()
+        )
     }
 
-    fun submitVote(
+    fun vote(
         electionId: String,
         voterId: String,
         candidateName: String
     ): VoteValidationResult {
         val result = repository.vote(
             electionId = electionId,
-            voterId = voterId,
-            candidateName = candidateName
+            voterId = voterId.trim(),
+            candidateName = candidateName.trim()
         )
 
-        if (result.success && result.receipt != null) {
-            _latestReceipt = result.receipt
+        if (result.success) {
+            _latestReceipt.value = result.receipt
         }
 
         return result
+    }
+
+    fun submitVote(
+        electionId: String,
+        voterId: String,
+        selectedCandidate: String
+    ): VoteValidationResult {
+        return vote(
+            electionId = electionId,
+            voterId = voterId,
+            candidateName = selectedCandidate
+        )
+    }
+
+    private fun parseEligibleVoterIds(input: String): List<String> {
+        return input
+            .split(",", "\n", ";")
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .distinct()
     }
 }
