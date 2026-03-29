@@ -9,22 +9,10 @@ import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.admin.CreateElectionScreen
 import com.example.evotingmobileapp.qr.QRCheckInScreen
 import com.example.evotingmobileapp.receipt.ReceiptScreen
-import com.example.evotingmobileapp.screens.BlockchainRecordsScreen
 import com.example.evotingmobileapp.screens.DashboardScreen
 import com.example.evotingmobileapp.screens.LoginScreen
 import com.example.evotingmobileapp.screens.ResultsScreen
 import com.example.evotingmobileapp.screens.VotingScreen
-
-object AppRoutes {
-    const val LOGIN = "login"
-    const val DASHBOARD = "dashboard"
-    const val CREATE_ELECTION = "create_election"
-    const val QR_CHECK_IN = "qr_check_in"
-    const val VOTING = "voting"
-    const val RESULTS = "results"
-    const val BLOCKCHAIN_RECORDS = "blockchain_records"
-    const val RECEIPT = "receipt"
-}
 
 @Composable
 fun AppNavGraph(
@@ -36,14 +24,13 @@ fun AppNavGraph(
         startDestination = AppRoutes.LOGIN
     ) {
         composable(AppRoutes.LOGIN) {
-            LoginScreen(
-                navController = navController
-            )
+            LoginScreen(navController = navController)
         }
 
         composable(AppRoutes.DASHBOARD) {
             DashboardScreen(
-                navController = navController
+                navController = navController,
+                adminViewModel = adminViewModel
             )
         }
 
@@ -68,21 +55,15 @@ fun AppNavGraph(
             )
         }
 
-        composable(AppRoutes.RESULTS) {
-            ResultsScreen(
+        composable(AppRoutes.RECEIPT) {
+            ReceiptScreen(
                 navController = navController,
                 adminViewModel = adminViewModel
             )
         }
 
-        composable(AppRoutes.BLOCKCHAIN_RECORDS) {
-            BlockchainRecordsScreen(
-                navController = navController
-            )
-        }
-
-        composable(AppRoutes.RECEIPT) {
-            ReceiptScreen(
+        composable(AppRoutes.RESULTS) {
+            ResultsScreen(
                 navController = navController,
                 adminViewModel = adminViewModel
             )
