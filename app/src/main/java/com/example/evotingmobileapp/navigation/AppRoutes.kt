@@ -8,4 +8,5 @@ object AppRoutes {
     const val VOTING = "voting"
     const val RECEIPT = "receipt"
     const val RESULTS = "results"
+    const val BLOCKCHAIN_RECORDS = "blockchain_records"
 }

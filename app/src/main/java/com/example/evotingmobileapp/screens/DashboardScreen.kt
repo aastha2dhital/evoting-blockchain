@@ -133,6 +133,13 @@ private fun DashboardActions(
         ) {
             Text("View Results")
         }
+
+        OutlinedButton(
+            onClick = { navController.navigate(AppRoutes.BLOCKCHAIN_RECORDS) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Blockchain Records")
+        }
     }
 }
 

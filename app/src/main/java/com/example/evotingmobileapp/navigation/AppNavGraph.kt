@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.admin.CreateElectionScreen
+import com.example.evotingmobileapp.blockchain.BlockchainRecordsScreen
 import com.example.evotingmobileapp.qr.QRCheckInScreen
 import com.example.evotingmobileapp.receipt.ReceiptScreen
 import com.example.evotingmobileapp.screens.DashboardScreen
@@ -64,6 +65,13 @@ fun AppNavGraph(
 
         composable(AppRoutes.RESULTS) {
             ResultsScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable(AppRoutes.BLOCKCHAIN_RECORDS) {
+            BlockchainRecordsScreen(
                 navController = navController,
                 adminViewModel = adminViewModel
             )
