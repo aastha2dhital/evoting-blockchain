@@ -3,78 +3,77 @@ package com.example.evotingmobileapp.admin
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @Composable
 fun CreateElectionScreen(
-    navController: NavHostController? = null,
-    adminViewModel: AdminViewModel,
-    modifier: Modifier = Modifier
+    navController: NavHostController,
+    adminViewModel: AdminViewModel
 ) {
-    var title by remember { mutableStateOf("") }
-    var startDateTime by remember { mutableStateOf("") }
-    var endDateTime by remember { mutableStateOf("") }
-    var candidates by remember { mutableStateOf(listOf("", "")) }
-    var errorMessage by remember { mutableStateOf("") }
-    var successMessage by remember { mutableStateOf("") }
+    val now = remember { System.currentTimeMillis() }
 
-    val formatter = remember {
-        SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault()).apply {
-            isLenient = false
-        }
-    }
+    var title by rememberSaveable { mutableStateOf("") }
+    var candidatesInput by rememberSaveable { mutableStateOf("") }
+    var eligibleVoterIdsInput by rememberSaveable { mutableStateOf("voter001") }
+    var startDateTimeInput by rememberSaveable { mutableStateOf(formatDateTime(now + 5 * 60 * 1000)) }
+    var endDateTimeInput by rememberSaveable { mutableStateOf(formatDateTime(now + 60 * 60 * 1000)) }
+    var errorMessage by rememberSaveable { mutableStateOf("") }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .navigationBarsPadding(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            Spacer(modifier = Modifier.padding(top = 8.dp))
-
+    Scaffold { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Text(
                 text = "Create Election",
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "Set the election details and schedule voting using 12-hour time with AM/PM.",
+                text = "Set up the election details, candidate list, schedule, and eligible voter whitelist.",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
 
-        item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors()
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -85,219 +84,165 @@ fun CreateElectionScreen(
                         onValueChange = {
                             title = it
                             errorMessage = ""
-                            successMessage = ""
                         },
-                        label = { Text("Election Title") },
+                        label = { Text("Election title") },
+                        placeholder = { Text("Student Council Election 2026") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
-                        value = startDateTime,
+                        value = candidatesInput,
                         onValueChange = {
-                            startDateTime = it
+                            candidatesInput = it
                             errorMessage = ""
-                            successMessage = ""
                         },
-                        label = { Text("Start (yyyy-MM-dd hh:mm AM/PM)") },
-                        placeholder = { Text("2026-03-27 06:15 PM") },
+                        label = { Text("Candidates") },
+                        placeholder = {
+                            Text(
+                                "Enter candidate names separated by commas or new lines\nExample:\nAlice\nBob\nCharlie"
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 4
+                    )
+
+                    OutlinedTextField(
+                        value = eligibleVoterIdsInput,
+                        onValueChange = {
+                            eligibleVoterIdsInput = it
+                            errorMessage = ""
+                        },
+                        label = { Text("Eligible voter IDs / whitelist") },
+                        placeholder = {
+                            Text(
+                                "Enter voter IDs separated by commas or new lines\nExample:\nvoter001\nvoter002\nvoter003"
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 4
+                    )
+
+                    OutlinedTextField(
+                        value = startDateTimeInput,
+                        onValueChange = {
+                            startDateTimeInput = it
+                            errorMessage = ""
+                        },
+                        label = { Text("Start date & time") },
+                        placeholder = { Text("dd/MM/yyyy hh:mm a") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
 
                     OutlinedTextField(
-                        value = endDateTime,
+                        value = endDateTimeInput,
                         onValueChange = {
-                            endDateTime = it
+                            endDateTimeInput = it
                             errorMessage = ""
-                            successMessage = ""
                         },
-                        label = { Text("End (yyyy-MM-dd hh:mm AM/PM)") },
-                        placeholder = { Text("2026-03-27 08:30 PM") },
+                        label = { Text("End date & time") },
+                        placeholder = { Text("dd/MM/yyyy hh:mm a") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Text(
+                        text = "Use this format for date and time: dd/MM/yyyy hh:mm a\nExample: 29/03/2026 08:30 PM",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-        }
 
-        item {
-            Card(
+            if (errorMessage.isNotBlank()) {
+                Text(
+                    text = errorMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors()
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                OutlinedButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = "Candidates",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Text("Cancel")
+                }
 
-                    Text(
-                        text = "Add at least 2 candidates.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                Button(
+                    onClick = {
+                        val cleanedTitle = title.trim()
+                        val cleanedCandidates = parseMultiValueInput(candidatesInput)
+                        val startTimeMillis = parseDateTimeToMillis(startDateTimeInput)
+                        val endTimeMillis = parseDateTimeToMillis(endDateTimeInput)
 
-                    candidates.forEachIndexed { index, candidate ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedTextField(
-                                value = candidate,
-                                onValueChange = { newValue ->
-                                    candidates = candidates.toMutableList().also {
-                                        it[index] = newValue
-                                    }
-                                    errorMessage = ""
-                                    successMessage = ""
-                                },
-                                label = { Text("Candidate ${index + 1}") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
-                            )
+                        when {
+                            cleanedTitle.isBlank() -> {
+                                errorMessage = "Please enter an election title."
+                            }
 
-                            if (candidates.size > 2) {
-                                Spacer(modifier = Modifier.width(8.dp))
+                            cleanedCandidates.size < 2 -> {
+                                errorMessage = "Please enter at least 2 candidates."
+                            }
 
-                                Button(
-                                    onClick = {
-                                        candidates = candidates.toMutableList().also {
-                                            it.removeAt(index)
-                                        }
-                                        errorMessage = ""
-                                        successMessage = ""
-                                    },
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
-                                    Text("Remove")
-                                }
+                            startTimeMillis == null -> {
+                                errorMessage = "Invalid start date/time. Use format: dd/MM/yyyy hh:mm a"
+                            }
+
+                            endTimeMillis == null -> {
+                                errorMessage = "Invalid end date/time. Use format: dd/MM/yyyy hh:mm a"
+                            }
+
+                            endTimeMillis <= startTimeMillis -> {
+                                errorMessage = "End time must be later than start time."
+                            }
+
+                            else -> {
+                                adminViewModel.createElection(
+                                    title = cleanedTitle,
+                                    candidates = cleanedCandidates,
+                                    startTimeMillis = startTimeMillis,
+                                    endTimeMillis = endTimeMillis,
+                                    eligibleVoterIdsInput = eligibleVoterIdsInput
+                                )
+                                navController.popBackStack()
                             }
                         }
-                    }
-
-                    Button(
-                        onClick = {
-                            candidates = candidates + ""
-                            errorMessage = ""
-                            successMessage = ""
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Add Candidate")
-                    }
-                }
-            }
-        }
-
-        if (errorMessage.isNotBlank()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors()
+                    },
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                    Text("Create")
                 }
             }
-        }
-
-        if (successMessage.isNotBlank()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors()
-                ) {
-                    Text(
-                        text = successMessage,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-        }
-
-        item {
-            Button(
-                onClick = {
-                    val cleanedTitle = title.trim()
-                    val cleanedCandidates = candidates
-                        .map { it.trim() }
-                        .filter { it.isNotBlank() }
-
-                    val parsedStart = try {
-                        formatter.parse(startDateTime.trim())?.time
-                    } catch (_: Exception) {
-                        null
-                    }
-
-                    val parsedEnd = try {
-                        formatter.parse(endDateTime.trim())?.time
-                    } catch (_: Exception) {
-                        null
-                    }
-
-                    when {
-                        cleanedTitle.isBlank() -> {
-                            errorMessage = "Please enter an election title."
-                            successMessage = ""
-                        }
-
-                        cleanedCandidates.size < 2 -> {
-                            errorMessage = "Please enter at least 2 candidates."
-                            successMessage = ""
-                        }
-
-                        parsedStart == null -> {
-                            errorMessage = "Please enter a valid start date and time in this format: yyyy-MM-dd hh:mm AM/PM"
-                            successMessage = ""
-                        }
-
-                        parsedEnd == null -> {
-                            errorMessage = "Please enter a valid end date and time in this format: yyyy-MM-dd hh:mm AM/PM"
-                            successMessage = ""
-                        }
-
-                        parsedEnd <= parsedStart -> {
-                            errorMessage = "End time must be after start time."
-                            successMessage = ""
-                        }
-
-                        else -> {
-                            adminViewModel.createElection(
-                                title = cleanedTitle,
-                                candidates = cleanedCandidates,
-                                startTimeMillis = parsedStart,
-                                endTimeMillis = parsedEnd
-                            )
-
-                            successMessage = "Election created successfully."
-                            errorMessage = ""
-
-                            title = ""
-                            startDateTime = ""
-                            endDateTime = ""
-                            candidates = listOf("", "")
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Create Election")
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.padding(bottom = 16.dp))
         }
     }
+}
+
+private fun parseMultiValueInput(input: String): List<String> {
+    return input
+        .split(",", "\n", ";")
+        .map { it.trim() }
+        .filter { it.isNotBlank() }
+        .distinct()
+}
+
+private fun parseDateTimeToMillis(input: String): Long? {
+    return try {
+        val formatter = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault())
+        formatter.isLenient = false
+        formatter.parse(input.trim())?.time
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun formatDateTime(timeInMillis: Long): String {
+    val formatter = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.getDefault())
+    return formatter.format(Date(timeInMillis))
 }
