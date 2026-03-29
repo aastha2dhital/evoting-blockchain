@@ -79,12 +79,12 @@ class AdminViewModel(
     fun submitVote(
         electionId: String,
         voterId: String,
-        selectedCandidate: String
+        candidateName: String
     ): VoteValidationResult {
         return vote(
             electionId = electionId,
             voterId = voterId,
-            candidateName = selectedCandidate
+            candidateName = candidateName
         )
     }
 
