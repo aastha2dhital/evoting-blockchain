@@ -15,6 +15,7 @@ class AdminViewModel(
 ) : ViewModel() {
 
     val elections: StateFlow<List<Election>> = repository.elections
+    val voteReceipts: StateFlow<List<VoteReceipt>> = repository.voteReceipts
 
     private val _latestReceipt = MutableStateFlow<VoteReceipt?>(null)
     val latestReceipt: StateFlow<VoteReceipt?> = _latestReceipt.asStateFlow()

@@ -12,6 +12,9 @@ class InMemoryElectionRepository : ElectionRepository {
     private val _elections = MutableStateFlow<List<Election>>(emptyList())
     override val elections: StateFlow<List<Election>> = _elections.asStateFlow()
 
+    private val _voteReceipts = MutableStateFlow<List<VoteReceipt>>(emptyList())
+    override val voteReceipts: StateFlow<List<VoteReceipt>> = _voteReceipts.asStateFlow()
+
     private val defaultEligibleVoterIds = setOf("voter001")
 
     override fun createElection(
@@ -50,7 +53,7 @@ class InMemoryElectionRepository : ElectionRepository {
             checkedInVoterIds = emptySet()
         )
 
-        _elections.value += newElection
+        _elections.value = _elections.value + newElection
     }
 
     override fun getElectionById(electionId: String): Election? {
@@ -163,6 +166,8 @@ class InMemoryElectionRepository : ElectionRepository {
             timestamp = System.currentTimeMillis(),
             transactionHash = generateFakeTransactionHash()
         )
+
+        _voteReceipts.value = _voteReceipts.value + receipt
 
         return VoteValidationResult(
             success = true,

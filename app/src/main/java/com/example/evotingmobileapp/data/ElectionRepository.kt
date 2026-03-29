@@ -1,10 +1,12 @@
 package com.example.evotingmobileapp.data
 
 import com.example.evotingmobileapp.model.Election
+import com.example.evotingmobileapp.model.VoteReceipt
 import kotlinx.coroutines.flow.StateFlow
 
 interface ElectionRepository {
     val elections: StateFlow<List<Election>>
+    val voteReceipts: StateFlow<List<VoteReceipt>>
 
     fun createElection(
         title: String,
