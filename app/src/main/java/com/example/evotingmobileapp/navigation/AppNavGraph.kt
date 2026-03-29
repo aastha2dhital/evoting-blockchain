@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.admin.CreateElectionScreen
+import com.example.evotingmobileapp.qr.QRCheckInScreen
 import com.example.evotingmobileapp.receipt.ReceiptScreen
 import com.example.evotingmobileapp.screens.BlockchainRecordsScreen
 import com.example.evotingmobileapp.screens.DashboardScreen
@@ -18,6 +19,7 @@ object AppRoutes {
     const val LOGIN = "login"
     const val DASHBOARD = "dashboard"
     const val CREATE_ELECTION = "create_election"
+    const val QR_CHECK_IN = "qr_check_in"
     const val VOTING = "voting"
     const val RESULTS = "results"
     const val BLOCKCHAIN_RECORDS = "blockchain_records"
@@ -47,6 +49,13 @@ fun AppNavGraph(
 
         composable(AppRoutes.CREATE_ELECTION) {
             CreateElectionScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable(AppRoutes.QR_CHECK_IN) {
+            QRCheckInScreen(
                 navController = navController,
                 adminViewModel = adminViewModel
             )
