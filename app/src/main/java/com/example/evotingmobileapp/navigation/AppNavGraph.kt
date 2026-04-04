@@ -72,7 +72,6 @@ fun AppNavGraph(
 
         composable(AppRoutes.BLOCKCHAIN_RECORDS) {
             BlockchainRecordsScreen(
-                navController = navController,
                 adminViewModel = adminViewModel
             )
         }
