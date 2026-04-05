@@ -1,10 +1,12 @@
 package com.example.evotingmobileapp.data
 
+import com.example.evotingmobileapp.blockchain.BlockchainRepository
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
 import kotlinx.coroutines.flow.StateFlow
 
 class BlockchainElectionRepository(
+    private val blockchainRepository: BlockchainRepository = BlockchainRepository(),
     private val fallbackRepository: ElectionRepository = InMemoryElectionRepository()
 ) : ElectionRepository {
 
