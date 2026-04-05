@@ -1,6 +1,8 @@
 package com.example.evotingmobileapp.admin
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import com.example.evotingmobileapp.data.BlockchainElectionRepository
 import com.example.evotingmobileapp.data.ElectionRepository
 import com.example.evotingmobileapp.data.VoteValidationResult
 import com.example.evotingmobileapp.model.Election
@@ -48,6 +50,23 @@ class AdminViewModel(
         return repository.checkInVoter(
             electionId = electionId,
             voterId = voterId.trim()
+        )
+    }
+
+    fun checkInVoterOnChain(
+        context: Context,
+        electionId: String,
+        voterWalletAddress: String
+    ): Result<String> {
+        val blockchainRepository = repository as? BlockchainElectionRepository
+            ?: return Result.failure(
+                IllegalStateException("Blockchain election repository is not currently active.")
+            )
+
+        return blockchainRepository.checkInVoterOnChain(
+            context = context,
+            electionId = electionId.trim(),
+            voterWalletAddress = voterWalletAddress.trim()
         )
     }
 
