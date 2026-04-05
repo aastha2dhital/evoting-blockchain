@@ -1,9 +1,11 @@
 package com.example.evotingmobileapp.data
 
+import android.content.Context
 import com.example.evotingmobileapp.blockchain.BlockchainRepository
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
 import kotlinx.coroutines.flow.StateFlow
+import java.math.BigInteger
 
 class BlockchainElectionRepository(
     private val blockchainRepository: BlockchainRepository = BlockchainRepository(),
@@ -13,6 +15,29 @@ class BlockchainElectionRepository(
     override val elections: StateFlow<List<Election>> = fallbackRepository.elections
 
     override val voteReceipts: StateFlow<List<VoteReceipt>> = fallbackRepository.voteReceipts
+
+    fun checkInVoterOnChain(
+        context: Context,
+        electionId: String,
+        voterWalletAddress: String
+    ): Result<String> {
+        val parsedElectionId = electionId.toBigIntegerOrNull()
+            ?: return Result.failure(
+                IllegalArgumentException("Election ID must be a valid non-negative integer.")
+            )
+
+        if (parsedElectionId < BigInteger.ZERO) {
+            return Result.failure(
+                IllegalArgumentException("Election ID must be a valid non-negative integer.")
+            )
+        }
+
+        return blockchainRepository.checkInVoterOnChain(
+            context = context,
+            electionId = parsedElectionId,
+            voterWalletAddress = voterWalletAddress
+        )
+    }
 
     override fun createElection(
         title: String,
