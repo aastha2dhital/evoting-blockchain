@@ -4,12 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.admin.AdminViewModelFactory
-import com.example.evotingmobileapp.data.InMemoryElectionRepository
+import com.example.evotingmobileapp.data.BlockchainElectionRepository
 import com.example.evotingmobileapp.navigation.AppNavGraph
 import com.example.evotingmobileapp.ui.theme.EVotingMobileAppTheme
 import org.conscrypt.Conscrypt
@@ -27,9 +26,11 @@ class MainActivity : ComponentActivity() {
             EVotingMobileAppTheme {
                 val navController = rememberNavController()
 
-                val repository = remember { InMemoryElectionRepository() }
-                val adminViewModelFactory = remember { AdminViewModelFactory(repository) }
-                val adminViewModel: AdminViewModel = viewModel(factory = adminViewModelFactory)
+                val repository = BlockchainElectionRepository()
+
+                val adminViewModel: AdminViewModel = viewModel(
+                    factory = AdminViewModelFactory(repository)
+                )
 
                 AppNavGraph(
                     navController = navController,
