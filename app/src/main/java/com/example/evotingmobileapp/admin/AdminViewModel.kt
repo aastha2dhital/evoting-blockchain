@@ -2,7 +2,6 @@ package com.example.evotingmobileapp.admin
 
 import androidx.lifecycle.ViewModel
 import com.example.evotingmobileapp.data.ElectionRepository
-import com.example.evotingmobileapp.data.InMemoryElectionRepository
 import com.example.evotingmobileapp.data.VoteValidationResult
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
@@ -11,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class AdminViewModel(
-    private val repository: ElectionRepository = InMemoryElectionRepository()
+    private val repository: ElectionRepository
 ) : ViewModel() {
 
     val elections: StateFlow<List<Election>> = repository.elections
