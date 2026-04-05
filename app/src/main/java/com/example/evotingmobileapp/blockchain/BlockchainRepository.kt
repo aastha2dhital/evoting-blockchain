@@ -48,4 +48,43 @@ class BlockchainRepository {
             Result.failure(e)
         }
     }
+
+    fun checkInVoterOnChain(
+        context: Context,
+        electionId: BigInteger,
+        voterWalletAddress: String
+    ): Result<String> {
+        return try {
+            if (electionId < BigInteger.ZERO) {
+                return Result.failure(
+                    IllegalArgumentException("Election ID cannot be negative.")
+                )
+            }
+
+            if (voterWalletAddress.isBlank()) {
+                return Result.failure(
+                    IllegalArgumentException("Voter wallet address cannot be blank.")
+                )
+            }
+
+            val contractConfig = ContractAssets.loadContractConfig(context)
+            val latestBlockResult = getLatestBlockNumber(context)
+
+            if (latestBlockResult.isFailure) {
+                Result.failure(
+                    latestBlockResult.exceptionOrNull()
+                        ?: Exception("Unable to reach blockchain before check-in transaction.")
+                )
+            } else {
+                Result.failure(
+                    UnsupportedOperationException(
+                        "Blockchain check-in transaction sending is not implemented yet. " +
+                                "A real signer/wallet path is still required for contract ${contractConfig.contractAddress}."
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
