@@ -80,6 +80,8 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.8.9")
 
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+
     implementation("org.conscrypt:conscrypt-android:2.5.2")
     implementation("org.web3j:core:4.12.3")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

@@ -1,5 +1,8 @@
 package com.example.evotingmobileapp.qr
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,14 +29,19 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.admin.AdminViewModel
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 
 @Composable
 fun QRCheckInScreen(
@@ -45,22 +53,31 @@ fun QRCheckInScreen(
     val connectedWalletAddress by adminViewModel.connectedWalletAddress.collectAsState()
     val walletConnected by adminViewModel.walletConnected.collectAsState()
 
-    var walletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
-    var resultMessage by rememberSaveable { mutableStateOf("") }
+    var voterWalletAddress by rememberSaveable { mutableStateOf("") }
+    var statusMessage by rememberSaveable { mutableStateOf("") }
+    var lastScannedValue by rememberSaveable { mutableStateOf("") }
 
-    val selectedElection = elections.find { election -> election.id == selectedElectionId }
-    val isSuccessMessage = resultMessage == "Check-in successful"
+    val selectedElection = elections.find { it.id == selectedElectionId }
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+
+    val scannerOptions = remember {
+        GmsBarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            .enableAutoZoom()
+            .build()
+    }
+
+    LaunchedEffect(walletConnected, connectedWalletAddress) {
+        if (walletConnected && connectedWalletAddress.isNotBlank() && voterWalletAddress.isBlank()) {
+            voterWalletAddress = connectedWalletAddress
+        }
+    }
 
     LaunchedEffect(elections, selectedElectionId) {
         if (selectedElectionId.isNotBlank() && selectedElection == null) {
             selectedElectionId = ""
-        }
-    }
-
-    LaunchedEffect(walletConnected, connectedWalletAddress) {
-        if (walletConnected && walletAddress.isBlank()) {
-            walletAddress = connectedWalletAddress
         }
     }
 
@@ -79,75 +96,10 @@ fun QRCheckInScreen(
         )
 
         Text(
-            text = "Prototype check-in flow for verifying a voter wallet before voting. Use the connected wallet for demo testing or enter another wallet address manually.",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Select the election, scan the voter QR code, then complete check-in using the scanned wallet address.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
-        if (walletConnected) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Connected Demo Wallet",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-
-                    Text(
-                        text = connectedWalletAddress,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-
-                    TextButton(
-                        onClick = {
-                            walletAddress = connectedWalletAddress
-                            resultMessage = ""
-                        }
-                    ) {
-                        Text("Use This Wallet")
-                    }
-                }
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = "Wallet Scan Input",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                OutlinedTextField(
-                    value = walletAddress,
-                    onValueChange = { newValue ->
-                        walletAddress = newValue
-                        resultMessage = ""
-                    },
-                    label = { Text("Wallet Address") },
-                    placeholder = { Text("Example: 0x1234...") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -166,7 +118,7 @@ fun QRCheckInScreen(
 
                 if (elections.isEmpty()) {
                     Text(
-                        text = "No elections available yet. Please create an election first.",
+                        text = "No elections available yet. Create an election first.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
@@ -184,10 +136,7 @@ fun QRCheckInScreen(
                             ) {
                                 RadioButton(
                                     selected = selectedElectionId == election.id,
-                                    onClick = {
-                                        selectedElectionId = election.id
-                                        resultMessage = ""
-                                    }
+                                    onClick = { selectedElectionId = election.id }
                                 )
 
                                 Column(
@@ -196,7 +145,7 @@ fun QRCheckInScreen(
                                     Text(
                                         text = election.title,
                                         style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.SemiBold
+                                        fontWeight = FontWeight.Bold
                                     )
                                     Text(
                                         text = "Election ID: ${election.id}",
@@ -210,90 +159,189 @@ fun QRCheckInScreen(
             }
         }
 
-        if (selectedElection != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "Selected Election",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = selectedElection.title,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = "Election ID: ${selectedElection.id}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
-        }
-
-        Button(
-            onClick = {
-                val trimmedWalletAddress = walletAddress.trim()
-
-                resultMessage = when {
-                    elections.isEmpty() -> "No election available"
-                    selectedElectionId.isBlank() -> "Please select an election"
-                    trimmedWalletAddress.isBlank() -> "Please enter wallet address"
-                    else -> adminViewModel.checkInVoter(
-                        electionId = selectedElectionId,
-                        voterId = trimmedWalletAddress
-                    )
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            enabled = elections.isNotEmpty()
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
-            Text("Check In")
-        }
-
-        if (resultMessage.isNotBlank()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isSuccessMessage) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.errorContainer
-                    }
-                )
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = resultMessage,
-                    color = if (isSuccessMessage) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onErrorContainer
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(16.dp)
+                    text = "Voter QR Scan",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
+
+                if (walletConnected && connectedWalletAddress.isNotBlank()) {
+                    Text(
+                        text = "Current shared wallet: ${shortenWalletAddress(connectedWalletAddress)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                OutlinedTextField(
+                    value = voterWalletAddress,
+                    onValueChange = { voterWalletAddress = it },
+                    label = { Text("Wallet Address") },
+                    placeholder = { Text("Scan QR or type wallet address") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (lastScannedValue.isNotBlank()) {
+                    Text(
+                        text = "Last scanned value: $lastScannedValue",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            if (activity == null) {
+                                statusMessage = "Scanner could not start because this screen is not attached to an activity."
+                                return@Button
+                            }
+
+                            val scanner = GmsBarcodeScanning.getClient(activity, scannerOptions)
+
+                            scanner.startScan()
+                                .addOnSuccessListener { barcode: Barcode ->
+                                    val scannedValue = barcode.rawValue?.trim().orEmpty()
+
+                                    if (scannedValue.isBlank()) {
+                                        statusMessage = "QR code scanned, but no readable value was returned."
+                                    } else {
+                                        voterWalletAddress = scannedValue
+                                        lastScannedValue = scannedValue
+                                        adminViewModel.setConnectedWalletAddress(scannedValue)
+                                        statusMessage = "QR scan successful. Wallet address loaded for check-in."
+                                    }
+                                }
+                                .addOnCanceledListener {
+                                    statusMessage = "QR scan was canceled."
+                                }
+                                .addOnFailureListener { exception: Exception ->
+                                    statusMessage = exception.message
+                                        ?: "QR scanning failed. Please try again."
+                                }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Scan QR Code")
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            if (connectedWalletAddress.isNotBlank()) {
+                                voterWalletAddress = connectedWalletAddress
+                                statusMessage = "Shared wallet restored into the wallet field."
+                            } else {
+                                statusMessage = "No shared wallet is connected yet."
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Use Shared Wallet")
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Complete Check-In",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-        OutlinedButton(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier.fillMaxWidth()
+                selectedElection?.let { election ->
+                    Text(
+                        text = "Selected election: ${election.title}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                } ?: Text(
+                    text = "No election selected yet.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Button(
+                    onClick = {
+                        val trimmedWalletAddress = voterWalletAddress.trim()
+
+                        if (selectedElection == null) {
+                            statusMessage = "Please select an election first."
+                            return@Button
+                        }
+
+                        if (trimmedWalletAddress.isBlank()) {
+                            statusMessage = "Please scan or enter a wallet address first."
+                            return@Button
+                        }
+
+                        adminViewModel.setConnectedWalletAddress(trimmedWalletAddress)
+
+                        statusMessage = adminViewModel.checkInVoter(
+                            electionId = selectedElection.id,
+                            voterId = trimmedWalletAddress
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Check In Voter")
+                }
+
+                if (statusMessage.isNotBlank()) {
+                    Text(
+                        text = statusMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (
+                            statusMessage.contains("success", ignoreCase = true) ||
+                            statusMessage.contains("checked in", ignoreCase = true)
+                        ) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                }
+            }
+        }
+
+        TextButton(
+            onClick = { navController.popBackStack() }
         ) {
             Text("Back")
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+private fun shortenWalletAddress(address: String): String {
+    if (address.length <= 16) return address
+    return "${address.take(10)}...${address.takeLast(8)}"
+}
+
+private tailrec fun Context.findActivity(): Activity? {
+    return when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
     }
 }
