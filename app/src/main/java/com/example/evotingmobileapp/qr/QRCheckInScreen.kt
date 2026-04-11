@@ -42,7 +42,7 @@ fun QRCheckInScreen(
 ) {
     val elections by adminViewModel.elections.collectAsState()
 
-    var voterId by rememberSaveable { mutableStateOf("") }
+    var walletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var resultMessage by rememberSaveable { mutableStateOf("") }
 
@@ -70,7 +70,7 @@ fun QRCheckInScreen(
         )
 
         Text(
-            text = "Simulate a QR scan by entering a voter ID, then check the voter into a selected election.",
+            text = "Simulate a QR scan by entering a wallet address, then check the voter into a selected election.",
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -84,19 +84,19 @@ fun QRCheckInScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Voter Scan Input",
+                    text = "Wallet Scan Input",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
                 OutlinedTextField(
-                    value = voterId,
+                    value = walletAddress,
                     onValueChange = {
-                        voterId = it
+                        walletAddress = it
                         resultMessage = ""
                     },
-                    label = { Text("Voter ID") },
-                    placeholder = { Text("Example: voter001") },
+                    label = { Text("Wallet Address") },
+                    placeholder = { Text("Example: 0x1234...") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -195,15 +195,15 @@ fun QRCheckInScreen(
 
         Button(
             onClick = {
-                val trimmedVoterId = voterId.trim()
+                val trimmedWalletAddress = walletAddress.trim()
 
                 resultMessage = when {
                     elections.isEmpty() -> "No election available"
                     selectedElectionId.isBlank() -> "Please select an election"
-                    trimmedVoterId.isBlank() -> "Please enter voter ID"
+                    trimmedWalletAddress.isBlank() -> "Please enter wallet address"
                     else -> adminViewModel.checkInVoter(
                         electionId = selectedElectionId,
-                        voterId = trimmedVoterId
+                        voterId = trimmedWalletAddress
                     )
                 }
             },

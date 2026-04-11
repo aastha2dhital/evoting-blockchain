@@ -112,7 +112,7 @@ fun ReceiptScreen(
                             value = currentReceipt.electionTitle
                         )
                         ReceiptRow(
-                            label = "Voter ID",
+                            label = "Wallet Address",
                             value = currentReceipt.voterId
                         )
                         ReceiptRow(

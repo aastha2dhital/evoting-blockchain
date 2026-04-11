@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
             EVotingMobileAppTheme {
                 val navController = rememberNavController()
 
-                val repository = BlockchainElectionRepository()
+                val repository = BlockchainElectionRepository(applicationContext)
 
                 val adminViewModel: AdminViewModel = viewModel(
                     factory = AdminViewModelFactory(repository)

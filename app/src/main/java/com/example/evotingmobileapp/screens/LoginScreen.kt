@@ -41,7 +41,7 @@ fun LoginScreen(
     modifier: Modifier = Modifier
 ) {
     var walletConnected by rememberSaveable { mutableStateOf(false) }
-    var walletAddress by rememberSaveable { mutableStateOf("Not connected") }
+    var walletAddress by rememberSaveable { mutableStateOf("") }
 
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(
@@ -95,7 +95,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Secure voter access with wallet-based login and election verification.",
+                    text = "Secure voter access with wallet-based identity, QR check-in, and blockchain-backed vote recording.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -167,7 +167,7 @@ fun LoginScreen(
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Text(
-                                text = "Wallet Address",
+                                text = "Connected Wallet Address",
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -183,6 +183,15 @@ fun LoginScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Medium
                             )
+
+                            if (walletConnected) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "This wallet address will be used as the voter identity during check-in and voting.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
 
@@ -191,7 +200,7 @@ fun LoginScreen(
                     Button(
                         onClick = {
                             walletConnected = true
-                            walletAddress = "0xA1B2C3D4E5F60718293ABCDEF1234567890ABCD"
+                            walletAddress = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
                         },
                         enabled = !walletConnected,
                         modifier = Modifier
@@ -224,7 +233,7 @@ fun LoginScreen(
                         shape = RoundedCornerShape(18.dp)
                     ) {
                         Text(
-                            text = "Login as Voter",
+                            text = "Continue as Voter",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -235,7 +244,7 @@ fun LoginScreen(
                     TextButton(
                         onClick = {
                             walletConnected = false
-                            walletAddress = "Not connected"
+                            walletAddress = ""
                         },
                         enabled = walletConnected,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -249,7 +258,7 @@ fun LoginScreen(
             }
 
             Text(
-                text = "Prototype login interface for the e-voting system",
+                text = "Prototype wallet login for the decentralized e-voting system",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

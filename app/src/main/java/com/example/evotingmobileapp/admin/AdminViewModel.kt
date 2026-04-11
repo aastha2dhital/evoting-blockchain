@@ -35,21 +35,23 @@ class AdminViewModel(
             .filter { it.isNotBlank() }
             .distinct()
 
-        val cleanedEligibleVoterIds = parseEligibleVoterIds(eligibleVoterIdsInput)
+        val cleanedEligibleWalletAddresses = parseEligibleWalletAddresses(eligibleVoterIdsInput)
 
         repository.createElection(
             title = cleanedTitle,
             candidates = cleanedCandidates,
             startTimeMillis = startTimeMillis,
             endTimeMillis = endTimeMillis,
-            eligibleVoterIds = cleanedEligibleVoterIds
+            eligibleVoterIds = cleanedEligibleWalletAddresses
         )
     }
 
     fun checkInVoter(electionId: String, voterId: String): String {
+        val cleanedWalletAddress = voterId.trim()
+
         return repository.checkInVoter(
-            electionId = electionId,
-            voterId = voterId.trim()
+            electionId = electionId.trim(),
+            voterId = cleanedWalletAddress
         )
     }
 
@@ -71,9 +73,11 @@ class AdminViewModel(
     }
 
     fun validateVoting(electionId: String, voterId: String): VoteValidationResult {
+        val cleanedWalletAddress = voterId.trim()
+
         return repository.validateVoting(
-            electionId = electionId,
-            voterId = voterId.trim()
+            electionId = electionId.trim(),
+            voterId = cleanedWalletAddress
         )
     }
 
@@ -82,9 +86,11 @@ class AdminViewModel(
         voterId: String,
         candidateName: String
     ): VoteValidationResult {
+        val cleanedWalletAddress = voterId.trim()
+
         val result = repository.vote(
-            electionId = electionId,
-            voterId = voterId.trim(),
+            electionId = electionId.trim(),
+            voterId = cleanedWalletAddress,
             candidateName = candidateName.trim()
         )
 
@@ -107,7 +113,7 @@ class AdminViewModel(
         )
     }
 
-    private fun parseEligibleVoterIds(input: String): List<String> {
+    private fun parseEligibleWalletAddresses(input: String): List<String> {
         return input
             .split(",", "\n", ";")
             .map { it.trim() }

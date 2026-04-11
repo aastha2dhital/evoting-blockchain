@@ -6,33 +6,49 @@ import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, Typed
   
 
   export interface EVotingInterface extends Interface {
-    getFunction(nameOrSignature: "addCandidate" | "candidates" | "checkInVoter" | "checkedInVoters" | "createElection" | "electionCount" | "elections" | "getCandidate" | "getElection" | "hasVoted" | "owner" | "vote"): FunctionFragment;
+    getFunction(nameOrSignature: "addCandidate" | "addEligibleVoter" | "addEligibleVoters" | "candidates" | "checkInVoter" | "checkedInVoters" | "closeElectionEarly" | "createElection" | "electionCount" | "elections" | "eligibleVoters" | "getCandidate" | "getElection" | "getTurnoutCount" | "hasElectionEnded" | "hasVoted" | "isCheckedIn" | "isEligibleVoter" | "owner" | "vote"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "CandidateAdded" | "ElectionCreated" | "VoteCast" | "VoterCheckedIn"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "CandidateAdded" | "ElectionClosed" | "ElectionCreated" | "VoteCast" | "VoterCheckedIn" | "VoterWhitelisted"): EventFragment;
 
     encodeFunctionData(functionFragment: 'addCandidate', values: [BigNumberish, string]): string;
+encodeFunctionData(functionFragment: 'addEligibleVoter', values: [BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'addEligibleVoters', values: [BigNumberish, AddressLike[]]): string;
 encodeFunctionData(functionFragment: 'candidates', values: [BigNumberish, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'checkInVoter', values: [BigNumberish, AddressLike]): string;
 encodeFunctionData(functionFragment: 'checkedInVoters', values: [BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'closeElectionEarly', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'createElection', values: [string, BigNumberish, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'electionCount', values?: undefined): string;
 encodeFunctionData(functionFragment: 'elections', values: [BigNumberish]): string;
+encodeFunctionData(functionFragment: 'eligibleVoters', values: [BigNumberish, AddressLike]): string;
 encodeFunctionData(functionFragment: 'getCandidate', values: [BigNumberish, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'getElection', values: [BigNumberish]): string;
+encodeFunctionData(functionFragment: 'getTurnoutCount', values: [BigNumberish]): string;
+encodeFunctionData(functionFragment: 'hasElectionEnded', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'hasVoted', values: [BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'isCheckedIn', values: [BigNumberish, AddressLike]): string;
+encodeFunctionData(functionFragment: 'isEligibleVoter', values: [BigNumberish, AddressLike]): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
 encodeFunctionData(functionFragment: 'vote', values: [BigNumberish, BigNumberish]): string;
 
     decodeFunctionResult(functionFragment: 'addCandidate', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'addEligibleVoter', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'addEligibleVoters', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'candidates', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'checkInVoter', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'checkedInVoters', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'closeElectionEarly', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'createElection', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'electionCount', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'elections', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'eligibleVoters', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getCandidate', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getElection', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'getTurnoutCount', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'hasElectionEnded', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'hasVoted', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'isCheckedIn', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'isEligibleVoter', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
   }
@@ -42,6 +58,18 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
       export type InputTuple = [electionId: BigNumberish, candidateId: BigNumberish, name: string];
       export type OutputTuple = [electionId: bigint, candidateId: bigint, name: string];
       export interface OutputObject {electionId: bigint, candidateId: bigint, name: string };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace ElectionClosedEvent {
+      export type InputTuple = [electionId: BigNumberish, closedAt: BigNumberish];
+      export type OutputTuple = [electionId: bigint, closedAt: bigint];
+      export interface OutputObject {electionId: bigint, closedAt: bigint };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -75,6 +103,18 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
   
 
     export namespace VoterCheckedInEvent {
+      export type InputTuple = [electionId: BigNumberish, voter: AddressLike];
+      export type OutputTuple = [electionId: bigint, voter: string];
+      export interface OutputObject {electionId: bigint, voter: string };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace VoterWhitelistedEvent {
       export type InputTuple = [electionId: BigNumberish, voter: AddressLike];
       export type OutputTuple = [electionId: bigint, voter: string];
       export interface OutputObject {electionId: bigint, voter: string };
@@ -128,6 +168,22 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
     
 
     
+    addEligibleVoter: TypedContractMethod<
+      [_electionId: BigNumberish, _voter: AddressLike, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    addEligibleVoters: TypedContractMethod<
+      [_electionId: BigNumberish, _voters: AddressLike[], ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
     candidates: TypedContractMethod<
       [arg0: BigNumberish, arg1: BigNumberish, ],
       [[bigint, string, bigint] & {id: bigint, name: string, voteCount: bigint }],
@@ -152,6 +208,14 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
     
 
     
+    closeElectionEarly: TypedContractMethod<
+      [_electionId: BigNumberish, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
     createElection: TypedContractMethod<
       [_title: string, _startTime: BigNumberish, _endTime: BigNumberish, ],
       [void],
@@ -170,7 +234,15 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
     
     elections: TypedContractMethod<
       [arg0: BigNumberish, ],
-      [[bigint, string, bigint, bigint, boolean, bigint] & {id: bigint, title: string, startTime: bigint, endTime: bigint, exists: boolean, candidateCount: bigint }],
+      [[bigint, string, bigint, bigint, boolean, boolean, bigint, bigint] & {id: bigint, title: string, startTime: bigint, endTime: bigint, exists: boolean, isClosed: boolean, candidateCount: bigint, totalVotes: bigint }],
+      'view'
+    >
+    
+
+    
+    eligibleVoters: TypedContractMethod<
+      [arg0: BigNumberish, arg1: AddressLike, ],
+      [boolean],
       'view'
     >
     
@@ -186,7 +258,23 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
     
     getElection: TypedContractMethod<
       [_electionId: BigNumberish, ],
-      [[bigint, string, bigint, bigint, bigint] & {id: bigint, title: string, startTime: bigint, endTime: bigint, candidateCount: bigint }],
+      [[bigint, string, bigint, bigint, bigint, bigint, boolean] & {id: bigint, title: string, startTime: bigint, endTime: bigint, candidateCount: bigint, totalVotes: bigint, isClosed: boolean }],
+      'view'
+    >
+    
+
+    
+    getTurnoutCount: TypedContractMethod<
+      [_electionId: BigNumberish, ],
+      [bigint],
+      'view'
+    >
+    
+
+    
+    hasElectionEnded: TypedContractMethod<
+      [_electionId: BigNumberish, ],
+      [boolean],
       'view'
     >
     
@@ -194,6 +282,22 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
     
     hasVoted: TypedContractMethod<
       [arg0: BigNumberish, arg1: AddressLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
+    isCheckedIn: TypedContractMethod<
+      [_electionId: BigNumberish, _voter: AddressLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
+    isEligibleVoter: TypedContractMethod<
+      [_electionId: BigNumberish, _voter: AddressLike, ],
       [boolean],
       'view'
     >
@@ -223,6 +327,16 @@ decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
       [void],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'addEligibleVoter'): TypedContractMethod<
+      [_electionId: BigNumberish, _voter: AddressLike, ],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'addEligibleVoters'): TypedContractMethod<
+      [_electionId: BigNumberish, _voters: AddressLike[], ],
+      [void],
+      'nonpayable'
+    >;
 getFunction(nameOrSignature: 'candidates'): TypedContractMethod<
       [arg0: BigNumberish, arg1: BigNumberish, ],
       [[bigint, string, bigint] & {id: bigint, name: string, voteCount: bigint }],
@@ -238,6 +352,11 @@ getFunction(nameOrSignature: 'checkedInVoters'): TypedContractMethod<
       [boolean],
       'view'
     >;
+getFunction(nameOrSignature: 'closeElectionEarly'): TypedContractMethod<
+      [_electionId: BigNumberish, ],
+      [void],
+      'nonpayable'
+    >;
 getFunction(nameOrSignature: 'createElection'): TypedContractMethod<
       [_title: string, _startTime: BigNumberish, _endTime: BigNumberish, ],
       [void],
@@ -250,7 +369,12 @@ getFunction(nameOrSignature: 'electionCount'): TypedContractMethod<
     >;
 getFunction(nameOrSignature: 'elections'): TypedContractMethod<
       [arg0: BigNumberish, ],
-      [[bigint, string, bigint, bigint, boolean, bigint] & {id: bigint, title: string, startTime: bigint, endTime: bigint, exists: boolean, candidateCount: bigint }],
+      [[bigint, string, bigint, bigint, boolean, boolean, bigint, bigint] & {id: bigint, title: string, startTime: bigint, endTime: bigint, exists: boolean, isClosed: boolean, candidateCount: bigint, totalVotes: bigint }],
+      'view'
+    >;
+getFunction(nameOrSignature: 'eligibleVoters'): TypedContractMethod<
+      [arg0: BigNumberish, arg1: AddressLike, ],
+      [boolean],
       'view'
     >;
 getFunction(nameOrSignature: 'getCandidate'): TypedContractMethod<
@@ -260,11 +384,31 @@ getFunction(nameOrSignature: 'getCandidate'): TypedContractMethod<
     >;
 getFunction(nameOrSignature: 'getElection'): TypedContractMethod<
       [_electionId: BigNumberish, ],
-      [[bigint, string, bigint, bigint, bigint] & {id: bigint, title: string, startTime: bigint, endTime: bigint, candidateCount: bigint }],
+      [[bigint, string, bigint, bigint, bigint, bigint, boolean] & {id: bigint, title: string, startTime: bigint, endTime: bigint, candidateCount: bigint, totalVotes: bigint, isClosed: boolean }],
+      'view'
+    >;
+getFunction(nameOrSignature: 'getTurnoutCount'): TypedContractMethod<
+      [_electionId: BigNumberish, ],
+      [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'hasElectionEnded'): TypedContractMethod<
+      [_electionId: BigNumberish, ],
+      [boolean],
       'view'
     >;
 getFunction(nameOrSignature: 'hasVoted'): TypedContractMethod<
       [arg0: BigNumberish, arg1: AddressLike, ],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'isCheckedIn'): TypedContractMethod<
+      [_electionId: BigNumberish, _voter: AddressLike, ],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'isEligibleVoter'): TypedContractMethod<
+      [_electionId: BigNumberish, _voter: AddressLike, ],
       [boolean],
       'view'
     >;
@@ -280,14 +424,20 @@ getFunction(nameOrSignature: 'vote'): TypedContractMethod<
     >;
 
     getEvent(key: 'CandidateAdded'): TypedContractEvent<CandidateAddedEvent.InputTuple, CandidateAddedEvent.OutputTuple, CandidateAddedEvent.OutputObject>;
+getEvent(key: 'ElectionClosed'): TypedContractEvent<ElectionClosedEvent.InputTuple, ElectionClosedEvent.OutputTuple, ElectionClosedEvent.OutputObject>;
 getEvent(key: 'ElectionCreated'): TypedContractEvent<ElectionCreatedEvent.InputTuple, ElectionCreatedEvent.OutputTuple, ElectionCreatedEvent.OutputObject>;
 getEvent(key: 'VoteCast'): TypedContractEvent<VoteCastEvent.InputTuple, VoteCastEvent.OutputTuple, VoteCastEvent.OutputObject>;
 getEvent(key: 'VoterCheckedIn'): TypedContractEvent<VoterCheckedInEvent.InputTuple, VoterCheckedInEvent.OutputTuple, VoterCheckedInEvent.OutputObject>;
+getEvent(key: 'VoterWhitelisted'): TypedContractEvent<VoterWhitelistedEvent.InputTuple, VoterWhitelistedEvent.OutputTuple, VoterWhitelistedEvent.OutputObject>;
 
     filters: {
       
       'CandidateAdded(uint256,uint256,string)': TypedContractEvent<CandidateAddedEvent.InputTuple, CandidateAddedEvent.OutputTuple, CandidateAddedEvent.OutputObject>;
       CandidateAdded: TypedContractEvent<CandidateAddedEvent.InputTuple, CandidateAddedEvent.OutputTuple, CandidateAddedEvent.OutputObject>;
+    
+
+      'ElectionClosed(uint256,uint256)': TypedContractEvent<ElectionClosedEvent.InputTuple, ElectionClosedEvent.OutputTuple, ElectionClosedEvent.OutputObject>;
+      ElectionClosed: TypedContractEvent<ElectionClosedEvent.InputTuple, ElectionClosedEvent.OutputTuple, ElectionClosedEvent.OutputObject>;
     
 
       'ElectionCreated(uint256,string,uint256,uint256)': TypedContractEvent<ElectionCreatedEvent.InputTuple, ElectionCreatedEvent.OutputTuple, ElectionCreatedEvent.OutputObject>;
@@ -300,6 +450,10 @@ getEvent(key: 'VoterCheckedIn'): TypedContractEvent<VoterCheckedInEvent.InputTup
 
       'VoterCheckedIn(uint256,address)': TypedContractEvent<VoterCheckedInEvent.InputTuple, VoterCheckedInEvent.OutputTuple, VoterCheckedInEvent.OutputObject>;
       VoterCheckedIn: TypedContractEvent<VoterCheckedInEvent.InputTuple, VoterCheckedInEvent.OutputTuple, VoterCheckedInEvent.OutputObject>;
+    
+
+      'VoterWhitelisted(uint256,address)': TypedContractEvent<VoterWhitelistedEvent.InputTuple, VoterWhitelistedEvent.OutputTuple, VoterWhitelistedEvent.OutputObject>;
+      VoterWhitelisted: TypedContractEvent<VoterWhitelistedEvent.InputTuple, VoterWhitelistedEvent.OutputTuple, VoterWhitelistedEvent.OutputObject>;
     
     };
   }

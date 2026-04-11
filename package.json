@@ -1,15 +1,19 @@
 {
   "name": "evoting-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "Decentralized E-Voting Project",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "deploy": "hardhat run scripts/deploy.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.6",
     "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.3",

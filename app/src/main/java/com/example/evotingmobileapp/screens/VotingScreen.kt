@@ -14,7 +14,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
@@ -48,7 +47,7 @@ fun VotingScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    var voterId by rememberSaveable { mutableStateOf("voter001") }
+    var walletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var selectedCandidate by rememberSaveable { mutableStateOf("") }
 
@@ -65,10 +64,15 @@ fun VotingScreen(
 
     fun getVotingAccessText(): String {
         val election = selectedElection ?: return "Please select an election"
+        val trimmedWalletAddress = walletAddress.trim()
+
+        if (trimmedWalletAddress.isBlank()) {
+            return "Enter a wallet address"
+        }
 
         val result = adminViewModel.validateVoting(
             electionId = election.id,
-            voterId = voterId.trim()
+            voterId = trimmedWalletAddress
         )
 
         return if (result.success) {
@@ -81,7 +85,10 @@ fun VotingScreen(
     LaunchedEffect(selectedElectionId, elections) {
         if (selectedElection == null) {
             selectedCandidate = ""
-        } else if (selectedCandidate.isNotBlank() && !selectedElection.candidates.contains(selectedCandidate)) {
+        } else if (
+            selectedCandidate.isNotBlank() &&
+            !selectedElection.candidates.contains(selectedCandidate)
+        ) {
             selectedCandidate = ""
         }
     }
@@ -117,9 +124,9 @@ fun VotingScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
-                    value = voterId,
-                    onValueChange = { voterId = it },
-                    label = { Text("Voter ID") },
+                    value = walletAddress,
+                    onValueChange = { walletAddress = it },
+                    label = { Text("Wallet Address") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
@@ -248,71 +255,41 @@ fun VotingScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    Button(
+                        onClick = {
+                            val trimmedWalletAddress = walletAddress.trim()
+
+                            if (trimmedWalletAddress.isBlank()) {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Enter wallet address")
+                                }
+                                return@Button
+                            }
+
+                            if (selectedCandidate.isBlank()) {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Please select a candidate")
+                                }
+                                return@Button
+                            }
+
+                            val result = adminViewModel.submitVote(
+                                electionId = election.id,
+                                voterId = trimmedWalletAddress,
+                                candidateName = selectedCandidate
+                            )
+
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar(result.message)
+                            }
+
+                            if (result.success) {
+                                navController.navigate(AppRoutes.RECEIPT)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        OutlinedButton(
-                            onClick = {
-                                val trimmedVoterId = voterId.trim()
-
-                                if (trimmedVoterId.isBlank()) {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Enter voter ID")
-                                    }
-                                    return@OutlinedButton
-                                }
-
-                                val resultMessage = adminViewModel.checkInVoter(
-                                    electionId = election.id,
-                                    voterId = trimmedVoterId
-                                )
-
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(resultMessage)
-                                }
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Check In")
-                        }
-
-                        Button(
-                            onClick = {
-                                val trimmedVoterId = voterId.trim()
-
-                                if (trimmedVoterId.isBlank()) {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Enter voter ID")
-                                    }
-                                    return@Button
-                                }
-
-                                if (selectedCandidate.isBlank()) {
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Please select a candidate")
-                                    }
-                                    return@Button
-                                }
-
-                                val result = adminViewModel.submitVote(
-                                    electionId = election.id,
-                                    voterId = trimmedVoterId,
-                                    candidateName = selectedCandidate
-                                )
-
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(result.message)
-                                }
-
-                                if (result.success) {
-                                    navController.navigate(AppRoutes.RECEIPT)
-                                }
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Submit Vote")
-                        }
+                        Text("Submit Vote")
                     }
                 }
             }

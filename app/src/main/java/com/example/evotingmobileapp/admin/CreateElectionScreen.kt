@@ -22,12 +22,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -38,13 +42,15 @@ fun CreateElectionScreen(
     adminViewModel: AdminViewModel
 ) {
     val now = remember { System.currentTimeMillis() }
+    val coroutineScope = rememberCoroutineScope()
 
     var title by rememberSaveable { mutableStateOf("") }
     var candidatesInput by rememberSaveable { mutableStateOf("") }
-    var eligibleVoterIdsInput by rememberSaveable { mutableStateOf("voter001") }
+    var eligibleVoterIdsInput by rememberSaveable { mutableStateOf("") }
     var startDateTimeInput by rememberSaveable { mutableStateOf(formatDateTime(now + 5 * 60 * 1000)) }
     var endDateTimeInput by rememberSaveable { mutableStateOf(formatDateTime(now + 60 * 60 * 1000)) }
     var errorMessage by rememberSaveable { mutableStateOf("") }
+    var isCreating by rememberSaveable { mutableStateOf(false) }
 
     Scaffold { innerPadding ->
         Column(
@@ -88,7 +94,8 @@ fun CreateElectionScreen(
                         label = { Text("Election title") },
                         placeholder = { Text("Student Council Election 2026") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCreating
                     )
 
                     OutlinedTextField(
@@ -104,7 +111,8 @@ fun CreateElectionScreen(
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 4
+                        minLines = 4,
+                        enabled = !isCreating
                     )
 
                     OutlinedTextField(
@@ -113,14 +121,15 @@ fun CreateElectionScreen(
                             eligibleVoterIdsInput = it
                             errorMessage = ""
                         },
-                        label = { Text("Eligible voter IDs / whitelist") },
+                        label = { Text("Eligible voter wallet addresses / whitelist") },
                         placeholder = {
                             Text(
-                                "Enter voter IDs separated by commas or new lines\nExample:\nvoter001\nvoter002\nvoter003"
+                                "Enter wallet addresses separated by commas or new lines\nExample:\n0x70997970c51812dc3a010c7d01b50e0d17dc79c8\n0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc"
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 4
+                        minLines = 4,
+                        enabled = !isCreating
                     )
 
                     OutlinedTextField(
@@ -132,7 +141,8 @@ fun CreateElectionScreen(
                         label = { Text("Start date & time") },
                         placeholder = { Text("dd/MM/yyyy hh:mm a") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCreating
                     )
 
                     OutlinedTextField(
@@ -144,11 +154,12 @@ fun CreateElectionScreen(
                         label = { Text("End date & time") },
                         placeholder = { Text("dd/MM/yyyy hh:mm a") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCreating
                     )
 
                     Text(
-                        text = "Use this format for date and time: dd/MM/yyyy hh:mm a\nExample: 29/03/2026 08:30 PM",
+                        text = "Use Ethereum wallet addresses for the whitelist.\nUse this date/time format: dd/MM/yyyy hh:mm a\nExample: 29/03/2026 08:30 PM",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,7 +181,8 @@ fun CreateElectionScreen(
             ) {
                 OutlinedButton(
                     onClick = { navController.popBackStack() },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    enabled = !isCreating
                 ) {
                     Text("Cancel")
                 }
@@ -179,6 +191,7 @@ fun CreateElectionScreen(
                     onClick = {
                         val cleanedTitle = title.trim()
                         val cleanedCandidates = parseMultiValueInput(candidatesInput)
+                        val cleanedEligibleVoters = parseMultiValueInput(eligibleVoterIdsInput)
                         val startTimeMillis = parseDateTimeToMillis(startDateTimeInput)
                         val endTimeMillis = parseDateTimeToMillis(endDateTimeInput)
 
@@ -189,6 +202,10 @@ fun CreateElectionScreen(
 
                             cleanedCandidates.size < 2 -> {
                                 errorMessage = "Please enter at least 2 candidates."
+                            }
+
+                            cleanedEligibleVoters.isEmpty() -> {
+                                errorMessage = "Please enter at least 1 eligible voter wallet address."
                             }
 
                             startTimeMillis == null -> {
@@ -204,20 +221,38 @@ fun CreateElectionScreen(
                             }
 
                             else -> {
-                                adminViewModel.createElection(
-                                    title = cleanedTitle,
-                                    candidates = cleanedCandidates,
-                                    startTimeMillis = startTimeMillis,
-                                    endTimeMillis = endTimeMillis,
-                                    eligibleVoterIdsInput = eligibleVoterIdsInput
-                                )
-                                navController.popBackStack()
+                                errorMessage = ""
+                                isCreating = true
+
+                                coroutineScope.launch {
+                                    val result = runCatching {
+                                        withContext(Dispatchers.IO) {
+                                            adminViewModel.createElection(
+                                                title = cleanedTitle,
+                                                candidates = cleanedCandidates,
+                                                startTimeMillis = startTimeMillis,
+                                                endTimeMillis = endTimeMillis,
+                                                eligibleVoterIdsInput = eligibleVoterIdsInput
+                                            )
+                                        }
+                                    }
+
+                                    isCreating = false
+
+                                    result.onSuccess {
+                                        navController.popBackStack()
+                                    }.onFailure { exception ->
+                                        errorMessage = exception.message
+                                            ?: "Failed to create election on blockchain."
+                                    }
+                                }
                             }
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    enabled = !isCreating
                 ) {
-                    Text("Create")
+                    Text(if (isCreating) "Creating..." else "Create")
                 }
             }
         }
