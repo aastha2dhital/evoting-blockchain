@@ -4,9 +4,10 @@ import android.content.Context
 import com.example.evotingmobileapp.blockchain.BlockchainRepository
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
+import java.math.BigInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.math.BigInteger
+import kotlinx.coroutines.flow.asStateFlow
 
 class BlockchainElectionRepository(
     private val appContext: Context,
@@ -17,10 +18,10 @@ class BlockchainElectionRepository(
     override val elections: StateFlow<List<Election>> = fallbackRepository.elections
 
     private val _voteReceipts = MutableStateFlow<List<VoteReceipt>>(emptyList())
-    override val voteReceipts: StateFlow<List<VoteReceipt>> = _voteReceipts
+    override val voteReceipts: StateFlow<List<VoteReceipt>> = _voteReceipts.asStateFlow()
 
     init {
-        _voteReceipts.value = fallbackRepository.voteReceipts.value
+        syncVoteReceiptsFromFallback()
     }
 
     fun checkInVoterOnChain(
@@ -48,6 +49,7 @@ class BlockchainElectionRepository(
         eligibleVoterIds: List<String>
     ) {
         val cleanedTitle = title.trim()
+
         val cleanedCandidates = candidates
             .map { it.trim() }
             .filter { it.isNotBlank() }
@@ -68,16 +70,17 @@ class BlockchainElectionRepository(
             startTimeSeconds = startTimeSeconds,
             endTimeSeconds = endTimeSeconds,
             eligibleVoterAddresses = cleanedEligibleWalletAddresses
-        )
-
-        onChainResult.getOrElse { exception ->
+        ).getOrElse { exception ->
             throw IllegalStateException(
                 exception.message ?: "Failed to create election on blockchain.",
                 exception
             )
         }
 
-        fallbackRepository.createElection(
+        val realElectionId = onChainResult.electionId.toString()
+
+        fallbackRepository.createElectionWithId(
+            electionId = realElectionId,
             title = cleanedTitle,
             candidates = cleanedCandidates,
             startTimeMillis = startTimeMillis,
@@ -93,7 +96,8 @@ class BlockchainElectionRepository(
     }
 
     override fun checkInVoter(electionId: String, voterId: String): String {
-        val parsedElectionId = parseElectionId(electionId)
+        val cleanedElectionId = electionId.trim()
+        val parsedElectionId = parseElectionId(cleanedElectionId)
             ?: return "Election ID must be a valid non-negative integer."
 
         val cleanedWalletAddress = voterId.trim()
@@ -107,7 +111,7 @@ class BlockchainElectionRepository(
         return onChainResult.fold(
             onSuccess = {
                 val result = fallbackRepository.checkInVoter(
-                    electionId = electionId.trim(),
+                    electionId = cleanedElectionId,
                     voterId = cleanedWalletAddress
                 )
                 syncVoteReceiptsFromFallback()
@@ -119,7 +123,10 @@ class BlockchainElectionRepository(
         )
     }
 
-    override fun validateVoting(electionId: String, voterId: String): VoteValidationResult {
+    override fun validateVoting(
+        electionId: String,
+        voterId: String
+    ): VoteValidationResult {
         return fallbackRepository.validateVoting(
             electionId = electionId.trim(),
             voterId = voterId.trim()
@@ -148,7 +155,7 @@ class BlockchainElectionRepository(
             )
 
         val candidateIndex = election.candidates.indexOfFirst {
-            it.equals(cleanedCandidateName, ignoreCase = false)
+            it == cleanedCandidateName
         }
 
         if (candidateIndex == -1) {

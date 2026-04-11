@@ -24,7 +24,31 @@ class InMemoryElectionRepository : ElectionRepository {
         endTimeMillis: Long,
         eligibleVoterIds: List<String>
     ) {
-        val electionId = (_elections.value.size + 1).toString()
+        val generatedElectionId = nextGeneratedElectionId()
+
+        createElectionWithId(
+            electionId = generatedElectionId,
+            title = title,
+            candidates = candidates,
+            startTimeMillis = startTimeMillis,
+            endTimeMillis = endTimeMillis,
+            eligibleVoterIds = eligibleVoterIds
+        )
+    }
+
+    fun createElectionWithId(
+        electionId: String,
+        title: String,
+        candidates: List<String>,
+        startTimeMillis: Long,
+        endTimeMillis: Long,
+        eligibleVoterIds: List<String>
+    ) {
+        val cleanedElectionId = electionId.trim()
+
+        require(cleanedElectionId.isNotEmpty()) {
+            "Election ID cannot be blank."
+        }
 
         val cleanedTitle = title.trim()
 
@@ -42,7 +66,7 @@ class InMemoryElectionRepository : ElectionRepository {
         val voteCounts = cleanedCandidates.associateWith { 0 }
 
         val newElection = Election(
-            id = electionId,
+            id = cleanedElectionId,
             title = cleanedTitle,
             candidates = cleanedCandidates,
             startTimeMillis = startTimeMillis,
@@ -53,7 +77,8 @@ class InMemoryElectionRepository : ElectionRepository {
             checkedInVoterIds = emptySet()
         )
 
-        _elections.value = _elections.value + newElection
+        _elections.value = (_elections.value.filterNot { it.id == cleanedElectionId } + newElection)
+            .sortedBy { it.id.toIntOrNull() ?: Int.MAX_VALUE }
     }
 
     override fun getElectionById(electionId: String): Election? {
@@ -167,13 +192,21 @@ class InMemoryElectionRepository : ElectionRepository {
             transactionHash = generateFakeTransactionHash()
         )
 
-        _voteReceipts.value = _voteReceipts.value + receipt
+        _voteReceipts.value += receipt
 
         return VoteValidationResult(
             success = true,
             message = "Vote submitted successfully",
             receipt = receipt
         )
+    }
+
+    private fun nextGeneratedElectionId(): String {
+        val highestExistingId = _elections.value
+            .mapNotNull { it.id.toIntOrNull() }
+            .maxOrNull() ?: 0
+
+        return (highestExistingId + 1).toString()
     }
 
     private fun generateFakeTransactionHash(): String {
