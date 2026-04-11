@@ -23,9 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -33,15 +31,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
 
 @Composable
 fun LoginScreen(
     navController: NavHostController,
+    adminViewModel: AdminViewModel,
     modifier: Modifier = Modifier
 ) {
-    var walletConnected by rememberSaveable { mutableStateOf(false) }
-    var walletAddress by rememberSaveable { mutableStateOf("") }
+    val walletConnected by adminViewModel.walletConnected.collectAsState()
+    val walletAddress by adminViewModel.connectedWalletAddress.collectAsState()
 
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(
@@ -199,8 +199,7 @@ fun LoginScreen(
 
                     Button(
                         onClick = {
-                            walletConnected = true
-                            walletAddress = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+                            adminViewModel.connectDemoWallet()
                         },
                         enabled = !walletConnected,
                         modifier = Modifier
@@ -243,8 +242,7 @@ fun LoginScreen(
 
                     TextButton(
                         onClick = {
-                            walletConnected = false
-                            walletAddress = ""
+                            adminViewModel.clearConnectedWallet()
                         },
                         enabled = walletConnected,
                         modifier = Modifier.align(Alignment.CenterHorizontally)

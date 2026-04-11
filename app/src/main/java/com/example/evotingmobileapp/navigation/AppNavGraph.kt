@@ -24,7 +24,10 @@ fun AppNavGraph(
         startDestination = AppRoutes.LOGIN
     ) {
         composable(AppRoutes.LOGIN) {
-            LoginScreen(navController = navController)
+            LoginScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
         }
 
         composable(AppRoutes.DASHBOARD) {
