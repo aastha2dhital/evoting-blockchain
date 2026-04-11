@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -20,12 +20,13 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,17 +42,25 @@ fun QRCheckInScreen(
     modifier: Modifier = Modifier
 ) {
     val elections by adminViewModel.elections.collectAsState()
+    val connectedWalletAddress by adminViewModel.connectedWalletAddress.collectAsState()
+    val walletConnected by adminViewModel.walletConnected.collectAsState()
 
     var walletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var resultMessage by rememberSaveable { mutableStateOf("") }
 
-    val selectedElection = elections.find { it.id == selectedElectionId }
+    val selectedElection = elections.find { election -> election.id == selectedElectionId }
     val isSuccessMessage = resultMessage == "Check-in successful"
 
-    LaunchedEffect(elections) {
+    LaunchedEffect(elections, selectedElectionId) {
         if (selectedElectionId.isNotBlank() && selectedElection == null) {
             selectedElectionId = ""
+        }
+    }
+
+    LaunchedEffect(walletConnected, connectedWalletAddress) {
+        if (walletConnected && walletAddress.isBlank()) {
+            walletAddress = connectedWalletAddress
         }
     }
 
@@ -70,9 +79,46 @@ fun QRCheckInScreen(
         )
 
         Text(
-            text = "Simulate a QR scan by entering a wallet address, then check the voter into a selected election.",
+            text = "Prototype check-in flow for verifying a voter wallet before voting. Use the connected wallet for demo testing or enter another wallet address manually.",
             style = MaterialTheme.typography.bodyMedium
         )
+
+        if (walletConnected) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Connected Demo Wallet",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+
+                    Text(
+                        text = connectedWalletAddress,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+
+                    TextButton(
+                        onClick = {
+                            walletAddress = connectedWalletAddress
+                            resultMessage = ""
+                        }
+                    ) {
+                        Text("Use This Wallet")
+                    }
+                }
+            }
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -91,8 +137,8 @@ fun QRCheckInScreen(
 
                 OutlinedTextField(
                     value = walletAddress,
-                    onValueChange = {
-                        walletAddress = it
+                    onValueChange = { newValue ->
+                        walletAddress = newValue
                         resultMessage = ""
                     },
                     label = { Text("Wallet Address") },

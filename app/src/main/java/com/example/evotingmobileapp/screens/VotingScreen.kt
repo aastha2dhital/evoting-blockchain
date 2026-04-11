@@ -7,13 +7,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
@@ -33,25 +37,50 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
 import kotlinx.coroutines.launch
 
 @Composable
 fun VotingScreen(
-    navController: NavController,
-    adminViewModel: AdminViewModel
+    navController: NavHostController,
+    adminViewModel: AdminViewModel,
+    modifier: Modifier = Modifier
 ) {
     val elections by adminViewModel.elections.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val connectedWalletAddress by adminViewModel.connectedWalletAddress.collectAsState()
+    val walletConnected by adminViewModel.walletConnected.collectAsState()
+
+    val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    var walletAddress by rememberSaveable { mutableStateOf("") }
+    var voterWalletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var selectedCandidate by rememberSaveable { mutableStateOf("") }
 
     val selectedElection = elections.find { it.id == selectedElectionId }
+
+    LaunchedEffect(walletConnected, connectedWalletAddress) {
+        if (walletConnected && connectedWalletAddress.isNotBlank()) {
+            voterWalletAddress = connectedWalletAddress
+        }
+    }
+
+    LaunchedEffect(elections, selectedElectionId) {
+        if (selectedElectionId.isNotBlank() && selectedElection == null) {
+            selectedElectionId = ""
+        }
+
+        if (selectedElection == null) {
+            selectedCandidate = ""
+        } else if (
+            selectedCandidate.isNotBlank() &&
+            !selectedElection.candidates.contains(selectedCandidate)
+        ) {
+            selectedCandidate = ""
+        }
+    }
 
     fun getElectionStatusText(): String {
         val election = selectedElection ?: return "No election selected"
@@ -63,11 +92,15 @@ fun VotingScreen(
     }
 
     fun getVotingAccessText(): String {
-        val election = selectedElection ?: return "Please select an election"
-        val trimmedWalletAddress = walletAddress.trim()
+        val election = selectedElection ?: return "Please select an election first."
+        val trimmedWalletAddress = voterWalletAddress.trim()
 
         if (trimmedWalletAddress.isBlank()) {
-            return "Enter a wallet address"
+            return if (walletConnected) {
+                "Wallet connection exists, but the wallet address field is empty."
+            } else {
+                "Connect a wallet on the login screen or enter a wallet address for prototype testing."
+            }
         }
 
         val result = adminViewModel.validateVoting(
@@ -82,24 +115,15 @@ fun VotingScreen(
         }
     }
 
-    LaunchedEffect(selectedElectionId, elections) {
-        if (selectedElection == null) {
-            selectedCandidate = ""
-        } else if (
-            selectedCandidate.isNotBlank() &&
-            !selectedElection.candidates.contains(selectedCandidate)
-        ) {
-            selectedCandidate = ""
-        }
-    }
-
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
+            .navigationBarsPadding(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        SnackbarHost(hostState = snackbarHostState)
+        SnackbarHost(hostState = snackBarHostState)
 
         Text(
             text = "Vote Now",
@@ -107,77 +131,115 @@ fun VotingScreen(
             fontWeight = FontWeight.Bold
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Use the connected wallet address for prototype voting. You can still edit it manually when needed for testing.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         Card(
             modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Text(
-                    text = "Voter Details",
+                    text = "Wallet Identity",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = if (walletConnected && connectedWalletAddress.isNotBlank()) {
+                        "Connected wallet detected. It will be used as the voter identity for check-in and voting."
+                    } else {
+                        "No shared wallet is connected right now. You can still type a wallet address for prototype testing."
+                    },
+                    style = MaterialTheme.typography.bodyMedium
+                )
 
                 OutlinedTextField(
-                    value = walletAddress,
-                    onValueChange = { walletAddress = it },
+                    value = voterWalletAddress,
+                    onValueChange = { voterWalletAddress = it },
                     label = { Text("Wallet Address") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    placeholder = { Text("0x...") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                if (walletConnected && connectedWalletAddress.isNotBlank()) {
+                    Text(
+                        text = "Connected wallet: ${shortenWalletAddress(connectedWalletAddress)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
 
+                    if (voterWalletAddress != connectedWalletAddress) {
+                        TextButton(
+                            onClick = { voterWalletAddress = connectedWalletAddress }
+                        ) {
+                            Text("Use Connected Wallet")
+                        }
+                    }
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Text(
-                    text = "Available Elections",
+                    text = "Select Election",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 if (elections.isEmpty()) {
                     Text(
-                        text = "No elections created yet.",
+                        text = "No elections created yet. Please create an election first.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 } else {
                     elections.forEach { election ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = election.title,
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "Election ID: ${election.id}",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = selectedElectionId == election.id,
+                                    onClick = {
+                                        selectedElectionId = election.id
+                                        selectedCandidate = ""
                                     }
+                                )
 
-                                    RadioButton(
-                                        selected = selectedElectionId == election.id,
-                                        onClick = {
-                                            selectedElectionId = election.id
-                                            selectedCandidate = ""
-                                        }
+                                Column(
+                                    modifier = Modifier.padding(start = 8.dp)
+                                ) {
+                                    Text(
+                                        text = election.title,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "Election ID: ${election.id}",
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                             }
@@ -187,36 +249,33 @@ fun VotingScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         selectedElection?.let { election ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Text(
                         text = "Election Status",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     Text(
                         text = "Status: ${getElectionStatusText()}",
                         style = MaterialTheme.typography.bodyLarge
                     )
-
-                    Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
                         text = "Voting Access: ${getVotingAccessText()}",
                         style = MaterialTheme.typography.bodyMedium
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = "Candidates",
@@ -224,13 +283,10 @@ fun VotingScreen(
                         fontWeight = FontWeight.SemiBold
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     election.candidates.forEach { candidate ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
                             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
                             Row(
@@ -244,31 +300,57 @@ fun VotingScreen(
                                     onClick = { selectedCandidate = candidate }
                                 )
 
+                                Spacer(modifier = Modifier.width(8.dp))
+
                                 Text(
                                     text = candidate,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(start = 8.dp)
+                                    style = MaterialTheme.typography.bodyLarge
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    Button(
+                    OutlinedButton(
                         onClick = {
-                            val trimmedWalletAddress = walletAddress.trim()
+                            val trimmedWalletAddress = voterWalletAddress.trim()
 
                             if (trimmedWalletAddress.isBlank()) {
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("Enter wallet address")
+                                    snackBarHostState.showSnackbar("Enter wallet address first")
+                                }
+                                return@OutlinedButton
+                            }
+
+                            val resultMessage = adminViewModel.checkInVoter(
+                                electionId = election.id,
+                                voterId = trimmedWalletAddress
+                            )
+
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar(resultMessage)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Check In With This Wallet")
+                    }
+
+                    Button(
+                        onClick = {
+                            val trimmedWalletAddress = voterWalletAddress.trim()
+
+                            if (trimmedWalletAddress.isBlank()) {
+                                coroutineScope.launch {
+                                    snackBarHostState.showSnackbar("Enter wallet address first")
                                 }
                                 return@Button
                             }
 
                             if (selectedCandidate.isBlank()) {
                                 coroutineScope.launch {
-                                    snackbarHostState.showSnackbar("Please select a candidate")
+                                    snackBarHostState.showSnackbar("Please select a candidate")
                                 }
                                 return@Button
                             }
@@ -280,7 +362,7 @@ fun VotingScreen(
                             )
 
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar(result.message)
+                                snackBarHostState.showSnackbar(result.message)
                             }
 
                             if (result.success) {
@@ -295,12 +377,15 @@ fun VotingScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         TextButton(
             onClick = { navController.popBackStack() }
         ) {
             Text("Back")
         }
     }
+}
+
+private fun shortenWalletAddress(address: String): String {
+    if (address.length <= 16) return address
+    return "${address.take(10)}...${address.takeLast(8)}"
 }
