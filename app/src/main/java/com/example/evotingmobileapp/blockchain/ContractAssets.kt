@@ -1,7 +1,9 @@
 package com.example.evotingmobileapp.blockchain
 
 import android.content.Context
+import java.io.FileNotFoundException
 import org.json.JSONArray
+import org.json.JSONException
 import org.json.JSONObject
 
 data class ContractConfig(
@@ -20,72 +22,143 @@ data class VoterWalletConfig(
 
 object ContractAssets {
 
-    fun loadContractConfig(context: Context): ContractConfig {
-        val jsonText = context.assets
-            .open("contract-info.json")
-            .bufferedReader()
-            .use { it.readText() }
+    private val privateKeyRegex = Regex("^0x[0-9a-fA-F]{64}$")
 
-        val jsonObject = JSONObject(jsonText)
+    fun loadContractConfig(context: Context): ContractConfig {
+        val jsonObject = readJsonObjectAsset(
+            context = context,
+            fileName = "contract-info.json"
+        )
+
+        val contractAddress = jsonObject.optString("contractAddress").trim()
+        val network = jsonObject.optString("network").trim()
+        val rpcUrl = jsonObject.optString("rpcUrl").trim()
+
+        require(contractAddress.isNotBlank()) {
+            "contractAddress is missing in contract-info.json."
+        }
+
+        require(network.isNotBlank()) {
+            "network is missing in contract-info.json."
+        }
+
+        require(rpcUrl.isNotBlank()) {
+            "rpcUrl is missing in contract-info.json."
+        }
 
         return ContractConfig(
-            contractAddress = jsonObject.getString("contractAddress"),
-            network = jsonObject.getString("network"),
-            rpcUrl = jsonObject.getString("rpcUrl")
+            contractAddress = contractAddress,
+            network = network,
+            rpcUrl = rpcUrl
         )
     }
 
     fun loadAdminWalletConfig(context: Context): AdminWalletConfig {
-        val jsonText = context.assets
-            .open("admin-wallet.json")
-            .bufferedReader()
-            .use { it.readText() }
+        val jsonObject = readJsonObjectAsset(
+            context = context,
+            fileName = "admin-wallet.json"
+        )
 
-        val jsonObject = JSONObject(jsonText)
-        val rawKey = jsonObject.getString("adminPrivateKey").trim()
+        val rawKey = jsonObject.optString("adminPrivateKey").trim()
 
         return AdminWalletConfig(
             adminPrivateKey = normalizePrivateKey(
                 rawKey = rawKey,
-                fieldName = "adminPrivateKey"
+                fieldName = "adminPrivateKey",
+                fileName = "admin-wallet.json"
             )
         )
     }
 
     fun loadVoterWalletConfig(context: Context): VoterWalletConfig {
-        val jsonText = context.assets
-            .open("voter-wallet.json")
-            .bufferedReader()
-            .use { it.readText() }
+        val jsonObject = readJsonObjectAsset(
+            context = context,
+            fileName = "voter-wallet.json"
+        )
 
-        val jsonObject = JSONObject(jsonText)
-        val rawKey = jsonObject.getString("voterPrivateKey").trim()
+        val rawKey = jsonObject.optString("voterPrivateKey").trim()
 
         return VoterWalletConfig(
             voterPrivateKey = normalizePrivateKey(
                 rawKey = rawKey,
-                fieldName = "voterPrivateKey"
+                fieldName = "voterPrivateKey",
+                fileName = "voter-wallet.json"
             )
         )
     }
 
     fun loadAbi(context: Context): JSONArray {
-        val jsonText = context.assets
-            .open("evoting-abi.json")
-            .bufferedReader()
-            .use { it.readText() }
+        val jsonText = readAssetText(
+            context = context,
+            fileName = "evoting-abi.json"
+        )
 
-        return JSONArray(jsonText)
+        return try {
+            JSONArray(jsonText)
+        } catch (exception: JSONException) {
+            throw IllegalStateException(
+                "evoting-abi.json is not a valid JSON array.",
+                exception
+            )
+        }
+    }
+
+    private fun readJsonObjectAsset(
+        context: Context,
+        fileName: String
+    ): JSONObject {
+        val jsonText = readAssetText(
+            context = context,
+            fileName = fileName
+        )
+
+        return try {
+            JSONObject(jsonText)
+        } catch (exception: JSONException) {
+            throw IllegalStateException(
+                "$fileName is not a valid JSON object.",
+                exception
+            )
+        }
+    }
+
+    private fun readAssetText(
+        context: Context,
+        fileName: String
+    ): String {
+        return try {
+            context.assets
+                .open(fileName)
+                .bufferedReader()
+                .use { it.readText() }
+        } catch (exception: FileNotFoundException) {
+            throw IllegalStateException(
+                "$fileName is missing from app/src/main/assets.",
+                exception
+            )
+        } catch (exception: Exception) {
+            throw IllegalStateException(
+                "Failed to read $fileName.",
+                exception
+            )
+        }
     }
 
     private fun normalizePrivateKey(
         rawKey: String,
-        fieldName: String
+        fieldName: String,
+        fileName: String
     ): String {
         require(rawKey.isNotBlank()) {
-            "$fieldName is missing."
+            "$fieldName is missing in $fileName."
         }
 
-        return if (rawKey.startsWith("0x")) rawKey else "0x$rawKey"
+        val normalizedKey = if (rawKey.startsWith("0x")) rawKey else "0x$rawKey"
+
+        require(privateKeyRegex.matches(normalizedKey)) {
+            "$fieldName in $fileName must be a valid 64-character hex private key."
+        }
+
+        return normalizedKey
     }
 }
