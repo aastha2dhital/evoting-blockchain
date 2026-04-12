@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -42,6 +43,9 @@ import com.example.evotingmobileapp.admin.AdminViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun QRCheckInScreen(
@@ -57,10 +61,12 @@ fun QRCheckInScreen(
     var voterWalletAddress by rememberSaveable { mutableStateOf("") }
     var statusMessage by rememberSaveable { mutableStateOf("") }
     var lastScannedValue by rememberSaveable { mutableStateOf("") }
+    var isCheckingIn by rememberSaveable { mutableStateOf(false) }
 
     val selectedElection = elections.find { it.id == selectedElectionId }
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
+    val coroutineScope = rememberCoroutineScope()
 
     val scannerOptions = remember {
         GmsBarcodeScannerOptions.Builder()
@@ -136,7 +142,12 @@ fun QRCheckInScreen(
                             ) {
                                 RadioButton(
                                     selected = selectedElectionId == election.id,
-                                    onClick = { selectedElectionId = election.id }
+                                    onClick = {
+                                        if (!isCheckingIn) {
+                                            selectedElectionId = election.id
+                                        }
+                                    },
+                                    enabled = !isCheckingIn
                                 )
 
                                 Column(
@@ -188,7 +199,8 @@ fun QRCheckInScreen(
                     label = { Text("Wallet Address") },
                     placeholder = { Text("Scan QR or type wallet address") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isCheckingIn
                 )
 
                 if (lastScannedValue.isNotBlank()) {
@@ -206,7 +218,8 @@ fun QRCheckInScreen(
                     Button(
                         onClick = {
                             if (activity == null) {
-                                statusMessage = "Scanner could not start because this screen is not attached to an activity."
+                                statusMessage =
+                                    "Scanner could not start because this screen is not attached to an activity."
                                 return@Button
                             }
 
@@ -222,7 +235,8 @@ fun QRCheckInScreen(
                                         voterWalletAddress = scannedValue
                                         lastScannedValue = scannedValue
                                         adminViewModel.setConnectedWalletAddress(scannedValue)
-                                        statusMessage = "QR scan successful. Wallet address loaded for check-in."
+                                        statusMessage =
+                                            "QR scan successful. Wallet address loaded for check-in."
                                     }
                                 }
                                 .addOnCanceledListener {
@@ -233,7 +247,8 @@ fun QRCheckInScreen(
                                         ?: "QR scanning failed. Please try again."
                                 }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        enabled = !isCheckingIn
                     ) {
                         Text("Scan QR Code")
                     }
@@ -247,7 +262,8 @@ fun QRCheckInScreen(
                                 statusMessage = "No shared wallet is connected yet."
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        enabled = !isCheckingIn
                     ) {
                         Text("Use Shared Wallet")
                     }
@@ -295,15 +311,32 @@ fun QRCheckInScreen(
                         }
 
                         adminViewModel.setConnectedWalletAddress(trimmedWalletAddress)
+                        isCheckingIn = true
+                        statusMessage = "Checking voter in on blockchain..."
 
-                        statusMessage = adminViewModel.checkInVoter(
-                            electionId = selectedElection.id,
-                            voterId = trimmedWalletAddress
-                        )
+                        coroutineScope.launch {
+                            val result = runCatching {
+                                withContext(Dispatchers.IO) {
+                                    adminViewModel.checkInVoter(
+                                        electionId = selectedElection.id,
+                                        voterId = trimmedWalletAddress
+                                    )
+                                }
+                            }
+
+                            isCheckingIn = false
+
+                            result.onSuccess { message ->
+                                statusMessage = message
+                            }.onFailure { exception ->
+                                statusMessage = exception.message ?: "Blockchain check-in failed."
+                            }
+                        }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isCheckingIn
                 ) {
-                    Text("Check In Voter")
+                    Text(if (isCheckingIn) "Checking In..." else "Check In Voter")
                 }
 
                 if (statusMessage.isNotBlank()) {
@@ -324,7 +357,8 @@ fun QRCheckInScreen(
         }
 
         TextButton(
-            onClick = { navController.popBackStack() }
+            onClick = { navController.popBackStack() },
+            enabled = !isCheckingIn
         ) {
             Text("Back")
         }

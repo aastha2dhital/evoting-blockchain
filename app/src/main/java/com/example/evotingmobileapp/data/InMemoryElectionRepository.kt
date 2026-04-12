@@ -2,6 +2,7 @@ package com.example.evotingmobileapp.data
 
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
+import java.util.Locale
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,10 +59,14 @@ class InMemoryElectionRepository : ElectionRepository {
             .distinct()
 
         val cleanedEligibleVoterIds = eligibleVoterIds
-            .map { it.trim() }
+            .map { normalizeVoterId(it) }
             .filter { it.isNotEmpty() }
             .toSet()
-            .ifEmpty { defaultEligibleVoterIds }
+            .ifEmpty {
+                defaultEligibleVoterIds
+                    .map { normalizeVoterId(it) }
+                    .toSet()
+            }
 
         val voteCounts = cleanedCandidates.associateWith { 0 }
 
@@ -86,7 +91,7 @@ class InMemoryElectionRepository : ElectionRepository {
     }
 
     override fun checkInVoter(electionId: String, voterId: String): String {
-        val normalizedVoterId = voterId.trim()
+        val normalizedVoterId = normalizeVoterId(voterId)
 
         if (normalizedVoterId.isEmpty()) {
             return "Voter ID required"
@@ -118,7 +123,7 @@ class InMemoryElectionRepository : ElectionRepository {
         electionId: String,
         voterId: String
     ): VoteValidationResult {
-        val normalizedVoterId = voterId.trim()
+        val normalizedVoterId = normalizeVoterId(voterId)
 
         if (normalizedVoterId.isEmpty()) {
             return VoteValidationResult(false, "Voter ID required")
@@ -155,7 +160,7 @@ class InMemoryElectionRepository : ElectionRepository {
         voterId: String,
         candidateName: String
     ): VoteValidationResult {
-        val normalizedVoterId = voterId.trim()
+        val normalizedVoterId = normalizeVoterId(voterId)
         val normalizedCandidateName = candidateName.trim()
 
         val election = getElectionById(electionId)
@@ -211,5 +216,9 @@ class InMemoryElectionRepository : ElectionRepository {
 
     private fun generateFakeTransactionHash(): String {
         return "0x" + UUID.randomUUID().toString().replace("-", "").take(32)
+    }
+
+    private fun normalizeVoterId(voterId: String): String {
+        return voterId.trim().lowercase(Locale.ROOT)
     }
 }

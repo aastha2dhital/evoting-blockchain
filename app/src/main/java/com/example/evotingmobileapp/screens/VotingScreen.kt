@@ -39,8 +39,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.data.VoteValidationResult
 import com.example.evotingmobileapp.navigation.AppRoutes
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun VotingScreen(
@@ -58,7 +61,10 @@ fun VotingScreen(
     var voterWalletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var selectedCandidate by rememberSaveable { mutableStateOf("") }
+    var isCheckingIn by rememberSaveable { mutableStateOf(false) }
+    var isSubmittingVote by rememberSaveable { mutableStateOf(false) }
 
+    val isBusy = isCheckingIn || isSubmittingVote
     val selectedElection = elections.find { it.id == selectedElectionId }
 
     LaunchedEffect(walletConnected, connectedWalletAddress) {
@@ -167,7 +173,8 @@ fun VotingScreen(
                     label = { Text("Wallet Address") },
                     placeholder = { Text("0x...") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isBusy
                 )
 
                 if (walletConnected && connectedWalletAddress.isNotBlank()) {
@@ -179,7 +186,8 @@ fun VotingScreen(
 
                     if (voterWalletAddress != connectedWalletAddress) {
                         TextButton(
-                            onClick = { voterWalletAddress = connectedWalletAddress }
+                            onClick = { voterWalletAddress = connectedWalletAddress },
+                            enabled = !isBusy
                         ) {
                             Text("Use Connected Wallet")
                         }
@@ -224,9 +232,12 @@ fun VotingScreen(
                                 RadioButton(
                                     selected = selectedElectionId == election.id,
                                     onClick = {
-                                        selectedElectionId = election.id
-                                        selectedCandidate = ""
-                                    }
+                                        if (!isBusy) {
+                                            selectedElectionId = election.id
+                                            selectedCandidate = ""
+                                        }
+                                    },
+                                    enabled = !isBusy
                                 )
 
                                 Column(
@@ -297,7 +308,12 @@ fun VotingScreen(
                             ) {
                                 RadioButton(
                                     selected = selectedCandidate == candidate,
-                                    onClick = { selectedCandidate = candidate }
+                                    onClick = {
+                                        if (!isBusy) {
+                                            selectedCandidate = candidate
+                                        }
+                                    },
+                                    enabled = !isBusy
                                 )
 
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -323,18 +339,32 @@ fun VotingScreen(
                                 return@OutlinedButton
                             }
 
-                            val resultMessage = adminViewModel.checkInVoter(
-                                electionId = election.id,
-                                voterId = trimmedWalletAddress
-                            )
+                            adminViewModel.setConnectedWalletAddress(trimmedWalletAddress)
+                            isCheckingIn = true
 
                             coroutineScope.launch {
-                                snackBarHostState.showSnackbar(resultMessage)
+                                val result = runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        adminViewModel.checkInVoter(
+                                            electionId = election.id,
+                                            voterId = trimmedWalletAddress
+                                        )
+                                    }
+                                }
+
+                                isCheckingIn = false
+
+                                val message = result.getOrElse { exception ->
+                                    exception.message ?: "Blockchain check-in failed."
+                                }
+
+                                snackBarHostState.showSnackbar(message)
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isBusy
                     ) {
-                        Text("Check In With This Wallet")
+                        Text(if (isCheckingIn) "Checking In..." else "Check In With This Wallet")
                     }
 
                     Button(
@@ -355,30 +385,48 @@ fun VotingScreen(
                                 return@Button
                             }
 
-                            val result = adminViewModel.submitVote(
-                                electionId = election.id,
-                                voterId = trimmedWalletAddress,
-                                candidateName = selectedCandidate
-                            )
+                            adminViewModel.setConnectedWalletAddress(trimmedWalletAddress)
+                            isSubmittingVote = true
 
                             coroutineScope.launch {
-                                snackBarHostState.showSnackbar(result.message)
-                            }
+                                val result = runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        adminViewModel.submitVote(
+                                            electionId = election.id,
+                                            voterId = trimmedWalletAddress,
+                                            candidateName = selectedCandidate
+                                        )
+                                    }
+                                }
 
-                            if (result.success) {
-                                navController.navigate(AppRoutes.RECEIPT)
+                                isSubmittingVote = false
+
+                                val finalResult = result.getOrElse { exception ->
+                                    VoteValidationResult(
+                                        success = false,
+                                        message = exception.message ?: "Blockchain vote failed."
+                                    )
+                                }
+
+                                snackBarHostState.showSnackbar(finalResult.message)
+
+                                if (finalResult.success) {
+                                    navController.navigate(AppRoutes.RECEIPT)
+                                }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isBusy
                     ) {
-                        Text("Submit Vote")
+                        Text(if (isSubmittingVote) "Submitting Vote..." else "Submit Vote")
                     }
                 }
             }
         }
 
         TextButton(
-            onClick = { navController.popBackStack() }
+            onClick = { navController.popBackStack() },
+            enabled = !isBusy
         ) {
             Text("Back")
         }
