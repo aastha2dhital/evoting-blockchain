@@ -153,11 +153,34 @@ class AdminViewModel(
         )
     }
 
+    fun findReceiptByTransactionHash(transactionHash: String): VoteReceipt? {
+        val normalizedTransactionHash = normalizeTransactionHash(transactionHash)
+        if (normalizedTransactionHash.isBlank()) return null
+
+        return voteReceipts.value.firstOrNull { receipt ->
+            normalizeTransactionHash(receipt.transactionHash) == normalizedTransactionHash
+        }
+    }
+
+    fun selectReceiptByTransactionHash(transactionHash: String): VoteReceipt? {
+        val matchedReceipt = findReceiptByTransactionHash(transactionHash)
+        _latestReceipt.value = matchedReceipt
+        return matchedReceipt
+    }
+
+    fun clearLatestReceipt() {
+        _latestReceipt.value = null
+    }
+
     private fun parseEligibleWalletAddresses(input: String): List<String> {
         return input
             .split(",", "\n", ";")
             .map { it.trim() }
             .filter { it.isNotBlank() }
             .distinct()
+    }
+
+    private fun normalizeTransactionHash(transactionHash: String): String {
+        return transactionHash.trim().lowercase()
     }
 }

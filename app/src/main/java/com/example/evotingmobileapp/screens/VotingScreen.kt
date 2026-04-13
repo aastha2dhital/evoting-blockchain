@@ -411,7 +411,15 @@ fun VotingScreen(
                                 snackBarHostState.showSnackbar(finalResult.message)
 
                                 if (finalResult.success) {
-                                    navController.navigate(AppRoutes.RECEIPT)
+                                    val transactionHash = finalResult.receipt?.transactionHash.orEmpty()
+
+                                    if (transactionHash.isNotBlank()) {
+                                        navController.navigate(
+                                            AppRoutes.receiptRoute(transactionHash)
+                                        )
+                                    } else {
+                                        navController.navigate(AppRoutes.RECEIPT)
+                                    }
                                 }
                             }
                         },

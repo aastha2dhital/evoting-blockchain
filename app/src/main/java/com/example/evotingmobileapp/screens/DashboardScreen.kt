@@ -206,6 +206,20 @@ private fun DashboardActions(
         }
 
         OutlinedButton(
+            onClick = { navController.navigate(AppRoutes.RECEIPT) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Text(
+                text = "Verify Receipt",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        OutlinedButton(
             onClick = { navController.navigate(AppRoutes.RESULTS) },
             modifier = Modifier
                 .fillMaxWidth()
