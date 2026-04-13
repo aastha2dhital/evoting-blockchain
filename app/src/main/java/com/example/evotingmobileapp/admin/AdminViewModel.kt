@@ -2,14 +2,17 @@ package com.example.evotingmobileapp.admin
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.evotingmobileapp.data.BlockchainElectionRepository
 import com.example.evotingmobileapp.data.ElectionRepository
 import com.example.evotingmobileapp.data.VoteValidationResult
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class AdminViewModel(
     private val repository: ElectionRepository
@@ -30,6 +33,18 @@ class AdminViewModel(
 
     private val _walletConnected = MutableStateFlow(false)
     val walletConnected: StateFlow<Boolean> = _walletConnected.asStateFlow()
+
+    init {
+        refreshBlockchainData()
+    }
+
+    fun refreshBlockchainData() {
+        val blockchainRepository = repository as? BlockchainElectionRepository ?: return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            blockchainRepository.refreshFromBlockchain()
+        }
+    }
 
     fun connectDemoWallet() {
         setConnectedWalletAddress(DEMO_VOTER_WALLET_ADDRESS)

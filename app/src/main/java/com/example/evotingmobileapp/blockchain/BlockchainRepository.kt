@@ -1,13 +1,18 @@
 package com.example.evotingmobileapp.blockchain
 
 import android.content.Context
+import com.example.evotingmobileapp.model.Election
+import java.math.BigInteger
+import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
 import org.web3j.abi.FunctionEncoder
 import org.web3j.abi.FunctionReturnDecoder
 import org.web3j.abi.TypeReference
 import org.web3j.abi.datatypes.Address
+import org.web3j.abi.datatypes.Bool
 import org.web3j.abi.datatypes.DynamicArray
 import org.web3j.abi.datatypes.Function
+import org.web3j.abi.datatypes.Type
 import org.web3j.abi.datatypes.Utf8String
 import org.web3j.abi.datatypes.generated.Uint256
 import org.web3j.crypto.Credentials
@@ -17,21 +22,24 @@ import org.web3j.crypto.WalletUtils
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.core.methods.request.Transaction
-import org.web3j.protocol.core.methods.response.EthCall
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount
 import org.web3j.protocol.core.methods.response.EthSendTransaction
 import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.protocol.http.HttpService
 import org.web3j.tx.response.PollingTransactionReceiptProcessor
 import org.web3j.utils.Numeric
-import java.math.BigInteger
-import java.util.concurrent.TimeUnit
 
 data class CreateElectionOnChainResult(
     val electionId: BigInteger,
     val createElectionTxHash: String,
     val candidateTxHashes: List<String>,
     val whitelistTxHash: String?
+)
+
+private data class ReadOnlyChainContext(
+    val web3j: Web3j,
+    val fromAddress: String,
+    val contractAddress: String
 )
 
 class BlockchainRepository {
@@ -80,6 +88,21 @@ class BlockchainRepository {
             } else {
                 Result.success(response.blockNumber)
             }
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    fun getAllElectionsOnChain(context: Context): Result<List<Election>> {
+        return try {
+            val electionCount = getElectionCountOnChain(context).getOrThrow()
+            val elections = buildList {
+                for (electionId in 1..electionCount.toInt()) {
+                    add(getElectionOnChain(context, BigInteger.valueOf(electionId.toLong())).getOrThrow())
+                }
+            }
+
+            Result.success(elections)
         } catch (exception: Exception) {
             Result.failure(exception)
         }
@@ -286,6 +309,156 @@ class BlockchainRepository {
         }
     }
 
+    private fun getElectionOnChain(
+        context: Context,
+        electionId: BigInteger
+    ): Result<Election> {
+        return try {
+            val function = Function(
+                "getElection",
+                listOf(Uint256(electionId)),
+                listOf(
+                    object : TypeReference<Uint256>() {},
+                    object : TypeReference<Utf8String>() {},
+                    object : TypeReference<Uint256>() {},
+                    object : TypeReference<Uint256>() {},
+                    object : TypeReference<Uint256>() {},
+                    object : TypeReference<Uint256>() {},
+                    object : TypeReference<Bool>() {}
+                )
+            )
+
+            val decodedValues = executeReadonlyFunction(
+                context = context,
+                function = function
+            ).getOrThrow()
+
+            require(decodedValues.size >= 7) {
+                "Failed to decode election $electionId from blockchain."
+            }
+
+            val title = decodedValues[1].value as String
+            val startTimeSeconds = decodedValues[2].value as BigInteger
+            val endTimeSeconds = decodedValues[3].value as BigInteger
+            val candidateCount = decodedValues[4].value as BigInteger
+            val isClosed = decodedValues[6].value as Boolean
+
+            val candidateNames = mutableListOf<String>()
+            val voteCounts = linkedMapOf<String, Int>()
+
+            for (candidateId in 1..candidateCount.toInt()) {
+                val candidate = getCandidateOnChain(
+                    context = context,
+                    electionId = electionId,
+                    candidateId = BigInteger.valueOf(candidateId.toLong())
+                ).getOrThrow()
+
+                candidateNames += candidate.first
+                voteCounts[candidate.first] = candidate.second
+            }
+
+            Result.success(
+                Election(
+                    id = electionId.toString(),
+                    title = title,
+                    candidates = candidateNames,
+                    startTimeMillis = startTimeSeconds.toLong() * 1000L,
+                    endTimeMillis = endTimeSeconds.toLong() * 1000L,
+                    isManuallyClosed = isClosed,
+                    voteCounts = voteCounts,
+                    votedVoterIds = emptySet(),
+                    eligibleVoterIds = emptySet(),
+                    checkedInVoterIds = emptySet()
+                )
+            )
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    private fun getCandidateOnChain(
+        context: Context,
+        electionId: BigInteger,
+        candidateId: BigInteger
+    ): Result<Pair<String, Int>> {
+        return try {
+            val function = Function(
+                "getCandidate",
+                listOf(
+                    Uint256(electionId),
+                    Uint256(candidateId)
+                ),
+                listOf(
+                    object : TypeReference<Uint256>() {},
+                    object : TypeReference<Utf8String>() {},
+                    object : TypeReference<Uint256>() {}
+                )
+            )
+
+            val decodedValues = executeReadonlyFunction(
+                context = context,
+                function = function
+            ).getOrThrow()
+
+            require(decodedValues.size >= 3) {
+                "Failed to decode candidate $candidateId for election $electionId."
+            }
+
+            val candidateName = decodedValues[1].value as String
+            val voteCount = (decodedValues[2].value as BigInteger).toInt()
+
+            Result.success(candidateName to voteCount)
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    private fun buildReadonlyChainContext(context: Context): ReadOnlyChainContext {
+        val contractConfig = ContractAssets.loadContractConfig(context)
+        val adminWalletConfig = ContractAssets.loadAdminWalletConfig(context)
+        val credentials = Credentials.create(adminWalletConfig.adminPrivateKey)
+
+        return ReadOnlyChainContext(
+            web3j = buildWeb3j(contractConfig.rpcUrl),
+            fromAddress = credentials.address,
+            contractAddress = contractConfig.contractAddress
+        )
+    }
+
+    private fun executeReadonlyFunction(
+        context: Context,
+        function: Function
+    ): Result<List<Type<*>>> {
+        return try {
+            val readOnlyContext = buildReadonlyChainContext(context)
+            val encodedFunction = FunctionEncoder.encode(function)
+
+            val response = readOnlyContext.web3j.ethCall(
+                Transaction.createEthCallTransaction(
+                    readOnlyContext.fromAddress,
+                    readOnlyContext.contractAddress,
+                    encodedFunction
+                ),
+                DefaultBlockParameterName.LATEST
+            ).send()
+
+            if (response.hasError()) {
+                return Result.failure(
+                    Exception("Blockchain read failed: ${response.error.message}")
+                )
+            }
+
+            val decodedValues = FunctionReturnDecoder.decode(
+                response.value,
+                function.outputParameters
+            )
+
+            Result.success(decodedValues)
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
     private fun sendOwnerTransaction(
         context: Context,
         function: Function
@@ -429,44 +602,21 @@ class BlockchainRepository {
 
     private fun getElectionCountOnChain(context: Context): Result<BigInteger> {
         return try {
-            val contractConfig = ContractAssets.loadContractConfig(context)
-            val adminWalletConfig = ContractAssets.loadAdminWalletConfig(context)
-
-            val web3j = buildWeb3j(contractConfig.rpcUrl)
-            val credentials = Credentials.create(adminWalletConfig.adminPrivateKey)
-
             val function = Function(
                 "electionCount",
                 emptyList(),
                 listOf(object : TypeReference<Uint256>() {})
             )
 
-            val encodedFunction = FunctionEncoder.encode(function)
+            val decodedValues = executeReadonlyFunction(
+                context = context,
+                function = function
+            ).getOrThrow()
 
-            val response: EthCall = web3j.ethCall(
-                Transaction.createEthCallTransaction(
-                    credentials.address,
-                    contractConfig.contractAddress,
-                    encodedFunction
-                ),
-                DefaultBlockParameterName.LATEST
-            ).send()
-
-            if (response.hasError()) {
-                return Result.failure(
-                    Exception("Blockchain read failed: ${response.error.message}")
-                )
-            }
-
-            val decoded = FunctionReturnDecoder.decode(
-                response.value,
-                function.outputParameters
-            )
-
-            if (decoded.isEmpty()) {
+            if (decodedValues.isEmpty()) {
                 Result.failure(Exception("Failed to read electionCount from blockchain."))
             } else {
-                Result.success(decoded[0].value as BigInteger)
+                Result.success(decodedValues[0].value as BigInteger)
             }
         } catch (exception: Exception) {
             Result.failure(exception)
