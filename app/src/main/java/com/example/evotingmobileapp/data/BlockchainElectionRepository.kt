@@ -307,6 +307,57 @@ class BlockchainElectionRepository(
         )
     }
 
+    override fun closeElectionEarly(electionId: String): Result<String> {
+        val cleanedElectionId = electionId.trim()
+        val parsedElectionId = parseElectionId(cleanedElectionId)
+            ?: return Result.failure(
+                IllegalArgumentException("Election ID must be a valid non-negative integer.")
+            )
+
+        val election = getElectionById(cleanedElectionId)
+            ?: return Result.failure(
+                IllegalStateException("Election not found.")
+            )
+
+        if (election.isClosed()) {
+            return Result.failure(
+                IllegalStateException("Election is already closed.")
+            )
+        }
+
+        val onChainResult = blockchainRepository.closeElectionEarlyOnChain(
+            context = appContext,
+            electionId = parsedElectionId
+        )
+
+        return onChainResult.fold(
+            onSuccess = {
+                refreshFromBlockchain().fold(
+                    onSuccess = {
+                        Result.success("Election closed successfully.")
+                    },
+                    onFailure = { refreshException ->
+                        Result.failure(
+                            IllegalStateException(
+                                refreshException.message
+                                    ?: "Election was closed on-chain, but refresh failed.",
+                                refreshException
+                            )
+                        )
+                    }
+                )
+            },
+            onFailure = { exception ->
+                Result.failure(
+                    IllegalStateException(
+                        exception.message ?: "Failed to close election early.",
+                        exception
+                    )
+                )
+            }
+        )
+    }
+
     private fun mergeChainAndCachedElections(
         chainElections: List<Election>
     ): List<Election> {

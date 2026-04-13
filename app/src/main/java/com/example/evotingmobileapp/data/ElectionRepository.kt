@@ -30,4 +30,6 @@ interface ElectionRepository {
         voterId: String,
         candidateName: String
     ): VoteValidationResult
+
+    fun closeElectionEarly(electionId: String): Result<String>
 }

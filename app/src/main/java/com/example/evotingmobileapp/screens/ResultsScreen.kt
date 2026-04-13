@@ -9,13 +9,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -24,6 +33,9 @@ import com.example.evotingmobileapp.model.Election
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ResultsScreen(
@@ -33,18 +45,24 @@ fun ResultsScreen(
 ) {
     val elections by adminViewModel.elections.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    var closingElectionId by rememberSaveable { mutableStateOf<String?>(null) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        SnackbarHost(hostState = snackbarHostState)
+
         Text(
             text = "Results",
             style = MaterialTheme.typography.headlineMedium
         )
 
         Text(
-            text = "Results are shown only after the election closes.",
+            text = "Results are shown only after the election closes. Admins can also close an election early from here.",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)
         )
@@ -67,7 +85,36 @@ fun ResultsScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             items(elections) { election ->
-                ElectionResultCard(election = election)
+                ElectionResultCard(
+                    election = election,
+                    isClosing = closingElectionId == election.id,
+                    onCloseElectionEarly = {
+                        if (closingElectionId != null) {
+                            return@ElectionResultCard
+                        }
+
+                        closingElectionId = election.id
+
+                        coroutineScope.launch {
+                            val result = withContext(Dispatchers.IO) {
+                                adminViewModel.closeElectionEarly(election.id)
+                            }
+
+                            closingElectionId = null
+
+                            val message = result.fold(
+                                onSuccess = { successMessage ->
+                                    successMessage
+                                },
+                                onFailure = { exception ->
+                                    exception.message ?: "Failed to close election early."
+                                }
+                            )
+
+                            snackbarHostState.showSnackbar(message)
+                        }
+                    }
+                )
             }
         }
     }
@@ -75,7 +122,9 @@ fun ResultsScreen(
 
 @Composable
 private fun ElectionResultCard(
-    election: Election
+    election: Election,
+    isClosing: Boolean,
+    onCloseElectionEarly: () -> Unit
 ) {
     val formatter = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     val totalVotes = election.voteCounts.values.sum()
@@ -114,6 +163,23 @@ private fun ElectionResultCard(
                     text = "Results are locked until this election closes.",
                     style = MaterialTheme.typography.bodyLarge
                 )
+
+                OutlinedButton(
+                    onClick = onCloseElectionEarly,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    enabled = !isClosing
+                ) {
+                    Text(
+                        text = if (isClosing) {
+                            "Closing Election..."
+                        } else {
+                            "Close Election Early"
+                        }
+                    )
+                }
+
                 return@Column
             }
 

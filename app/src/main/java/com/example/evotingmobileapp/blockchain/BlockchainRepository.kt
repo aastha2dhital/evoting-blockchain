@@ -258,6 +258,30 @@ class BlockchainRepository {
         }
     }
 
+    fun closeElectionEarlyOnChain(
+        context: Context,
+        electionId: BigInteger
+    ): Result<String> {
+        return try {
+            require(electionId >= BigInteger.ZERO) {
+                "Election ID cannot be negative."
+            }
+
+            val function = Function(
+                "closeElectionEarly",
+                listOf(Uint256(electionId)),
+                emptyList()
+            )
+
+            sendOwnerTransaction(
+                context = context,
+                function = function
+            )
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
     fun voteOnChain(
         context: Context,
         electionId: BigInteger,

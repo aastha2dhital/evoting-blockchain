@@ -206,6 +206,26 @@ class InMemoryElectionRepository : ElectionRepository {
         )
     }
 
+    override fun closeElectionEarly(electionId: String): Result<String> {
+        val election = getElectionById(electionId)
+            ?: return Result.failure(IllegalStateException("Election not found"))
+
+        if (election.isClosed()) {
+            return Result.failure(IllegalStateException("Election is already closed"))
+        }
+
+        val updatedElection = election.copy(
+            isManuallyClosed = true,
+            endTimeMillis = System.currentTimeMillis()
+        )
+
+        _elections.value = _elections.value.map { current ->
+            if (current.id == electionId) updatedElection else current
+        }
+
+        return Result.success("Election closed successfully.")
+    }
+
     private fun nextGeneratedElectionId(): String {
         val highestExistingId = _elections.value
             .mapNotNull { it.id.toIntOrNull() }

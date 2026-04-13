@@ -153,6 +153,10 @@ class AdminViewModel(
         )
     }
 
+    fun closeElectionEarly(electionId: String): Result<String> {
+        return repository.closeElectionEarly(electionId.trim())
+    }
+
     fun findReceiptByTransactionHash(transactionHash: String): VoteReceipt? {
         val normalizedTransactionHash = normalizeTransactionHash(transactionHash)
         if (normalizedTransactionHash.isBlank()) return null
