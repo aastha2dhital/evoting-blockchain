@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +17,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +44,13 @@ fun ResultsScreen(
     modifier: Modifier = Modifier
 ) {
     val elections by adminViewModel.elections.collectAsState()
+    val turnoutCounts by adminViewModel.turnoutCounts.collectAsState()
+
+    LaunchedEffect(elections) {
+        elections.forEach { election ->
+            adminViewModel.loadTurnoutCount(election.id)
+        }
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -87,6 +94,7 @@ fun ResultsScreen(
             items(elections) { election ->
                 ElectionResultCard(
                     election = election,
+                    turnoutCount = turnoutCounts[election.id],
                     isClosing = closingElectionId == election.id,
                     onCloseElectionEarly = {
                         if (closingElectionId != null) {
@@ -123,6 +131,7 @@ fun ResultsScreen(
 @Composable
 private fun ElectionResultCard(
     election: Election,
+    turnoutCount: Int?,
     isClosing: Boolean,
     onCloseElectionEarly: () -> Unit
 ) {
@@ -155,7 +164,17 @@ private fun ElectionResultCard(
             Text(
                 text = "Status: ${if (election.isClosed()) "Closed" else "Open"}",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp, bottom = 12.dp)
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            Text(
+                text = if (turnoutCount != null) {
+                    "Observer Turnout: $turnoutCount"
+                } else {
+                    "Observer Turnout: Loading..."
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
             )
 
             if (!election.isClosed()) {

@@ -282,6 +282,36 @@ class BlockchainRepository {
         }
     }
 
+    fun getTurnoutCountOnChain(
+        context: Context,
+        electionId: BigInteger
+    ): Result<Int> {
+        return try {
+            require(electionId >= BigInteger.ZERO) {
+                "Election ID cannot be negative."
+            }
+
+            val function = Function(
+                "getTurnoutCount",
+                listOf(Uint256(electionId)),
+                listOf(object : TypeReference<Uint256>() {})
+            )
+
+            val decodedValues = executeReadonlyFunction(
+                context = context,
+                function = function
+            ).getOrThrow()
+
+            if (decodedValues.isEmpty()) {
+                Result.failure(Exception("Failed to read turnout count from blockchain."))
+            } else {
+                Result.success((decodedValues[0].value as BigInteger).toInt())
+            }
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
     fun voteOnChain(
         context: Context,
         electionId: BigInteger,

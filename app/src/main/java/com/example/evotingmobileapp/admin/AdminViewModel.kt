@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AdminViewModel(
@@ -33,6 +34,9 @@ class AdminViewModel(
 
     private val _walletConnected = MutableStateFlow(false)
     val walletConnected: StateFlow<Boolean> = _walletConnected.asStateFlow()
+
+    private val _turnoutCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val turnoutCounts: StateFlow<Map<String, Int>> = _turnoutCounts.asStateFlow()
 
     init {
         refreshBlockchainData()
@@ -155,6 +159,24 @@ class AdminViewModel(
 
     fun closeElectionEarly(electionId: String): Result<String> {
         return repository.closeElectionEarly(electionId.trim())
+    }
+
+    fun loadTurnoutCount(electionId: String) {
+        val cleanedElectionId = electionId.trim()
+        if (cleanedElectionId.isBlank()) return
+
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.getTurnoutCount(cleanedElectionId)
+                .onSuccess { turnout ->
+                    _turnoutCounts.update { current ->
+                        current + (cleanedElectionId to turnout)
+                    }
+                }
+        }
+    }
+
+    fun getCachedTurnoutCount(electionId: String): Int? {
+        return turnoutCounts.value[electionId.trim()]
     }
 
     fun findReceiptByTransactionHash(transactionHash: String): VoteReceipt? {

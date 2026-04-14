@@ -226,6 +226,13 @@ class InMemoryElectionRepository : ElectionRepository {
         return Result.success("Election closed successfully.")
     }
 
+    override fun getTurnoutCount(electionId: String): Result<Int> {
+        val election = getElectionById(electionId.trim())
+            ?: return Result.failure(IllegalArgumentException("Election not found."))
+
+        return Result.success(election.voteCounts.values.sum())
+    }
+
     private fun nextGeneratedElectionId(): String {
         val highestExistingId = _elections.value
             .mapNotNull { it.id.toIntOrNull() }

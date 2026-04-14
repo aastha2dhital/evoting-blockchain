@@ -32,4 +32,6 @@ interface ElectionRepository {
     ): VoteValidationResult
 
     fun closeElectionEarly(electionId: String): Result<String>
+
+    fun getTurnoutCount(electionId: String): Result<Int>
 }

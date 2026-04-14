@@ -358,6 +358,19 @@ class BlockchainElectionRepository(
         )
     }
 
+    override fun getTurnoutCount(electionId: String): Result<Int> {
+        val cleanedElectionId = electionId.trim()
+        val parsedElectionId = parseElectionId(cleanedElectionId)
+            ?: return Result.failure(
+                IllegalArgumentException("Election ID must be a valid non-negative integer.")
+            )
+
+        return blockchainRepository.getTurnoutCountOnChain(
+            context = appContext,
+            electionId = parsedElectionId
+        )
+    }
+
     private fun mergeChainAndCachedElections(
         chainElections: List<Election>
     ): List<Election> {
