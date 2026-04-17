@@ -16,9 +16,11 @@ import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.blockchain.BlockchainRecordsScreen
 import com.example.evotingmobileapp.qr.QRCheckInScreen
 import com.example.evotingmobileapp.receipt.ReceiptScreen
+import com.example.evotingmobileapp.screens.AdminLoginScreen
 import com.example.evotingmobileapp.screens.DashboardScreen
 import com.example.evotingmobileapp.screens.LoginScreen
 import com.example.evotingmobileapp.screens.ResultsScreen
+import com.example.evotingmobileapp.screens.VoterAccessScreen
 import com.example.evotingmobileapp.screens.VotingScreen
 
 @Composable
@@ -33,6 +35,20 @@ fun AppNavGraph(
     ) {
         composable(AppRoutes.LOGIN) {
             LoginScreen(
+                navController = navController,
+                authSessionViewModel = authSessionViewModel
+            )
+        }
+
+        composable(AppRoutes.ADMIN_LOGIN) {
+            AdminLoginScreen(
+                navController = navController,
+                authSessionViewModel = authSessionViewModel
+            )
+        }
+
+        composable(AppRoutes.VOTER_ACCESS) {
+            VoterAccessScreen(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             )

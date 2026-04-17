@@ -4,8 +4,11 @@ import android.net.Uri
 
 object AppRoutes {
     const val LOGIN = "login"
-    const val DASHBOARD = "dashboard"
 
+    const val ADMIN_LOGIN = "admin_login"
+    const val VOTER_ACCESS = "voter_access"
+
+    const val DASHBOARD = "dashboard"
     const val ADMIN_DASHBOARD = "admin_dashboard"
     const val VOTER_DASHBOARD = "voter_dashboard"
 
