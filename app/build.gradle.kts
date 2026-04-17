@@ -15,6 +15,27 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "ADMIN_WALLET_ADDRESS",
+            "\"0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266\""
+        )
+        buildConfigField(
+            "String",
+            "DEMO_VOTER_WALLET_ADDRESS",
+            "\"0x70997970c51812dc3a010c7d01b50e0d17dc79c8\""
+        )
+        buildConfigField(
+            "boolean",
+            "ENABLE_DEMO_WALLET_SHORTCUTS",
+            "false"
+        )
+        buildConfigField(
+            "String",
+            "REOWN_PROJECT_ID",
+            "\"db9c117c950c7a7d9da3126a297ba5af\""
+        )
     }
 
     buildFeatures {
@@ -63,27 +84,29 @@ android {
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
-
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.material:material-navigation:1.9.5")
 
     implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("androidx.core:core-ktx:1.15.0")
-
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
-
     implementation("androidx.navigation:navigation-compose:2.8.9")
-
-    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("androidx.core:core-ktx:1.15.0")
 
     implementation("org.conscrypt:conscrypt-android:2.5.2")
     implementation("org.web3j:core:4.12.3")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+
+    implementation(platform("com.reown:android-bom:1.6.11"))
+    implementation("com.reown:android-core")
+    implementation("com.reown:appkit")
 }
