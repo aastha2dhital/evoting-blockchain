@@ -20,7 +20,6 @@ import com.example.evotingmobileapp.screens.DashboardScreen
 import com.example.evotingmobileapp.screens.LoginScreen
 import com.example.evotingmobileapp.screens.ResultsScreen
 import com.example.evotingmobileapp.screens.VotingScreen
-import com.reown.appkit.ui.appKitGraph
 
 @Composable
 fun AppNavGraph(
@@ -166,8 +165,6 @@ fun AppNavGraph(
                 )
             }
         }
-
-        appKitGraph(navController)
     }
 }
 

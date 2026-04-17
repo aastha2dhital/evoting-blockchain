@@ -29,7 +29,7 @@ android {
         buildConfigField(
             "boolean",
             "ENABLE_DEMO_WALLET_SHORTCUTS",
-            "false"
+            "true"
         )
         buildConfigField(
             "String",
