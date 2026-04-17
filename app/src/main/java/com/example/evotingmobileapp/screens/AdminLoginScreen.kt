@@ -40,8 +40,6 @@ import com.example.evotingmobileapp.BuildConfig
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
 
-private const val ADMIN_ACCESS_PIN = "2406"
-
 @Composable
 fun AdminLoginScreen(
     navController: NavHostController,
@@ -153,7 +151,7 @@ fun AdminLoginScreen(
                                     errorMessage = "Enter the admin access code."
                                 }
 
-                                adminPin != ADMIN_ACCESS_PIN -> {
+                                adminPin != BuildConfig.ADMIN_ACCESS_PIN -> {
                                     errorMessage = "Incorrect admin access code."
                                 }
 
@@ -197,11 +195,11 @@ fun AdminLoginScreen(
             }
 
             Text(
-                text = "You can change the prototype admin PIN later before final submission.",
+                text = "This prototype uses a configuration-based admin PIN plus admin wallet validation. A production system would use secure backend authentication.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
     }
-}
+}s

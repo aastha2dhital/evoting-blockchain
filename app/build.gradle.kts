@@ -33,6 +33,11 @@ android {
         )
         buildConfigField(
             "String",
+            "ADMIN_ACCESS_PIN",
+            "\"593814\""
+        )
+        buildConfigField(
+            "String",
             "REOWN_PROJECT_ID",
             "\"db9c117c950c7a7d9da3126a297ba5af\""
         )
