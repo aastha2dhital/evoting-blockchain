@@ -1,6 +1,9 @@
 package com.example.evotingmobileapp.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -37,52 +40,87 @@ fun AppNavGraph(
         }
 
         composable(AppRoutes.DASHBOARD) {
-            DashboardScreen(
+            RequireAdminAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                DashboardScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(AppRoutes.ADMIN_DASHBOARD) {
-            DashboardScreen(
+            RequireAdminAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                DashboardScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(AppRoutes.VOTER_DASHBOARD) {
-            DashboardScreen(
+            RequireVoterAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                DashboardScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(AppRoutes.CREATE_ELECTION) {
-            CreateElectionScreen(
+            RequireAdminAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                CreateElectionScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(AppRoutes.QR_CHECK_IN) {
-            QRCheckInScreen(
+            RequireAdminAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                QRCheckInScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(AppRoutes.VOTING) {
-            VotingScreen(
+            RequireVoterAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                VotingScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(AppRoutes.RECEIPT) {
-            ReceiptScreen(
+            RequireVoterAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                ReceiptScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(
@@ -93,27 +131,84 @@ fun AppNavGraph(
                 }
             )
         ) { backStackEntry ->
-            ReceiptScreen(
+            RequireVoterAccess(
                 navController = navController,
-                adminViewModel = adminViewModel,
-                initialTransactionHash = backStackEntry.arguments
-                    ?.getString(AppRoutes.RECEIPT_TX_HASH_ARG)
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                ReceiptScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel,
+                    initialTransactionHash = backStackEntry.arguments
+                        ?.getString(AppRoutes.RECEIPT_TX_HASH_ARG)
+                )
+            }
         }
 
         composable(AppRoutes.RESULTS) {
-            ResultsScreen(
+            RequireAdminAccess(
                 navController = navController,
-                adminViewModel = adminViewModel
-            )
+                authSessionViewModel = authSessionViewModel
+            ) {
+                ResultsScreen(
+                    navController = navController,
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         composable(AppRoutes.BLOCKCHAIN_RECORDS) {
-            BlockchainRecordsScreen(
-                adminViewModel = adminViewModel
-            )
+            RequireAdminAccess(
+                navController = navController,
+                authSessionViewModel = authSessionViewModel
+            ) {
+                BlockchainRecordsScreen(
+                    adminViewModel = adminViewModel
+                )
+            }
         }
 
         appKitGraph(navController)
+    }
+}
+
+@Composable
+private fun RequireAdminAccess(
+    navController: NavHostController,
+    authSessionViewModel: AuthSessionViewModel,
+    content: @Composable () -> Unit
+) {
+    val authUiState by authSessionViewModel.uiState.collectAsState()
+
+    LaunchedEffect(authUiState) {
+        if (!authUiState.canAccessAdmin()) {
+            navController.navigate(AppRoutes.LOGIN) {
+                popUpTo(AppRoutes.LOGIN) { inclusive = true }
+            }
+        }
+    }
+
+    if (authUiState.canAccessAdmin()) {
+        content()
+    }
+}
+
+@Composable
+private fun RequireVoterAccess(
+    navController: NavHostController,
+    authSessionViewModel: AuthSessionViewModel,
+    content: @Composable () -> Unit
+) {
+    val authUiState by authSessionViewModel.uiState.collectAsState()
+
+    LaunchedEffect(authUiState) {
+        if (!authUiState.canAccessVoter()) {
+            navController.navigate(AppRoutes.LOGIN) {
+                popUpTo(AppRoutes.LOGIN) { inclusive = true }
+            }
+        }
+    }
+
+    if (authUiState.canAccessVoter()) {
+        content()
     }
 }
