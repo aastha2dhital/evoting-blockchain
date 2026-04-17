@@ -18,30 +18,45 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.BuildConfig
+import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
+import com.reown.appkit.ui.openAppKit
 
 @Composable
 fun LoginScreen(
     navController: NavHostController,
-    adminViewModel: AdminViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    authSessionViewModel: AuthSessionViewModel = viewModel()
 ) {
-    val walletConnected by adminViewModel.walletConnected.collectAsState()
-    val walletAddress by adminViewModel.connectedWalletAddress.collectAsState()
+    val authUiState by authSessionViewModel.uiState.collectAsState()
+
+    val walletConnected = authUiState.isWalletConnected
+    val walletAddress = authUiState.walletAddress
+    val isAdminWallet = authUiState.isAdminWallet()
+    val canContinueAsAdmin = authUiState.canAccessAdmin()
+    val canContinueAsVoter = authUiState.canAccessVoter()
+
+    var walletConnectionStarted by remember { mutableStateOf(false) }
+    var walletModalErrorMessage by remember { mutableStateOf<String?>(null) }
 
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(
@@ -95,7 +110,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Secure voter access with wallet-based identity, QR check-in, and blockchain-backed vote recording.",
+                    text = "Wallet-based entry with separate admin and voter access.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -126,7 +141,11 @@ fun LoginScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Connect your wallet to continue",
+                                text = if (BuildConfig.ENABLE_DEMO_WALLET_SHORTCUTS) {
+                                    "Demo shortcuts are enabled for local testing"
+                                } else {
+                                    "Real wallet modal is now wired into this screen"
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -167,7 +186,7 @@ fun LoginScreen(
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Text(
-                                text = "Connected Wallet Address",
+                                text = "Wallet Address",
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -185,23 +204,165 @@ fun LoginScreen(
                             )
 
                             if (walletConnected) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "This wallet address will be used as the voter identity during check-in and voting.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = if (isAdminWallet) {
+                                        MaterialTheme.colorScheme.secondaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.tertiaryContainer
+                                    }
+                                ) {
+                                    Text(
+                                        text = if (isAdminWallet) {
+                                            "Approved admin wallet"
+                                        } else {
+                                            "Voter wallet"
+                                        },
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (isAdminWallet) {
+                                            MaterialTheme.colorScheme.onSecondaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onTertiaryContainer
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    if (BuildConfig.ENABLE_DEMO_WALLET_SHORTCUTS) {
+                        Button(
+                            onClick = {
+                                authSessionViewModel.connectWallet(BuildConfig.ADMIN_WALLET_ADDRESS)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.secondary
+                            )
+                        ) {
+                            Text(
+                                text = "Use Admin Wallet",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                authSessionViewModel.connectWallet(BuildConfig.DEMO_VOTER_WALLET_ADDRESS)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(54.dp),
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Text(
+                                text = "Use Voter Wallet",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    } else {
+                        Button(
+                            onClick = {
+                                walletModalErrorMessage = null
+                                walletConnectionStarted = true
+                                navController.openAppKit(
+                                    shouldOpenChooseNetwork = false,
+                                    onError = {
+                                        walletModalErrorMessage =
+                                            "Unable to open the wallet connection modal. Please try again."
+                                    }
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text(
+                                text = "Connect Wallet",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "How this works",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = if (walletConnectionStarted) {
+                                        "Complete the connection in your wallet app, then return here."
+                                    } else {
+                                        "Tap Connect Wallet to open the real wallet connection modal."
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        if (walletModalErrorMessage != null) {
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer
+                                )
+                            ) {
+                                Text(
+                                    text = walletModalErrorMessage.orEmpty(),
+                                    modifier = Modifier.padding(16.dp),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
 
                     Button(
                         onClick = {
-                            adminViewModel.connectDemoWallet()
+                            authSessionViewModel.selectAdminRole()
+                            navController.navigate(AppRoutes.ADMIN_DASHBOARD) {
+                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                            }
                         },
-                        enabled = !walletConnected,
+                        enabled = canContinueAsAdmin,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -211,21 +372,22 @@ fun LoginScreen(
                         )
                     ) {
                         Text(
-                            text = if (walletConnected) "Wallet Connected" else "Connect Wallet",
+                            text = "Continue as Admin",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Button(
                         onClick = {
-                            navController.navigate(AppRoutes.DASHBOARD) {
+                            authSessionViewModel.selectVoterRole()
+                            navController.navigate(AppRoutes.VOTER_DASHBOARD) {
                                 popUpTo(AppRoutes.LOGIN) { inclusive = true }
                             }
                         },
-                        enabled = walletConnected,
+                        enabled = canContinueAsVoter,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
@@ -242,7 +404,9 @@ fun LoginScreen(
 
                     TextButton(
                         onClick = {
-                            adminViewModel.clearConnectedWallet()
+                            authSessionViewModel.disconnectWallet()
+                            walletConnectionStarted = false
+                            walletModalErrorMessage = null
                         },
                         enabled = walletConnected,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -256,7 +420,7 @@ fun LoginScreen(
             }
 
             Text(
-                text = "Prototype wallet login for the decentralized e-voting system",
+                text = "Connect a wallet first, then continue with the correct role",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

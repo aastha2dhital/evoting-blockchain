@@ -1,13 +1,15 @@
 package com.example.evotingmobileapp.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.admin.CreateElectionScreen
+import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.blockchain.BlockchainRecordsScreen
 import com.example.evotingmobileapp.qr.QRCheckInScreen
 import com.example.evotingmobileapp.receipt.ReceiptScreen
@@ -15,11 +17,13 @@ import com.example.evotingmobileapp.screens.DashboardScreen
 import com.example.evotingmobileapp.screens.LoginScreen
 import com.example.evotingmobileapp.screens.ResultsScreen
 import com.example.evotingmobileapp.screens.VotingScreen
+import com.reown.appkit.ui.appKitGraph
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    adminViewModel: AdminViewModel
+    adminViewModel: AdminViewModel = viewModel(),
+    authSessionViewModel: AuthSessionViewModel = viewModel()
 ) {
     NavHost(
         navController = navController,
@@ -28,11 +32,25 @@ fun AppNavGraph(
         composable(AppRoutes.LOGIN) {
             LoginScreen(
                 navController = navController,
-                adminViewModel = adminViewModel
+                authSessionViewModel = authSessionViewModel
             )
         }
 
         composable(AppRoutes.DASHBOARD) {
+            DashboardScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable(AppRoutes.ADMIN_DASHBOARD) {
+            DashboardScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
+        }
+
+        composable(AppRoutes.VOTER_DASHBOARD) {
             DashboardScreen(
                 navController = navController,
                 adminViewModel = adminViewModel
@@ -95,5 +113,7 @@ fun AppNavGraph(
                 adminViewModel = adminViewModel
             )
         }
+
+        appKitGraph(navController)
     }
 }
