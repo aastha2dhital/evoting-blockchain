@@ -24,7 +24,7 @@ import com.example.evotingmobileapp.screens.VotingScreen
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    adminViewModel: AdminViewModel = viewModel(),
+    adminViewModel: AdminViewModel,
     authSessionViewModel: AuthSessionViewModel = viewModel()
 ) {
     NavHost(
