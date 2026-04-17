@@ -110,6 +110,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("com.google.zxing:core:3.5.4")
 
     implementation(platform("com.reown:android-bom:1.6.11"))
     implementation("com.reown:android-core")
