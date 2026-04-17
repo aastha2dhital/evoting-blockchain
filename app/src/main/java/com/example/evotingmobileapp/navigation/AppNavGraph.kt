@@ -61,7 +61,8 @@ fun AppNavGraph(
             ) {
                 DashboardScreen(
                     navController = navController,
-                    adminViewModel = adminViewModel
+                    adminViewModel = adminViewModel,
+                    authSessionViewModel = authSessionViewModel
                 )
             }
         }
@@ -73,7 +74,8 @@ fun AppNavGraph(
             ) {
                 DashboardScreen(
                     navController = navController,
-                    adminViewModel = adminViewModel
+                    adminViewModel = adminViewModel,
+                    authSessionViewModel = authSessionViewModel
                 )
             }
         }
@@ -85,7 +87,8 @@ fun AppNavGraph(
             ) {
                 DashboardScreen(
                     navController = navController,
-                    adminViewModel = adminViewModel
+                    adminViewModel = adminViewModel,
+                    authSessionViewModel = authSessionViewModel
                 )
             }
         }

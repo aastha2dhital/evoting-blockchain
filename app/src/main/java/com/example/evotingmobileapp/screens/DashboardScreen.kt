@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.navigation.AppRoutes
 import java.text.SimpleDateFormat
@@ -41,7 +42,8 @@ private enum class DashboardMode {
 @Composable
 fun DashboardScreen(
     navController: NavHostController,
-    adminViewModel: AdminViewModel
+    adminViewModel: AdminViewModel,
+    authSessionViewModel: AuthSessionViewModel
 ) {
     val elections by adminViewModel.elections.collectAsState()
     val latestElection = elections.lastOrNull()
@@ -64,6 +66,13 @@ fun DashboardScreen(
             "Create elections, perform voter QR check-in, review turnout, and manage blockchain-backed election activity."
         DashboardMode.VOTER ->
             "Review available elections, cast your vote once you have been checked in by the polling officer, and verify your receipt."
+    }
+
+    val onLogout = {
+        authSessionViewModel.disconnectWallet()
+        navController.navigate(AppRoutes.LOGIN) {
+            popUpTo(AppRoutes.LOGIN) { inclusive = true }
+        }
     }
 
     Scaffold { innerPadding ->
@@ -91,7 +100,10 @@ fun DashboardScreen(
 
             when (dashboardMode) {
                 DashboardMode.ADMIN -> {
-                    AdminDashboardActions(navController = navController)
+                    AdminDashboardActions(
+                        navController = navController,
+                        onLogout = onLogout
+                    )
 
                     if (latestElection == null) {
                         EmptyElectionState(
@@ -125,7 +137,10 @@ fun DashboardScreen(
                 }
 
                 DashboardMode.VOTER -> {
-                    VoterDashboardActions(navController = navController)
+                    VoterDashboardActions(
+                        navController = navController,
+                        onLogout = onLogout
+                    )
 
                     if (latestElection == null) {
                         VoterEmptyState()
@@ -156,7 +171,8 @@ fun DashboardScreen(
 
 @Composable
 private fun AdminDashboardActions(
-    navController: NavHostController
+    navController: NavHostController,
+    onLogout: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -191,11 +207,7 @@ private fun AdminDashboardActions(
         }
 
         TextButton(
-            onClick = {
-                navController.navigate(AppRoutes.LOGIN) {
-                    popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                }
-            },
+            onClick = onLogout,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Logout")
@@ -205,7 +217,8 @@ private fun AdminDashboardActions(
 
 @Composable
 private fun VoterDashboardActions(
-    navController: NavHostController
+    navController: NavHostController,
+    onLogout: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -226,11 +239,7 @@ private fun VoterDashboardActions(
         }
 
         TextButton(
-            onClick = {
-                navController.navigate(AppRoutes.LOGIN) {
-                    popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                }
-            },
+            onClick = onLogout,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Logout")

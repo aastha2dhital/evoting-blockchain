@@ -161,7 +161,7 @@ fun AdminLoginScreen(
                                     authSessionViewModel.selectAdminRole()
 
                                     navController.navigate(AppRoutes.ADMIN_DASHBOARD) {
-                                        popUpTo(AppRoutes.LOGIN) { inclusive = false }
+                                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
                                     }
                                 }
                             }

@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -119,7 +118,7 @@ fun VoterAccessScreen(
                             authSessionViewModel.selectVoterRole()
 
                             navController.navigate(AppRoutes.VOTER_DASHBOARD) {
-                                popUpTo(AppRoutes.LOGIN) { inclusive = false }
+                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
                             }
                         },
                         modifier = Modifier

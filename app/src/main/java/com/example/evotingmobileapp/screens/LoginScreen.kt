@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
@@ -36,10 +35,10 @@ import com.example.evotingmobileapp.navigation.AppRoutes
 @Composable
 fun LoginScreen(
     navController: NavHostController,
-    modifier: Modifier = Modifier,
-    authSessionViewModel: AuthSessionViewModel = viewModel()
+    authSessionViewModel: AuthSessionViewModel,
+    modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(Unit) {
+    LaunchedEffect(authSessionViewModel) {
         authSessionViewModel.disconnectWallet()
     }
 
