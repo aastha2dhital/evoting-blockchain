@@ -17,7 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
@@ -61,10 +60,9 @@ fun VotingScreen(
     var voterWalletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var selectedCandidate by rememberSaveable { mutableStateOf("") }
-    var isCheckingIn by rememberSaveable { mutableStateOf(false) }
     var isSubmittingVote by rememberSaveable { mutableStateOf(false) }
 
-    val isBusy = isCheckingIn || isSubmittingVote
+    val isBusy = isSubmittingVote
     val selectedElection = elections.find { it.id == selectedElectionId }
 
     LaunchedEffect(walletConnected, connectedWalletAddress) {
@@ -105,7 +103,7 @@ fun VotingScreen(
             return if (walletConnected) {
                 "Wallet connection exists, but the wallet address field is empty."
             } else {
-                "Connect a wallet on the login screen or enter a wallet address for prototype testing."
+                "Connect a wallet on the voter portal or enter a wallet address for prototype testing."
             }
         }
 
@@ -138,7 +136,7 @@ fun VotingScreen(
         )
 
         Text(
-            text = "Use the connected wallet address for prototype voting. You can still edit it manually when needed for testing.",
+            text = "This screen validates voter access and submits the vote. QR check-in must be completed first by the polling officer or admin.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -160,9 +158,9 @@ fun VotingScreen(
 
                 Text(
                     text = if (walletConnected && connectedWalletAddress.isNotBlank()) {
-                        "Connected wallet detected. It will be used as the voter identity for check-in and voting."
+                        "Connected voter wallet detected. It will be used as the voter identity for eligibility validation and vote submission."
                     } else {
-                        "No shared wallet is connected right now. You can still type a wallet address for prototype testing."
+                        "No voter wallet is connected right now. You can still type a wallet address for prototype testing."
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -327,45 +325,6 @@ fun VotingScreen(
                     }
 
                     Spacer(modifier = Modifier.height(4.dp))
-
-                    OutlinedButton(
-                        onClick = {
-                            val trimmedWalletAddress = voterWalletAddress.trim()
-
-                            if (trimmedWalletAddress.isBlank()) {
-                                coroutineScope.launch {
-                                    snackBarHostState.showSnackbar("Enter wallet address first")
-                                }
-                                return@OutlinedButton
-                            }
-
-                            adminViewModel.setConnectedWalletAddress(trimmedWalletAddress)
-                            isCheckingIn = true
-
-                            coroutineScope.launch {
-                                val result = runCatching {
-                                    withContext(Dispatchers.IO) {
-                                        adminViewModel.checkInVoter(
-                                            electionId = election.id,
-                                            voterId = trimmedWalletAddress
-                                        )
-                                    }
-                                }
-
-                                isCheckingIn = false
-
-                                val message = result.getOrElse { exception ->
-                                    exception.message ?: "Blockchain check-in failed."
-                                }
-
-                                snackBarHostState.showSnackbar(message)
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isBusy
-                    ) {
-                        Text(if (isCheckingIn) "Checking In..." else "Check In With This Wallet")
-                    }
 
                     Button(
                         onClick = {

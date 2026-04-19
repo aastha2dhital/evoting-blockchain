@@ -19,7 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -54,8 +53,6 @@ fun QRCheckInScreen(
     modifier: Modifier = Modifier
 ) {
     val elections by adminViewModel.elections.collectAsState()
-    val connectedWalletAddress by adminViewModel.connectedWalletAddress.collectAsState()
-    val walletConnected by adminViewModel.walletConnected.collectAsState()
 
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var voterWalletAddress by rememberSaveable { mutableStateOf("") }
@@ -73,12 +70,6 @@ fun QRCheckInScreen(
             .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
             .enableAutoZoom()
             .build()
-    }
-
-    LaunchedEffect(walletConnected, connectedWalletAddress) {
-        if (walletConnected && connectedWalletAddress.isNotBlank() && voterWalletAddress.isBlank()) {
-            voterWalletAddress = connectedWalletAddress
-        }
     }
 
     LaunchedEffect(elections, selectedElectionId) {
@@ -102,7 +93,7 @@ fun QRCheckInScreen(
         )
 
         Text(
-            text = "Select the election, scan the voter QR code, then complete check-in using the scanned wallet address.",
+            text = "Select the election, scan the voter QR code, then complete check-in using the scanned voter wallet address.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -185,19 +176,11 @@ fun QRCheckInScreen(
                     fontWeight = FontWeight.SemiBold
                 )
 
-                if (walletConnected && connectedWalletAddress.isNotBlank()) {
-                    Text(
-                        text = "Current shared wallet: ${shortenWalletAddress(connectedWalletAddress)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
                 OutlinedTextField(
                     value = voterWalletAddress,
                     onValueChange = { voterWalletAddress = it },
-                    label = { Text("Wallet Address") },
-                    placeholder = { Text("Scan QR or type wallet address") },
+                    label = { Text("Voter Wallet Address") },
+                    placeholder = { Text("Scan QR or type voter wallet address") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isCheckingIn
@@ -211,62 +194,41 @@ fun QRCheckInScreen(
                     )
                 }
 
-                Row(
+                Button(
+                    onClick = {
+                        if (activity == null) {
+                            statusMessage =
+                                "Scanner could not start because this screen is not attached to an activity."
+                            return@Button
+                        }
+
+                        val scanner = GmsBarcodeScanning.getClient(activity, scannerOptions)
+
+                        scanner.startScan()
+                            .addOnSuccessListener { barcode: Barcode ->
+                                val scannedValue = barcode.rawValue?.trim().orEmpty()
+
+                                if (scannedValue.isBlank()) {
+                                    statusMessage = "QR code scanned, but no readable value was returned."
+                                } else {
+                                    voterWalletAddress = scannedValue
+                                    lastScannedValue = scannedValue
+                                    statusMessage =
+                                        "QR scan successful. Voter wallet address loaded for check-in."
+                                }
+                            }
+                            .addOnCanceledListener {
+                                statusMessage = "QR scan was canceled."
+                            }
+                            .addOnFailureListener { exception: Exception ->
+                                statusMessage = exception.message
+                                    ?: "QR scanning failed. Please try again."
+                            }
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    enabled = !isCheckingIn
                 ) {
-                    Button(
-                        onClick = {
-                            if (activity == null) {
-                                statusMessage =
-                                    "Scanner could not start because this screen is not attached to an activity."
-                                return@Button
-                            }
-
-                            val scanner = GmsBarcodeScanning.getClient(activity, scannerOptions)
-
-                            scanner.startScan()
-                                .addOnSuccessListener { barcode: Barcode ->
-                                    val scannedValue = barcode.rawValue?.trim().orEmpty()
-
-                                    if (scannedValue.isBlank()) {
-                                        statusMessage = "QR code scanned, but no readable value was returned."
-                                    } else {
-                                        voterWalletAddress = scannedValue
-                                        lastScannedValue = scannedValue
-                                        adminViewModel.setConnectedWalletAddress(scannedValue)
-                                        statusMessage =
-                                            "QR scan successful. Wallet address loaded for check-in."
-                                    }
-                                }
-                                .addOnCanceledListener {
-                                    statusMessage = "QR scan was canceled."
-                                }
-                                .addOnFailureListener { exception: Exception ->
-                                    statusMessage = exception.message
-                                        ?: "QR scanning failed. Please try again."
-                                }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = !isCheckingIn
-                    ) {
-                        Text("Scan QR Code")
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            if (connectedWalletAddress.isNotBlank()) {
-                                voterWalletAddress = connectedWalletAddress
-                                statusMessage = "Shared wallet restored into the wallet field."
-                            } else {
-                                statusMessage = "No shared wallet is connected yet."
-                            }
-                        },
-                        modifier = Modifier.weight(1f),
-                        enabled = !isCheckingIn
-                    ) {
-                        Text("Use Shared Wallet")
-                    }
+                    Text("Scan QR Code")
                 }
             }
         }
@@ -306,11 +268,10 @@ fun QRCheckInScreen(
                         }
 
                         if (trimmedWalletAddress.isBlank()) {
-                            statusMessage = "Please scan or enter a wallet address first."
+                            statusMessage = "Please scan or enter a voter wallet address first."
                             return@Button
                         }
 
-                        adminViewModel.setConnectedWalletAddress(trimmedWalletAddress)
                         isCheckingIn = true
                         statusMessage = "Checking voter in on blockchain..."
 
@@ -365,11 +326,6 @@ fun QRCheckInScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
     }
-}
-
-private fun shortenWalletAddress(address: String): String {
-    if (address.length <= 16) return address
-    return "${address.take(10)}...${address.takeLast(8)}"
 }
 
 private tailrec fun Context.findActivity(): Activity? {
