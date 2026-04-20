@@ -3,6 +3,7 @@ package com.example.evotingmobileapp.admin
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.evotingmobileapp.blockchain.OnChainTransactionVerification
 import com.example.evotingmobileapp.data.BlockchainElectionRepository
 import com.example.evotingmobileapp.data.ElectionRepository
 import com.example.evotingmobileapp.data.VoteValidationResult
@@ -37,6 +38,16 @@ class AdminViewModel(
 
     private val _turnoutCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val turnoutCounts: StateFlow<Map<String, Int>> = _turnoutCounts.asStateFlow()
+
+    private val _verifiedOnChainTransaction = MutableStateFlow<OnChainTransactionVerification?>(null)
+    val verifiedOnChainTransaction: StateFlow<OnChainTransactionVerification?> =
+        _verifiedOnChainTransaction.asStateFlow()
+
+    private val _verificationInProgress = MutableStateFlow(false)
+    val verificationInProgress: StateFlow<Boolean> = _verificationInProgress.asStateFlow()
+
+    private val _verificationError = MutableStateFlow<String?>(null)
+    val verificationError: StateFlow<String?> = _verificationError.asStateFlow()
 
     init {
         refreshBlockchainData()
@@ -177,6 +188,52 @@ class AdminViewModel(
 
     fun getCachedTurnoutCount(electionId: String): Int? {
         return turnoutCounts.value[electionId.trim()]
+    }
+
+    fun verifyTransactionReceiptOnChain(
+        context: Context,
+        transactionHash: String
+    ) {
+        val blockchainRepository = repository as? BlockchainElectionRepository
+        if (blockchainRepository == null) {
+            _verifiedOnChainTransaction.value = null
+            _verificationError.value = "Blockchain election repository is not currently active."
+            _verificationInProgress.value = false
+            return
+        }
+
+        val cleanedTransactionHash = transactionHash.trim()
+
+        _verificationInProgress.value = true
+        _verificationError.value = null
+        _verifiedOnChainTransaction.value = null
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = blockchainRepository.verifyTransactionReceiptOnChain(
+                context = context,
+                transactionHash = cleanedTransactionHash
+            )
+
+            result.fold(
+                onSuccess = { verification ->
+                    _verifiedOnChainTransaction.value = verification
+                    _verificationError.value = null
+                },
+                onFailure = { exception ->
+                    _verifiedOnChainTransaction.value = null
+                    _verificationError.value =
+                        exception.message ?: "Failed to verify transaction on-chain."
+                }
+            )
+
+            _verificationInProgress.value = false
+        }
+    }
+
+    fun clearOnChainVerification() {
+        _verifiedOnChainTransaction.value = null
+        _verificationError.value = null
+        _verificationInProgress.value = false
     }
 
     fun findReceiptByTransactionHash(transactionHash: String): VoteReceipt? {
