@@ -36,6 +36,15 @@ data class CreateElectionOnChainResult(
     val whitelistTxHash: String?
 )
 
+data class OnChainTransactionVerification(
+    val transactionHash: String,
+    val blockNumber: BigInteger,
+    val status: String,
+    val fromAddress: String,
+    val toAddress: String?,
+    val gasUsed: BigInteger
+)
+
 private data class ReadOnlyChainContext(
     val web3j: Web3j,
     val fromAddress: String,
@@ -307,6 +316,61 @@ class BlockchainRepository {
             } else {
                 Result.success((decodedValues[0].value as BigInteger).toInt())
             }
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    fun verifyTransactionReceiptOnChain(
+        context: Context,
+        transactionHash: String
+    ): Result<OnChainTransactionVerification> {
+        return try {
+            val normalizedHash = transactionHash.trim()
+
+            require(
+                normalizedHash.matches(Regex("^0x[a-fA-F0-9]{64}$"))
+            ) {
+                "Enter a valid transaction hash."
+            }
+
+            val contractConfig = ContractAssets.loadContractConfig(context)
+            val web3j = buildWeb3j(contractConfig.rpcUrl)
+
+            val response = web3j.ethGetTransactionReceipt(normalizedHash).send()
+
+            if (response.hasError()) {
+                return Result.failure(
+                    Exception("Blockchain verification failed: ${response.error.message}")
+                )
+            }
+
+            val optionalReceipt = response.transactionReceipt
+            if (optionalReceipt.isEmpty) {
+                return Result.failure(
+                    Exception("No confirmed transaction receipt was found on-chain for this hash.")
+                )
+            }
+
+            val receipt = optionalReceipt.get()
+            val status = receipt.status ?: "unknown"
+
+            if (status != "0x1") {
+                return Result.failure(
+                    Exception("Transaction was found on-chain but it failed or reverted.")
+                )
+            }
+
+            Result.success(
+                OnChainTransactionVerification(
+                    transactionHash = receipt.transactionHash,
+                    blockNumber = receipt.blockNumber,
+                    status = status,
+                    fromAddress = receipt.from,
+                    toAddress = receipt.to,
+                    gasUsed = receipt.gasUsed
+                )
+            )
         } catch (exception: Exception) {
             Result.failure(exception)
         }

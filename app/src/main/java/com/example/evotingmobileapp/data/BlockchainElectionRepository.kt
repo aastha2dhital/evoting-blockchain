@@ -2,6 +2,7 @@ package com.example.evotingmobileapp.data
 
 import android.content.Context
 import com.example.evotingmobileapp.blockchain.BlockchainRepository
+import com.example.evotingmobileapp.blockchain.OnChainTransactionVerification
 import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.model.VoteReceipt
 import java.math.BigInteger
@@ -56,6 +57,16 @@ class BlockchainElectionRepository(
             context = context,
             electionId = parsedElectionId,
             voterWalletAddress = voterWalletAddress.trim()
+        )
+    }
+
+    fun verifyTransactionReceiptOnChain(
+        context: Context,
+        transactionHash: String
+    ): Result<OnChainTransactionVerification> {
+        return blockchainRepository.verifyTransactionReceiptOnChain(
+            context = context,
+            transactionHash = transactionHash.trim()
         )
     }
 
