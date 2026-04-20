@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,28 +44,43 @@ fun ReceiptScreen(
     adminViewModel: AdminViewModel,
     initialTransactionHash: String? = null
 ) {
-    val receipt by adminViewModel.latestReceipt.collectAsState()
+    val context = LocalContext.current
+
+    val latestReceipt by adminViewModel.latestReceipt.collectAsState()
     val voteReceipts by adminViewModel.voteReceipts.collectAsState()
+    val verifiedOnChainTransaction by adminViewModel.verifiedOnChainTransaction.collectAsState()
+    val verificationInProgress by adminViewModel.verificationInProgress.collectAsState()
+    val verificationError by adminViewModel.verificationError.collectAsState()
 
     var transactionHashInput by rememberSaveable {
-        mutableStateOf(initialTransactionHash.orEmpty())
+        mutableStateOf(initialTransactionHash?.trim().orEmpty())
     }
     var hasAttemptedVerification by rememberSaveable {
         mutableStateOf(!initialTransactionHash.isNullOrBlank())
     }
+    var lastSubmittedTransactionHash by rememberSaveable {
+        mutableStateOf(initialTransactionHash?.trim().orEmpty())
+    }
+    var inputError by rememberSaveable {
+        mutableStateOf<String?>(null)
+    }
 
     LaunchedEffect(initialTransactionHash) {
-        if (!initialTransactionHash.isNullOrBlank()) {
-            transactionHashInput = initialTransactionHash
+        val startingHash = initialTransactionHash?.trim().orEmpty()
+        if (startingHash.isNotBlank()) {
+            transactionHashInput = startingHash
             hasAttemptedVerification = true
-            adminViewModel.selectReceiptByTransactionHash(initialTransactionHash)
+            lastSubmittedTransactionHash = startingHash
+            inputError = null
+            adminViewModel.clearOnChainVerification()
+            adminViewModel.verifyTransactionReceiptOnChain(context, startingHash)
         }
     }
 
     val trimmedTransactionHash = transactionHashInput.trim()
 
-    val verifiedReceipt: VoteReceipt? =
-        if (hasAttemptedVerification && trimmedTransactionHash.isNotBlank()) {
+    val matchedLocalReceipt: VoteReceipt? =
+        if (trimmedTransactionHash.isNotBlank()) {
             voteReceipts.firstOrNull { savedReceipt ->
                 savedReceipt.transactionHash.equals(trimmedTransactionHash, ignoreCase = true)
             }
@@ -71,17 +88,24 @@ fun ReceiptScreen(
             null
         }
 
-    val currentReceipt =
-        if (hasAttemptedVerification && trimmedTransactionHash.isNotBlank()) {
-            verifiedReceipt
-        } else {
-            receipt
-        }
+    val currentLatestReceipt = latestReceipt
+    val currentVerifiedOnChainTransaction = verifiedOnChainTransaction
 
-    val shouldShowNotFoundState =
+    val shouldShowOnChainSuccess =
         hasAttemptedVerification &&
-                trimmedTransactionHash.isNotBlank() &&
-                verifiedReceipt == null
+                !verificationInProgress &&
+                verificationError.isNullOrBlank() &&
+                currentVerifiedOnChainTransaction != null &&
+                lastSubmittedTransactionHash.equals(trimmedTransactionHash, ignoreCase = true)
+
+    val shouldShowVerificationError =
+        hasAttemptedVerification &&
+                !verificationInProgress &&
+                inputError == null &&
+                !verificationError.isNullOrBlank()
+
+    val verifiedTransactionForUi =
+        if (shouldShowOnChainSuccess) currentVerifiedOnChainTransaction else null
 
     Scaffold { innerPadding ->
         Column(
@@ -100,7 +124,7 @@ fun ReceiptScreen(
             )
 
             Text(
-                text = "Review your latest receipt or verify a recorded vote using its transaction hash.",
+                text = "Review your latest receipt or verify a recorded vote using its transaction hash. On-chain verification below checks the real blockchain transaction result.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -123,11 +147,30 @@ fun ReceiptScreen(
 
                     OutlinedTextField(
                         value = transactionHashInput,
-                        onValueChange = { transactionHashInput = it },
+                        onValueChange = { newValue ->
+                            transactionHashInput = newValue
+                            inputError = null
+
+                            if (hasAttemptedVerification ||
+                                currentVerifiedOnChainTransaction != null ||
+                                !verificationError.isNullOrBlank()
+                            ) {
+                                hasAttemptedVerification = false
+                                lastSubmittedTransactionHash = ""
+                                adminViewModel.clearOnChainVerification()
+                            }
+                        },
                         label = { Text("Transaction Hash") },
                         placeholder = { Text("0x...") },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 2
+                        minLines = 2,
+                        isError = inputError != null,
+                        supportingText = {
+                            Text(
+                                text = inputError
+                                    ?: "Enter a blockchain transaction hash to confirm that the vote receipt exists on-chain."
+                            )
+                        }
                     )
 
                     Row(
@@ -137,105 +180,122 @@ fun ReceiptScreen(
                         OutlinedButton(
                             onClick = {
                                 transactionHashInput = ""
+                                inputError = null
                                 hasAttemptedVerification = false
+                                lastSubmittedTransactionHash = ""
+                                adminViewModel.clearOnChainVerification()
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            enabled = !verificationInProgress
                         ) {
                             Text("Clear")
                         }
 
                         Button(
                             onClick = {
-                                hasAttemptedVerification = true
-                                adminViewModel.selectReceiptByTransactionHash(transactionHashInput)
+                                if (trimmedTransactionHash.isBlank()) {
+                                    inputError = "Enter a transaction hash before verifying."
+                                    hasAttemptedVerification = false
+                                    lastSubmittedTransactionHash = ""
+                                    adminViewModel.clearOnChainVerification()
+                                } else {
+                                    inputError = null
+                                    hasAttemptedVerification = true
+                                    lastSubmittedTransactionHash = trimmedTransactionHash
+                                    adminViewModel.clearOnChainVerification()
+                                    adminViewModel.verifyTransactionReceiptOnChain(
+                                        context = context,
+                                        transactionHash = trimmedTransactionHash
+                                    )
+                                }
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            enabled = !verificationInProgress
                         ) {
-                            Text("Verify")
+                            Text(if (verificationInProgress) "Verifying..." else "Verify")
                         }
                     }
                 }
             }
 
             when {
-                shouldShowNotFoundState -> {
-                    NotFoundReceiptState()
-                }
-
-                currentReceipt == null -> {
-                    EmptyReceiptState(
-                        onBackClick = { navController.popBackStack() }
+                verificationInProgress -> {
+                    VerificationLoadingState(
+                        transactionHash = lastSubmittedTransactionHash.ifBlank { trimmedTransactionHash }
                     )
                 }
 
-                else -> {
-                    val currentVerifiedReceipt = currentReceipt
-
+                verifiedTransactionForUi != null -> {
                     Text(
-                        text = if (hasAttemptedVerification && trimmedTransactionHash.isNotBlank()) {
-                            "Verified transaction details found."
-                        } else {
-                            "Your vote has been recorded successfully."
-                        },
+                        text = "On-chain verification succeeded. This transaction was found on the blockchain.",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    OnChainVerificationCard(
+                        verification = verifiedTransactionForUi
+                    )
+
+                    if (matchedLocalReceipt != null) {
+                        ReceiptDetailsCard(
+                            title = "Matched Local Receipt",
+                            supportingText = "This app receipt matches the verified blockchain transaction hash.",
+                            receipt = matchedLocalReceipt
                         )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            ReceiptRow(
-                                label = "Election ID",
-                                value = currentVerifiedReceipt.electionId
-                            )
-                            ReceiptRow(
-                                label = "Election Title",
-                                value = currentVerifiedReceipt.electionTitle
-                            )
-                            ReceiptRow(
-                                label = "Wallet Address",
-                                value = currentVerifiedReceipt.voterId
-                            )
-                            ReceiptRow(
-                                label = "Candidate",
-                                value = currentVerifiedReceipt.candidateName
-                            )
-                            ReceiptRow(
-                                label = "Timestamp",
-                                value = formatTimestamp(currentVerifiedReceipt.timestamp)
-                            )
-                            ReceiptRow(
-                                label = "Transaction Hash",
-                                value = currentVerifiedReceipt.transactionHash
-                            )
-                        }
+                    } else {
+                        NoLocalReceiptMatchCard()
                     }
+                }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Back")
-                        }
+                shouldShowVerificationError -> {
+                    VerificationErrorCard(
+                        message = verificationError.orEmpty()
+                    )
 
-                        Button(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Done")
-                        }
+                    if (matchedLocalReceipt != null) {
+                        ReceiptDetailsCard(
+                            title = "Local Receipt Match",
+                            supportingText = "A local receipt with this hash exists in app storage, but blockchain verification did not succeed. Treat the on-chain result as the source of truth.",
+                            receipt = matchedLocalReceipt
+                        )
                     }
+                }
+
+                currentLatestReceipt != null -> {
+                    Text(
+                        text = "Your latest recorded receipt is shown below. Use the verification section above to confirm the transaction on-chain.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    ReceiptDetailsCard(
+                        title = "Latest Local Receipt",
+                        supportingText = "This is the latest receipt saved in the app. It is useful for review, but it is not the same as on-chain verification.",
+                        receipt = currentLatestReceipt
+                    )
+                }
+
+                else -> {
+                    EmptyReceiptState()
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Back")
+                }
+
+                Button(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Done")
                 }
             }
         }
@@ -243,39 +303,9 @@ fun ReceiptScreen(
 }
 
 @Composable
-private fun EmptyReceiptState(
-    onBackClick: () -> Unit
+private fun VerificationLoadingState(
+    transactionHash: String
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "No receipt available",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "Submit a vote first or verify using a known transaction hash.",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
-        )
-
-        Button(
-            onClick = onBackClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Go Back")
-        }
-    }
-}
-
-@Composable
-private fun NotFoundReceiptState() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -284,17 +314,204 @@ private fun NotFoundReceiptState() {
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator()
+
+            Text(
+                text = "Verifying transaction on blockchain...",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
+
+            if (transactionHash.isNotBlank()) {
+                Text(
+                    text = transactionHash,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OnChainVerificationCard(
+    verification: Any
+) {
+    val detailRows = buildOnChainVerificationRows(verification)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "Transaction hash not found",
+                text = "Verified On-Chain Transaction",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "No stored vote receipt matches the transaction hash you entered. Check the hash and try again.",
+                text = "These values come from the blockchain verification result, not just local app receipt storage.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            detailRows.forEach { (label, value) ->
+                ReceiptRow(
+                    label = label,
+                    value = value
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReceiptDetailsCard(
+    title: String,
+    supportingText: String,
+    receipt: VoteReceipt
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = supportingText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            ReceiptRow(
+                label = "Election ID",
+                value = receipt.electionId
+            )
+            ReceiptRow(
+                label = "Election Title",
+                value = receipt.electionTitle
+            )
+            ReceiptRow(
+                label = "Wallet Address",
+                value = receipt.voterId
+            )
+            ReceiptRow(
+                label = "Candidate",
+                value = receipt.candidateName
+            )
+            ReceiptRow(
+                label = "Timestamp",
+                value = formatTimestamp(receipt.timestamp)
+            )
+            ReceiptRow(
+                label = "Transaction Hash",
+                value = receipt.transactionHash
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyReceiptState() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "No receipt available",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = "Submit a vote first or verify a known transaction hash to check whether it exists on-chain.",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+private fun NoLocalReceiptMatchCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "No local receipt match",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "The blockchain transaction was verified successfully, but no matching receipt was found in the app's current local receipt list.",
                 style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Composable
+private fun VerificationErrorCard(
+    message: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = "On-chain verification failed",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
             )
         }
     }
@@ -316,6 +533,118 @@ private fun ReceiptRow(
             text = value,
             style = MaterialTheme.typography.bodyLarge
         )
+    }
+}
+
+private fun buildOnChainVerificationRows(
+    verification: Any
+): List<Pair<String, String>> {
+    val transactionHash = readPropertyValue(
+        target = verification,
+        "transactionHash",
+        "txHash",
+        "hash"
+    )
+
+    val blockNumber = readPropertyValue(
+        target = verification,
+        "blockNumber",
+        "blockNo"
+    )
+
+    val status = normalizeStatusValue(
+        readPropertyValue(
+            target = verification,
+            "status",
+            "receiptStatus",
+            "successful",
+            "success",
+            "isSuccessful"
+        )
+    )
+
+    val fromAddress = readPropertyValue(
+        target = verification,
+        "fromAddress",
+        "from",
+        "senderAddress",
+        "sender"
+    )
+
+    val toAddress = readPropertyValue(
+        target = verification,
+        "toAddress",
+        "to",
+        "contractAddress",
+        "receiverAddress"
+    )
+
+    val gasUsed = readPropertyValue(
+        target = verification,
+        "gasUsed",
+        "cumulativeGasUsed"
+    )
+
+    return listOfNotNull(
+        transactionHash?.let { "Transaction Hash" to it },
+        blockNumber?.let { "Block Number" to it },
+        status?.let { "Status" to it },
+        fromAddress?.let { "From Address" to it },
+        toAddress?.let { "To Address" to it },
+        gasUsed?.let { "Gas Used" to it }
+    ).ifEmpty {
+        listOf("Verification Result" to verification.toString())
+    }
+}
+
+private fun readPropertyValue(
+    target: Any,
+    vararg propertyNames: String
+): String? {
+    for (propertyName in propertyNames) {
+        val getterCandidates = listOf(
+            "get${propertyName.replaceFirstChar { it.uppercase() }}",
+            "is${propertyName.replaceFirstChar { it.uppercase() }}"
+        )
+
+        getterCandidates.forEach { getterName ->
+            runCatching {
+                target.javaClass.methods.firstOrNull { method ->
+                    method.parameterCount == 0 && method.name.equals(getterName, ignoreCase = true)
+                }?.invoke(target)
+            }.getOrNull()?.let { value ->
+                return convertValueToString(value)
+            }
+        }
+
+        runCatching {
+            target.javaClass.declaredFields.firstOrNull { field ->
+                field.name.equals(propertyName, ignoreCase = true)
+            }?.apply {
+                isAccessible = true
+            }?.get(target)
+        }.getOrNull()?.let { value ->
+            return convertValueToString(value)
+        }
+    }
+
+    return null
+}
+
+private fun convertValueToString(value: Any?): String? {
+    return when (value) {
+        null -> null
+        is Boolean -> if (value) "Success" else "Failed"
+        else -> value.toString().takeIf { it.isNotBlank() }
+    }
+}
+
+private fun normalizeStatusValue(rawStatus: String?): String? {
+    return when (rawStatus?.trim()?.lowercase(Locale.getDefault())) {
+        null, "" -> null
+        "true", "1", "0x1", "success", "successful", "succeeded" -> "Success"
+        "false", "0", "0x0", "failure", "failed" -> "Failed"
+        else -> rawStatus
     }
 }
 
