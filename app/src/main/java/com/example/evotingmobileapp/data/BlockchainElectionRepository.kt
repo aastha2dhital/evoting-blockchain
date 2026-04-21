@@ -48,15 +48,35 @@ class BlockchainElectionRepository(
         electionId: String,
         voterWalletAddress: String
     ): Result<String> {
-        val parsedElectionId = parseElectionId(electionId)
+        val cleanedElectionId = electionId.trim()
+        val parsedElectionId = parseElectionId(cleanedElectionId)
             ?: return Result.failure(
                 IllegalArgumentException("Election ID must be a valid non-negative integer.")
             )
 
+        val normalizedWalletAddress = normalizeWalletAddress(voterWalletAddress)
+
+        if (normalizedWalletAddress.isBlank()) {
+            return Result.failure(
+                IllegalArgumentException("Voter wallet address cannot be blank.")
+            )
+        }
+
         return blockchainRepository.checkInVoterOnChain(
             context = context,
             electionId = parsedElectionId,
-            voterWalletAddress = voterWalletAddress.trim()
+            voterWalletAddress = normalizedWalletAddress
+        ).fold(
+            onSuccess = { message ->
+                applySuccessfulCheckIn(
+                    electionId = cleanedElectionId,
+                    normalizedWalletAddress = normalizedWalletAddress
+                )
+                Result.success(message)
+            },
+            onFailure = { exception ->
+                Result.failure(exception)
+            }
         )
     }
 
@@ -132,36 +152,12 @@ class BlockchainElectionRepository(
     }
 
     override fun checkInVoter(electionId: String, voterId: String): String {
-        val cleanedElectionId = electionId.trim()
-        val parsedElectionId = parseElectionId(cleanedElectionId)
-            ?: return "Election ID must be a valid non-negative integer."
-
-        val normalizedWalletAddress = normalizeWalletAddress(voterId)
-
-        if (normalizedWalletAddress.isBlank()) {
-            return "Voter wallet address cannot be blank."
-        }
-
-        val onChainResult = blockchainRepository.checkInVoterOnChain(
+        return checkInVoterOnChain(
             context = appContext,
-            electionId = parsedElectionId,
-            voterWalletAddress = normalizedWalletAddress
-        )
-
-        return onChainResult.fold(
-            onSuccess = {
-                val currentElection = getElectionById(cleanedElectionId)
-                    ?: return@fold "Election not found."
-
-                val updatedElection = currentElection.copy(
-                    checkedInVoterIds = currentElection.checkedInVoterIds + normalizedWalletAddress
-                )
-
-                upsertElection(updatedElection)
-                refreshFromBlockchain()
-
-                "Check-in successful"
-            },
+            electionId = electionId,
+            voterWalletAddress = voterId
+        ).fold(
+            onSuccess = { "Check-in successful" },
             onFailure = { exception ->
                 exception.message ?: "Blockchain check-in failed."
             }
@@ -252,50 +248,42 @@ class BlockchainElectionRepository(
             return validation
         }
 
-        val candidateIndex = election.candidates.indexOfFirst {
-            it == cleanedCandidateName
-        }
+        val candidateId = resolveCandidateId(
+            election = election,
+            candidateName = cleanedCandidateName
+        ) ?: return VoteValidationResult(
+            success = false,
+            message = "Selected candidate was not found."
+        )
 
-        if (candidateIndex == -1) {
-            return VoteValidationResult(
+        val parsedElectionId = parseElectionId(cleanedElectionId)
+            ?: return VoteValidationResult(
                 success = false,
-                message = "Selected candidate was not found."
+                message = "Election ID must be a valid non-negative integer."
             )
-        }
-
-        val candidateId = BigInteger.valueOf((candidateIndex + 1).toLong())
 
         val onChainVoteResult = blockchainRepository.voteOnChain(
             context = appContext,
-            electionId = parseElectionId(cleanedElectionId)
-                ?: return VoteValidationResult(
-                    success = false,
-                    message = "Election ID must be a valid non-negative integer."
-                ),
+            electionId = parsedElectionId,
             candidateId = candidateId,
             voterWalletAddress = normalizedWalletAddress
         )
 
         return onChainVoteResult.fold(
             onSuccess = { realTxHash ->
-                val updatedVoteCounts = election.voteCounts.toMutableMap()
-                updatedVoteCounts[cleanedCandidateName] =
-                    (updatedVoteCounts[cleanedCandidateName] ?: 0) + 1
-
-                val updatedElection = election.copy(
-                    voteCounts = updatedVoteCounts,
-                    votedVoterIds = election.votedVoterIds + normalizedWalletAddress
+                val updatedElection = buildElectionAfterSuccessfulVote(
+                    election = election,
+                    cleanedCandidateName = cleanedCandidateName,
+                    normalizedWalletAddress = normalizedWalletAddress
                 )
 
                 upsertElection(updatedElection)
 
-                val receipt = VoteReceipt(
-                    electionId = election.id,
-                    electionTitle = election.title,
-                    candidateName = cleanedCandidateName,
-                    voterId = normalizedWalletAddress,
-                    transactionHash = realTxHash,
-                    timestamp = System.currentTimeMillis()
+                val receipt = createVoteReceipt(
+                    election = election,
+                    cleanedCandidateName = cleanedCandidateName,
+                    normalizedWalletAddress = normalizedWalletAddress,
+                    transactionHash = realTxHash
                 )
 
                 _voteReceipts.value = _voteReceipts.value + receipt
@@ -402,6 +390,60 @@ class BlockchainElectionRepository(
                 }
             }
             .sortedBy { it.id.toIntOrNull() ?: Int.MAX_VALUE }
+    }
+
+    private fun applySuccessfulCheckIn(
+        electionId: String,
+        normalizedWalletAddress: String
+    ) {
+        val currentElection = getElectionById(electionId) ?: return
+
+        val updatedElection = currentElection.copy(
+            checkedInVoterIds = currentElection.checkedInVoterIds + normalizedWalletAddress
+        )
+
+        upsertElection(updatedElection)
+        refreshFromBlockchain()
+    }
+
+    private fun resolveCandidateId(
+        election: Election,
+        candidateName: String
+    ): BigInteger? {
+        val candidateIndex = election.candidates.indexOfFirst { it == candidateName }
+        if (candidateIndex == -1) return null
+        return BigInteger.valueOf((candidateIndex + 1).toLong())
+    }
+
+    private fun buildElectionAfterSuccessfulVote(
+        election: Election,
+        cleanedCandidateName: String,
+        normalizedWalletAddress: String
+    ): Election {
+        val updatedVoteCounts = election.voteCounts.toMutableMap()
+        updatedVoteCounts[cleanedCandidateName] =
+            (updatedVoteCounts[cleanedCandidateName] ?: 0) + 1
+
+        return election.copy(
+            voteCounts = updatedVoteCounts,
+            votedVoterIds = election.votedVoterIds + normalizedWalletAddress
+        )
+    }
+
+    private fun createVoteReceipt(
+        election: Election,
+        cleanedCandidateName: String,
+        normalizedWalletAddress: String,
+        transactionHash: String
+    ): VoteReceipt {
+        return VoteReceipt(
+            electionId = election.id,
+            electionTitle = election.title,
+            candidateName = cleanedCandidateName,
+            voterId = normalizedWalletAddress,
+            transactionHash = transactionHash,
+            timestamp = System.currentTimeMillis()
+        )
     }
 
     private fun upsertElection(updatedElection: Election) {
