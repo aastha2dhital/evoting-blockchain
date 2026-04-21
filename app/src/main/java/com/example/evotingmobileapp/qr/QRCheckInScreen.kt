@@ -276,22 +276,24 @@ fun QRCheckInScreen(
                         statusMessage = "Checking voter in on blockchain..."
 
                         coroutineScope.launch {
-                            val result = runCatching {
-                                withContext(Dispatchers.IO) {
-                                    adminViewModel.checkInVoter(
-                                        electionId = selectedElection.id,
-                                        voterId = trimmedWalletAddress
-                                    )
-                                }
+                            val result = withContext(Dispatchers.IO) {
+                                adminViewModel.checkInVoterOnChain(
+                                    context = context,
+                                    electionId = selectedElection.id,
+                                    voterWalletAddress = trimmedWalletAddress
+                                )
                             }
 
                             isCheckingIn = false
 
-                            result.onSuccess { message ->
-                                statusMessage = message
-                            }.onFailure { exception ->
-                                statusMessage = exception.message ?: "Blockchain check-in failed."
-                            }
+                            result.fold(
+                                onSuccess = { message ->
+                                    statusMessage = message
+                                },
+                                onFailure = { exception ->
+                                    statusMessage = exception.message ?: "Blockchain check-in failed."
+                                }
+                            )
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
