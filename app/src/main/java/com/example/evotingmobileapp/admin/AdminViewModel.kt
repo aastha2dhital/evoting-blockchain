@@ -20,21 +20,11 @@ class AdminViewModel(
     private val repository: ElectionRepository
 ) : ViewModel() {
 
-    companion object {
-        const val DEMO_VOTER_WALLET_ADDRESS = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-    }
-
     val elections: StateFlow<List<Election>> = repository.elections
     val voteReceipts: StateFlow<List<VoteReceipt>> = repository.voteReceipts
 
     private val _latestReceipt = MutableStateFlow<VoteReceipt?>(null)
     val latestReceipt: StateFlow<VoteReceipt?> = _latestReceipt.asStateFlow()
-
-    private val _connectedWalletAddress = MutableStateFlow("")
-    val connectedWalletAddress: StateFlow<String> = _connectedWalletAddress.asStateFlow()
-
-    private val _walletConnected = MutableStateFlow(false)
-    val walletConnected: StateFlow<Boolean> = _walletConnected.asStateFlow()
 
     private val _turnoutCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val turnoutCounts: StateFlow<Map<String, Int>> = _turnoutCounts.asStateFlow()
@@ -59,21 +49,6 @@ class AdminViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             blockchainRepository.refreshFromBlockchain()
         }
-    }
-
-    fun connectDemoWallet() {
-        setConnectedWalletAddress(DEMO_VOTER_WALLET_ADDRESS)
-    }
-
-    fun setConnectedWalletAddress(walletAddress: String) {
-        val cleanedWalletAddress = walletAddress.trim()
-        _connectedWalletAddress.value = cleanedWalletAddress
-        _walletConnected.value = cleanedWalletAddress.isNotBlank()
-    }
-
-    fun clearConnectedWallet() {
-        _connectedWalletAddress.value = ""
-        _walletConnected.value = false
     }
 
     fun createElection(
