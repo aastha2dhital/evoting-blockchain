@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.data.VoteValidationResult
 import com.example.evotingmobileapp.navigation.AppRoutes
 import kotlinx.coroutines.Dispatchers
@@ -48,28 +49,22 @@ import kotlinx.coroutines.withContext
 fun VotingScreen(
     navController: NavHostController,
     adminViewModel: AdminViewModel,
+    authSessionViewModel: AuthSessionViewModel,
     modifier: Modifier = Modifier
 ) {
     val elections by adminViewModel.elections.collectAsState()
-    val connectedWalletAddress by adminViewModel.connectedWalletAddress.collectAsState()
-    val walletConnected by adminViewModel.walletConnected.collectAsState()
+    val authUiState by authSessionViewModel.uiState.collectAsState()
 
     val snackBarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    var voterWalletAddress by rememberSaveable { mutableStateOf("") }
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var selectedCandidate by rememberSaveable { mutableStateOf("") }
     var isSubmittingVote by rememberSaveable { mutableStateOf(false) }
 
     val isBusy = isSubmittingVote
     val selectedElection = elections.find { it.id == selectedElectionId }
-
-    LaunchedEffect(walletConnected, connectedWalletAddress) {
-        if (walletConnected && connectedWalletAddress.isNotBlank()) {
-            voterWalletAddress = connectedWalletAddress
-        }
-    }
+    val voterWalletAddress = authUiState.walletAddress.trim()
 
     LaunchedEffect(elections, selectedElectionId) {
         if (selectedElectionId.isNotBlank() && selectedElection == null) {
@@ -97,19 +92,14 @@ fun VotingScreen(
 
     fun getVotingAccessText(): String {
         val election = selectedElection ?: return "Please select an election first."
-        val trimmedWalletAddress = voterWalletAddress.trim()
 
-        if (trimmedWalletAddress.isBlank()) {
-            return if (walletConnected) {
-                "Wallet connection exists, but the wallet address field is empty."
-            } else {
-                "Connect a wallet on the voter portal or enter a wallet address for prototype testing."
-            }
+        if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
+            return "No active voter session was found. Return to the voter access portal first."
         }
 
         val result = adminViewModel.validateVoting(
             electionId = election.id,
-            voterId = trimmedWalletAddress
+            voterId = voterWalletAddress
         )
 
         return if (result.success) {
@@ -136,7 +126,7 @@ fun VotingScreen(
         )
 
         Text(
-            text = "This screen validates voter access and submits the vote. QR check-in must be completed first by the polling officer or admin.",
+            text = "This screen validates the signed-in voter session and submits the vote. QR check-in must be completed first by the polling officer or admin.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -157,39 +147,31 @@ fun VotingScreen(
                 )
 
                 Text(
-                    text = if (walletConnected && connectedWalletAddress.isNotBlank()) {
-                        "Connected voter wallet detected. It will be used as the voter identity for eligibility validation and vote submission."
+                    text = if (authUiState.canAccessVoter() && voterWalletAddress.isNotBlank()) {
+                        "Your signed-in voter wallet is locked as the identity for eligibility checks, check-in matching, and vote submission."
                     } else {
-                        "No voter wallet is connected right now. You can still type a wallet address for prototype testing."
+                        "No active voter wallet session was found. Go back to the voter access portal and continue again."
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )
 
                 OutlinedTextField(
                     value = voterWalletAddress,
-                    onValueChange = { voterWalletAddress = it },
-                    label = { Text("Wallet Address") },
+                    onValueChange = {},
+                    label = { Text("Signed-In Voter Wallet") },
                     placeholder = { Text("0x...") },
                     singleLine = true,
+                    readOnly = true,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isBusy
+                    enabled = false
                 )
 
-                if (walletConnected && connectedWalletAddress.isNotBlank()) {
+                if (voterWalletAddress.isNotBlank()) {
                     Text(
-                        text = "Connected wallet: ${shortenWalletAddress(connectedWalletAddress)}",
+                        text = "Current voter wallet: ${shortenWalletAddress(voterWalletAddress)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
-                    if (voterWalletAddress != connectedWalletAddress) {
-                        TextButton(
-                            onClick = { voterWalletAddress = connectedWalletAddress },
-                            enabled = !isBusy
-                        ) {
-                            Text("Use Connected Wallet")
-                        }
-                    }
                 }
             }
         }
@@ -328,11 +310,11 @@ fun VotingScreen(
 
                     Button(
                         onClick = {
-                            val trimmedWalletAddress = voterWalletAddress.trim()
-
-                            if (trimmedWalletAddress.isBlank()) {
+                            if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
                                 coroutineScope.launch {
-                                    snackBarHostState.showSnackbar("Enter wallet address first")
+                                    snackBarHostState.showSnackbar(
+                                        "No active voter session found. Please return to Voter Access."
+                                    )
                                 }
                                 return@Button
                             }
@@ -344,7 +326,6 @@ fun VotingScreen(
                                 return@Button
                             }
 
-                            adminViewModel.setConnectedWalletAddress(trimmedWalletAddress)
                             isSubmittingVote = true
 
                             coroutineScope.launch {
@@ -352,7 +333,7 @@ fun VotingScreen(
                                     withContext(Dispatchers.IO) {
                                         adminViewModel.submitVote(
                                             electionId = election.id,
-                                            voterId = trimmedWalletAddress,
+                                            voterId = voterWalletAddress,
                                             candidateName = selectedCandidate
                                         )
                                     }

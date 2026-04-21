@@ -124,7 +124,8 @@ fun AppNavGraph(
             ) {
                 VotingScreen(
                     navController = navController,
-                    adminViewModel = adminViewModel
+                    adminViewModel = adminViewModel,
+                    authSessionViewModel = authSessionViewModel
                 )
             }
         }
