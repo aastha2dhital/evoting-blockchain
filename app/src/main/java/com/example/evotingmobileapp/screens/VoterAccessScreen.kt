@@ -176,9 +176,7 @@ fun VoterAccessScreen(
 
                     Button(
                         onClick = {
-                            authSessionViewModel.disconnectWallet()
-                            authSessionViewModel.connectWallet(BuildConfig.DEMO_VOTER_WALLET_ADDRESS)
-                            authSessionViewModel.selectVoterRole()
+                            authSessionViewModel.signInAsDemoVoter()
 
                             navController.navigate(AppRoutes.VOTER_DASHBOARD) {
                                 popUpTo(AppRoutes.LOGIN) { inclusive = true }
