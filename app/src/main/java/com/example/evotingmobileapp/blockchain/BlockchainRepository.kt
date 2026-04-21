@@ -51,6 +51,11 @@ private data class ReadOnlyChainContext(
     val contractAddress: String
 )
 
+private data class SigningWalletContext(
+    val credentials: Credentials,
+    val privateKey: String
+)
+
 class BlockchainRepository {
 
     private companion object {
@@ -239,15 +244,7 @@ class BlockchainRepository {
                 "Election ID cannot be negative."
             }
 
-            val normalizedAddress = voterWalletAddress.trim()
-
-            require(normalizedAddress.isNotBlank()) {
-                "Voter wallet address cannot be blank."
-            }
-
-            require(WalletUtils.isValidAddress(normalizedAddress)) {
-                "Invalid voter wallet address."
-            }
+            val normalizedAddress = normalizeAndValidateWalletAddress(voterWalletAddress)
 
             val function = Function(
                 "checkInVoter",
@@ -391,22 +388,11 @@ class BlockchainRepository {
                 "Candidate ID must be greater than zero."
             }
 
-            val normalizedAddress = voterWalletAddress.trim()
-
-            require(normalizedAddress.isNotBlank()) {
-                "Voter wallet address cannot be blank."
-            }
-
-            require(WalletUtils.isValidAddress(normalizedAddress)) {
-                "Invalid voter wallet address."
-            }
-
-            val voterWalletConfig = ContractAssets.loadVoterWalletConfig(context)
-            val voterCredentials = Credentials.create(voterWalletConfig.voterPrivateKey)
-
-            require(voterCredentials.address.equals(normalizedAddress, ignoreCase = true)) {
-                "The provided wallet address does not match voter-wallet.json."
-            }
+            val normalizedAddress = normalizeAndValidateWalletAddress(voterWalletAddress)
+            val voterSigningWallet = loadValidatedVoterSigningWallet(
+                context = context,
+                expectedWalletAddress = normalizedAddress
+            ).getOrThrow()
 
             val function = Function(
                 "vote",
@@ -420,7 +406,7 @@ class BlockchainRepository {
             sendSignedTransaction(
                 context = context,
                 function = function,
-                privateKey = voterWalletConfig.voterPrivateKey
+                privateKey = voterSigningWallet.privateKey
             )
         } catch (exception: Exception) {
             Result.failure(exception)
@@ -736,6 +722,45 @@ class BlockchainRepository {
             } else {
                 Result.success(decodedValues[0].value as BigInteger)
             }
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
+    private fun normalizeAndValidateWalletAddress(walletAddress: String): String {
+        val normalizedAddress = walletAddress.trim()
+
+        require(normalizedAddress.isNotBlank()) {
+            "Voter wallet address cannot be blank."
+        }
+
+        require(WalletUtils.isValidAddress(normalizedAddress)) {
+            "Invalid voter wallet address."
+        }
+
+        return normalizedAddress
+    }
+
+    private fun loadValidatedVoterSigningWallet(
+        context: Context,
+        expectedWalletAddress: String
+    ): Result<SigningWalletContext> {
+        return try {
+            val voterWalletConfig = ContractAssets.loadVoterWalletConfig(context)
+            val voterCredentials = Credentials.create(voterWalletConfig.voterPrivateKey)
+
+            require(
+                voterCredentials.address.equals(expectedWalletAddress, ignoreCase = true)
+            ) {
+                "The signed-in voter wallet does not match voter-wallet.json."
+            }
+
+            Result.success(
+                SigningWalletContext(
+                    credentials = voterCredentials,
+                    privateKey = voterWalletConfig.voterPrivateKey
+                )
+            )
         } catch (exception: Exception) {
             Result.failure(exception)
         }
