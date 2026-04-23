@@ -32,11 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.BuildConfig
+import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
 import com.google.zxing.BarcodeFormat
@@ -98,7 +100,7 @@ fun VoterAccessScreen(
                         color = MaterialTheme.colorScheme.tertiaryContainer
                     ) {
                         Text(
-                            text = "CHECK-IN QR",
+                            text = stringResource(R.string.voter_qr_badge),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
@@ -107,14 +109,14 @@ fun VoterAccessScreen(
                     }
 
                     Text(
-                        text = "Voter QR for Polling Officer Check-In",
+                        text = stringResource(R.string.voter_qr_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
                         textAlign = TextAlign.Center
                     )
 
                     Text(
-                        text = "Show this QR code to the polling officer during check-in. It contains the voter wallet address used for whitelist matching and controlled access to the voting flow.",
+                        text = stringResource(R.string.voter_qr_description),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -130,7 +132,7 @@ fun VoterAccessScreen(
                         ) {
                             Image(
                                 bitmap = qrBitmap.asImageBitmap(),
-                                contentDescription = "Voter wallet QR code",
+                                contentDescription = stringResource(R.string.voter_qr_title),
                                 modifier = Modifier.size(220.dp)
                             )
                         }
@@ -146,7 +148,7 @@ fun VoterAccessScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "Wallet Address",
+                                text = stringResource(R.string.label_wallet_address),
                                 style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
@@ -161,7 +163,7 @@ fun VoterAccessScreen(
                     }
 
                     Text(
-                        text = "For single-emulator testing, manual wallet entry in the admin QR Check-In screen can still be used as a fallback.",
+                        text = stringResource(R.string.voter_fallback_note),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -186,7 +188,7 @@ fun VoterAccessScreen(
                         color = MaterialTheme.colorScheme.primaryContainer
                     ) {
                         Text(
-                            text = "VOTER PORTAL",
+                            text = stringResource(R.string.voter_portal_badge),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
@@ -195,13 +197,13 @@ fun VoterAccessScreen(
                     }
 
                     Text(
-                        text = "Continue to Voting Access",
+                        text = stringResource(R.string.voter_continue_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold
                     )
 
                     Text(
-                        text = "Continue as a voter to view eligible elections, cast a vote when allowed, and verify the receipt after blockchain recording is completed.",
+                        text = stringResource(R.string.voter_continue_description),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -220,7 +222,7 @@ fun VoterAccessScreen(
                         shape = RoundedCornerShape(20.dp)
                     ) {
                         Text(
-                            text = "Continue as Voter",
+                            text = stringResource(R.string.action_continue_as_voter),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -234,7 +236,7 @@ fun VoterAccessScreen(
                         shape = RoundedCornerShape(20.dp)
                     ) {
                         Text(
-                            text = "Back to Homepage",
+                            text = stringResource(R.string.action_back_to_homepage),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -250,7 +252,7 @@ fun VoterAccessScreen(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.60f)
                 ) {
                     Text(
-                        text = "Demo voter wallet mode is currently enabled for local testing.",
+                        text = stringResource(R.string.voter_demo_mode),
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -293,14 +295,14 @@ private fun VoterHeroSection() {
             }
 
             Text(
-                text = "Voter Access Portal",
+                text = stringResource(R.string.voter_portal_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center
             )
 
             Text(
-                text = "This portal guides eligible voters through QR-based check-in, controlled vote access, and receipt verification after submission.",
+                text = stringResource(R.string.voter_portal_description),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -312,11 +314,11 @@ private fun VoterHeroSection() {
             ) {
                 VoterStatChip(
                     modifier = Modifier.weight(1f),
-                    label = "QR check-in"
+                    label = stringResource(R.string.voter_chip_qr)
                 )
                 VoterStatChip(
                     modifier = Modifier.weight(1f),
-                    label = "Receipt verification"
+                    label = stringResource(R.string.voter_chip_receipt)
                 )
             }
         }
@@ -358,25 +360,25 @@ private fun VoterGuidanceCard() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "Voter Access Notes",
+                text = stringResource(R.string.voter_notes_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "• Voting access still depends on whitelist eligibility, QR check-in status, and election timing rules.",
+                text = stringResource(R.string.voter_note_eligibility),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "• Only checked-in eligible voters should be able to continue through the final voting workflow.",
+                text = stringResource(R.string.voter_note_checked_in),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "• Successful vote submission should produce a receipt and transaction hash for later verification.",
+                text = stringResource(R.string.voter_note_receipt),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
