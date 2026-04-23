@@ -16,6 +16,7 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = Color.White,
     primaryContainer = VotingBlue,
     onPrimaryContainer = TextPrimaryDark,
+    inversePrimary = AccentGold,
 
     secondary = TrustTeal,
     onSecondary = Color.White,
@@ -37,23 +38,34 @@ private val DarkColorScheme = darkColorScheme(
     onSurfaceVariant = TextSecondaryDark,
 
     error = ErrorRed,
-    onError = Color.White
+    onError = Color.White,
+    errorContainer = Color(0xFF601410),
+    onErrorContainer = Color(0xFFFFDAD6),
+
+    outline = Color(0xFF6F7D90),
+    outlineVariant = Color(0xFF314158),
+
+    scrim = Color.Black,
+    inverseSurface = Color(0xFFE7EDF7),
+    inverseOnSurface = Color(0xFF152033),
+    surfaceTint = VotingSky
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = VotingBlue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFDCE8FF),
+    primaryContainer = Color(0xFFD9E7FF),
     onPrimaryContainer = VotingBlueDark,
+    inversePrimary = VotingSky,
 
     secondary = TrustTeal,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFD7F3EF),
+    secondaryContainer = Color(0xFFD4F4F0),
     onSecondaryContainer = TrustTealDark,
 
     tertiary = AccentGold,
     onTertiary = Color.Black,
-    tertiaryContainer = Color(0xFFFFEDC2),
+    tertiaryContainer = Color(0xFFFFEDC7),
     onTertiaryContainer = AccentGoldDark,
 
     background = SoftBackground,
@@ -66,7 +78,17 @@ private val LightColorScheme = lightColorScheme(
     onSurfaceVariant = TextSecondaryLight,
 
     error = ErrorRed,
-    onError = Color.White
+    onError = Color.White,
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
+
+    outline = Color(0xFF758399),
+    outlineVariant = Color(0xFFC9D3E1),
+
+    scrim = Color.Black,
+    inverseSurface = Color(0xFF1B2430),
+    inverseOnSurface = Color(0xFFF4F7FB),
+    surfaceTint = VotingBlue
 )
 
 @Composable
