@@ -1,3 +1,66 @@
 <resources>
     <string name="app_name">EVotingMobileApp</string>
+
+    <!-- Common -->
+    <string name="action_back_to_homepage">Back to Homepage</string>
+    <string name="action_continue_as_admin">Continue as Admin</string>
+    <string name="action_continue_as_voter">Continue as Voter</string>
+    <string name="action_go_to_admin_login">Go to Admin Login</string>
+    <string name="action_go_to_voter_access">Go to Voter Access</string>
+    <string name="label_wallet_address">Wallet Address</string>
+
+    <!-- Login / Landing -->
+    <string name="login_hero_badge">SECURE • AUDITABLE • BLOCKCHAIN-BACKED</string>
+    <string name="login_title">Decentralized\nE-Voting System</string>
+    <string name="login_description">A premium prototype for controlled election access, QR-based voter check-in, transparent blockchain vote recording, and receipt verification.</string>
+    <string name="login_stat_role_access">Role-separated access</string>
+    <string name="login_stat_onchain_receipts">On-chain receipts</string>
+    <string name="login_admin_badge">CONTROL PORTAL</string>
+    <string name="login_admin_title">Admin / Polling Officer</string>
+    <string name="login_admin_description">Create and manage elections, verify eligible voters, complete QR check-in, monitor turnout, and access results securely.</string>
+    <string name="login_voter_badge">VOTER PORTAL</string>
+    <string name="login_voter_title">Voter</string>
+    <string name="login_voter_description">Access the voter flow, present the wallet QR for polling check-in, cast a vote when eligible, and verify the receipt afterward.</string>
+    <string name="login_notes_title">System Access Notes</string>
+    <string name="login_note_admin">• Admin users continue through a protected management portal.</string>
+    <string name="login_note_voter">• Voters continue through a separate access path for QR check-in and voting.</string>
+    <string name="login_note_audit">• Election actions are designed to support transparency, auditability, and controlled access.</string>
+    <string name="login_footer">Direct dashboard shortcuts have been removed so each user must continue through the correct access path.</string>
+
+    <!-- Admin Login -->
+    <string name="admin_portal_title">Admin Control Portal</string>
+    <string name="admin_portal_description">Protected access for election setup, voter check-in management, turnout visibility, and results control.</string>
+    <string name="admin_chip_setup">Election setup</string>
+    <string name="admin_chip_qr">QR check-in</string>
+    <string name="admin_protected_badge">PROTECTED ACCESS</string>
+    <string name="admin_access_code_title">Admin Access Code</string>
+    <string name="admin_access_code_description">Only authorized election administrators or polling officers should continue. This prototype uses a controlled access code before wallet-based admin actions are enabled.</string>
+    <string name="admin_pin_label">Enter admin PIN</string>
+    <string name="admin_pin_supporting">Required to unlock the admin control portal.</string>
+    <string name="admin_continue_dashboard">Continue to Admin Dashboard</string>
+    <string name="admin_error_blank">Enter the admin access code to continue.</string>
+    <string name="admin_error_incorrect">Incorrect admin access code. Please try again.</string>
+    <string name="admin_notes_title">Admin Access Notes</string>
+    <string name="admin_note_authorized">• Use this portal only for authorized election administration tasks.</string>
+    <string name="admin_note_voter_separation">• Voter access remains separated through its own portal and check-in flow.</string>
+    <string name="admin_note_blockchain">• Blockchain-backed actions improve transparency and auditability during the prototype workflow.</string>
+    <string name="admin_footer">In a production deployment, this step should be replaced by secure backend authentication, protected credential handling, and stronger role verification.</string>
+
+    <!-- Voter Access -->
+    <string name="voter_portal_title">Voter Access Portal</string>
+    <string name="voter_portal_description">This portal guides eligible voters through QR-based check-in, controlled vote access, and receipt verification after submission.</string>
+    <string name="voter_chip_qr">QR check-in</string>
+    <string name="voter_chip_receipt">Receipt verification</string>
+    <string name="voter_qr_badge">CHECK-IN QR</string>
+    <string name="voter_qr_title">Voter QR for Polling Officer Check-In</string>
+    <string name="voter_qr_description">Show this QR code to the polling officer during check-in. It contains the voter wallet address used for whitelist matching and controlled access to the voting flow.</string>
+    <string name="voter_fallback_note">For single-emulator testing, manual wallet entry in the admin QR Check-In screen can still be used as a fallback.</string>
+    <string name="voter_portal_badge">VOTER PORTAL</string>
+    <string name="voter_continue_title">Continue to Voting Access</string>
+    <string name="voter_continue_description">Continue as a voter to view eligible elections, cast a vote when allowed, and verify the receipt after blockchain recording is completed.</string>
+    <string name="voter_notes_title">Voter Access Notes</string>
+    <string name="voter_note_eligibility">• Voting access still depends on whitelist eligibility, QR check-in status, and election timing rules.</string>
+    <string name="voter_note_checked_in">• Only checked-in eligible voters should be able to continue through the final voting workflow.</string>
+    <string name="voter_note_receipt">• Successful vote submission should produce a receipt and transaction hash for later verification.</string>
+    <string name="voter_demo_mode">Demo voter wallet mode is currently enabled for local testing.</string>
 </resources>

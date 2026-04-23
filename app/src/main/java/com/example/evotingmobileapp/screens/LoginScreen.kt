@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,10 +29,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
 
@@ -72,10 +75,10 @@ fun LoginScreen(
             ElectionHeroSection()
 
             RoleEntryCard(
-                title = "Admin / Polling Officer",
-                badge = "CONTROL PORTAL",
-                description = "Create and manage elections, verify eligible voters, complete QR check-in, monitor turnout, and access results securely.",
-                buttonLabel = "Go to Admin Login",
+                title = stringResource(R.string.login_admin_title),
+                badge = stringResource(R.string.login_admin_badge),
+                description = stringResource(R.string.login_admin_description),
+                buttonLabel = stringResource(R.string.action_go_to_admin_login),
                 accentBrush = Brush.horizontalGradient(
                     listOf(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.95f),
@@ -88,10 +91,10 @@ fun LoginScreen(
             )
 
             RoleEntryCard(
-                title = "Voter",
-                badge = "VOTER PORTAL",
-                description = "Access the voter flow, present the wallet QR for polling check-in, cast a vote when eligible, and verify the receipt afterward.",
-                buttonLabel = "Go to Voter Access",
+                title = stringResource(R.string.login_voter_title),
+                badge = stringResource(R.string.login_voter_badge),
+                description = stringResource(R.string.login_voter_description),
+                buttonLabel = stringResource(R.string.action_go_to_voter_access),
                 accentBrush = Brush.horizontalGradient(
                     listOf(
                         MaterialTheme.colorScheme.tertiary.copy(alpha = 0.95f),
@@ -106,7 +109,7 @@ fun LoginScreen(
             SecurityInfoCard()
 
             Text(
-                text = "Direct dashboard shortcuts have been removed so each user must continue through the correct access path.",
+                text = stringResource(R.string.login_footer),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -153,7 +156,7 @@ private fun ElectionHeroSection() {
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "SECURE • AUDITABLE • BLOCKCHAIN-BACKED",
+                    text = stringResource(R.string.login_hero_badge),
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
@@ -163,7 +166,7 @@ private fun ElectionHeroSection() {
             }
 
             Text(
-                text = "Decentralized\nE-Voting System",
+                text = stringResource(R.string.login_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
@@ -171,7 +174,7 @@ private fun ElectionHeroSection() {
             )
 
             Text(
-                text = "A premium prototype for controlled election access, QR-based voter check-in, transparent blockchain vote recording, and receipt verification.",
+                text = stringResource(R.string.login_description),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -183,11 +186,11 @@ private fun ElectionHeroSection() {
             ) {
                 HeroStatChip(
                     modifier = Modifier.weight(1f),
-                    label = "Role-separated access"
+                    label = stringResource(R.string.login_stat_role_access)
                 )
                 HeroStatChip(
                     modifier = Modifier.weight(1f),
-                    label = "On-chain receipts"
+                    label = stringResource(R.string.login_stat_onchain_receipts)
                 )
             }
         }
@@ -310,25 +313,25 @@ private fun SecurityInfoCard() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "System Access Notes",
+                text = stringResource(R.string.login_notes_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "• Admin users continue through a protected management portal.",
+                text = stringResource(R.string.login_note_admin),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "• Voters continue through a separate access path for QR check-in and voting.",
+                text = stringResource(R.string.login_note_voter),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "• Election actions are designed to support transparency, auditability, and controlled access.",
+                text = stringResource(R.string.login_note_audit),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
