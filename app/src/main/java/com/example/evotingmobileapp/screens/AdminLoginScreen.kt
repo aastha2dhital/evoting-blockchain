@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.BuildConfig
+import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
 
@@ -51,6 +52,9 @@ fun AdminLoginScreen(
 ) {
     var adminPin by rememberSaveable { mutableStateOf("") }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val adminErrorBlank = stringResource(R.string.admin_error_blank)
+    val adminErrorIncorrect = stringResource(R.string.admin_error_incorrect)
 
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(
@@ -95,7 +99,7 @@ fun AdminLoginScreen(
                         color = MaterialTheme.colorScheme.secondaryContainer
                     ) {
                         Text(
-                            text = "PROTECTED ACCESS",
+                            text = stringResource(R.string.admin_protected_badge),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
@@ -104,13 +108,13 @@ fun AdminLoginScreen(
                     }
 
                     Text(
-                        text = "Admin Access Code",
+                        text = stringResource(R.string.admin_access_code_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold
                     )
 
                     Text(
-                        text = "Only authorized election administrators or polling officers should continue. This prototype uses a controlled access code before wallet-based admin actions are enabled.",
+                        text = stringResource(R.string.admin_access_code_description),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -122,9 +126,9 @@ fun AdminLoginScreen(
                             errorMessage = null
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Enter admin PIN") },
+                        label = { Text(stringResource(R.string.admin_pin_label)) },
                         supportingText = {
-                            Text("Required to unlock the admin control portal.")
+                            Text(stringResource(R.string.admin_pin_supporting))
                         },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
@@ -153,11 +157,11 @@ fun AdminLoginScreen(
                         onClick = {
                             when {
                                 adminPin.isBlank() -> {
-                                    errorMessage = "Enter the admin access code to continue."
+                                    errorMessage = adminErrorBlank
                                 }
 
                                 adminPin != BuildConfig.ADMIN_ACCESS_PIN -> {
-                                    errorMessage = "Incorrect admin access code. Please try again."
+                                    errorMessage = adminErrorIncorrect
                                 }
 
                                 else -> {
@@ -177,7 +181,7 @@ fun AdminLoginScreen(
                         shape = RoundedCornerShape(20.dp)
                     ) {
                         Text(
-                            text = "Continue to Admin Dashboard",
+                            text = stringResource(R.string.admin_continue_dashboard),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -191,7 +195,7 @@ fun AdminLoginScreen(
                         shape = RoundedCornerShape(20.dp)
                     ) {
                         Text(
-                            text = "Back to Homepage",
+                            text = stringResource(R.string.action_back_to_homepage),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -202,7 +206,7 @@ fun AdminLoginScreen(
             AccessGuidanceCard()
 
             Text(
-                text = "In a production deployment, this step should be replaced by secure backend authentication, protected credential handling, and stronger role verification.",
+                text = stringResource(R.string.admin_footer),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -243,14 +247,14 @@ private fun AdminHeroSection() {
             }
 
             Text(
-                text = "Admin Control Portal",
+                text = stringResource(R.string.admin_portal_title),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center
             )
 
             Text(
-                text = "Protected access for election setup, voter check-in management, turnout visibility, and results control.",
+                text = stringResource(R.string.admin_portal_description),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -262,11 +266,11 @@ private fun AdminHeroSection() {
             ) {
                 AdminStatChip(
                     modifier = Modifier.weight(1f),
-                    label = "Election setup"
+                    label = stringResource(R.string.admin_chip_setup)
                 )
                 AdminStatChip(
                     modifier = Modifier.weight(1f),
-                    label = "QR check-in"
+                    label = stringResource(R.string.admin_chip_qr)
                 )
             }
         }
@@ -308,33 +312,28 @@ private fun AccessGuidanceCard() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "Admin Access Notes",
+                text = stringResource(R.string.admin_notes_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "• Use this portal only for authorized election administration tasks.",
+                text = stringResource(R.string.admin_note_authorized),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "• Voter access remains separated through its own portal and check-in flow.",
+                text = stringResource(R.string.admin_note_voter_separation),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Text(
-                text = "• Blockchain-backed actions improve transparency and auditability during the prototype workflow.",
+                text = stringResource(R.string.admin_note_blockchain),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
-}
-
-@Composable
-private fun SpacerHeight(height: Int) {
-    Spacer(modifier = Modifier.height(height.dp))
 }
