@@ -1,5 +1,6 @@
 package com.example.evotingmobileapp.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,18 +10,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -109,274 +115,465 @@ fun VotingScreen(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-            .navigationBarsPadding(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        SnackbarHost(hostState = snackBarHostState)
+    fun getVotingAccessSuccess(): Boolean {
+        val election = selectedElection ?: return false
+        if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) return false
+        return adminViewModel.validateVoting(
+            electionId = election.id,
+            voterId = voterWalletAddress
+        ).success
+    }
 
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
+    ) { innerPadding ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            VotingHeroCard()
+
+            WalletIdentityCard(
+                voterWalletAddress = voterWalletAddress,
+                hasVoterAccess = authUiState.canAccessVoter()
+            )
+
+            ElectionSelectionCard(
+                elections = elections,
+                selectedElectionId = selectedElectionId,
+                onElectionSelected = { electionId ->
+                    if (!isBusy) {
+                        selectedElectionId = electionId
+                        selectedCandidate = ""
+                    }
+                },
+                isBusy = isBusy
+            )
+
+            selectedElection?.let { election ->
+                ElectionVotingCard(
+                    electionTitle = election.title,
+                    electionId = election.id,
+                    electionStatus = getElectionStatusText(),
+                    votingAccessText = getVotingAccessText(),
+                    votingAccessSuccess = getVotingAccessSuccess(),
+                    candidates = election.candidates,
+                    selectedCandidate = selectedCandidate,
+                    onCandidateSelected = { candidate ->
+                        if (!isBusy) {
+                            selectedCandidate = candidate
+                        }
+                    },
+                    isBusy = isBusy,
+                    isSubmittingVote = isSubmittingVote,
+                    onSubmitVote = {
+                        if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar(
+                                    "No active voter session found. Please return to Voter Access."
+                                )
+                            }
+                            return@ElectionVotingCard
+                        }
+
+                        if (selectedCandidate.isBlank()) {
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar("Please select a candidate.")
+                            }
+                            return@ElectionVotingCard
+                        }
+
+                        isSubmittingVote = true
+
+                        coroutineScope.launch {
+                            val result = runCatching {
+                                withContext(Dispatchers.IO) {
+                                    adminViewModel.submitVote(
+                                        electionId = election.id,
+                                        voterId = voterWalletAddress,
+                                        candidateName = selectedCandidate
+                                    )
+                                }
+                            }
+
+                            isSubmittingVote = false
+
+                            val finalResult = result.getOrElse { exception ->
+                                VoteValidationResult(
+                                    success = false,
+                                    message = exception.message ?: "Blockchain vote failed."
+                                )
+                            }
+
+                            if (finalResult.success) {
+                                snackBarHostState.showSnackbar(
+                                    "Congratulations. Your vote was recorded successfully."
+                                )
+
+                                val transactionHash = finalResult.receipt?.transactionHash.orEmpty()
+
+                                if (transactionHash.isNotBlank()) {
+                                    navController.navigate(
+                                        AppRoutes.receiptRoute(transactionHash)
+                                    )
+                                } else {
+                                    navController.navigate(AppRoutes.RECEIPT)
+                                }
+                            } else {
+                                snackBarHostState.showSnackbar(finalResult.message)
+                            }
+                        }
+                    }
+                )
+            }
+
+            TextButton(
+                onClick = { navController.popBackStack() },
+                enabled = !isBusy
+            ) {
+                Text("Back")
+            }
+        }
+    }
+}
+
+@Composable
+private fun VotingHeroCard() {
+    val gradient = Brush.linearGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.secondary
+        )
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .background(brush = gradient)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Vote Now",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = "Complete your vote securely after QR check-in. This screen validates your voter session, election access, and final submission.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
+            )
+
+            PillColumn(
+                items = listOf("1. Wallet Verified", "2. Check-In Required", "3. Submit Vote")
+            )
+        }
+    }
+}
+
+@Composable
+private fun WalletIdentityCard(
+    voterWalletAddress: String,
+    hasVoterAccess: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            SectionTitle(
+                title = "Wallet Identity",
+                subtitle = "Your signed-in voter wallet is used for eligibility, check-in matching, and vote submission."
+            )
+
+            OutlinedTextField(
+                value = voterWalletAddress,
+                onValueChange = {},
+                label = { Text("Signed-In Voter Wallet") },
+                placeholder = { Text("0x...") },
+                singleLine = true,
+                readOnly = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = false
+            )
+
+            StatusInfoBadge(
+                text = if (hasVoterAccess && voterWalletAddress.isNotBlank()) {
+                    "Active voter session: ${shortenWalletAddress(voterWalletAddress)}"
+                } else {
+                    "No active voter wallet session found."
+                },
+                positive = hasVoterAccess && voterWalletAddress.isNotBlank()
+            )
+        }
+    }
+}
+
+@Composable
+private fun ElectionSelectionCard(
+    elections: List<com.example.evotingmobileapp.model.Election>,
+    selectedElectionId: String,
+    onElectionSelected: (String) -> Unit,
+    isBusy: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            SectionTitle(
+                title = "Select Election",
+                subtitle = "Choose the election you want to participate in."
+            )
+
+            if (elections.isEmpty()) {
+                StatusInfoBadge(
+                    text = "No elections have been created yet.",
+                    positive = false
+                )
+            } else {
+                elections.forEach { election ->
+                    SelectionCard(
+                        title = election.title,
+                        subtitle = "Election ID: ${election.id}",
+                        selected = selectedElectionId == election.id,
+                        onSelected = { onElectionSelected(election.id) },
+                        enabled = !isBusy
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ElectionVotingCard(
+    electionTitle: String,
+    electionId: String,
+    electionStatus: String,
+    votingAccessText: String,
+    votingAccessSuccess: Boolean,
+    candidates: List<String>,
+    selectedCandidate: String,
+    onCandidateSelected: (String) -> Unit,
+    isBusy: Boolean,
+    isSubmittingVote: Boolean,
+    onSubmitVote: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            SectionTitle(
+                title = electionTitle,
+                subtitle = "Election ready for review and candidate selection."
+            )
+
+            PillColumn(
+                items = listOf(
+                    "Status: $electionStatus",
+                    "Election ID: $electionId"
+                )
+            )
+
+            StatusInfoBadge(
+                text = votingAccessText,
+                positive = votingAccessSuccess
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            Text(
+                text = "Candidates",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            candidates.forEach { candidate ->
+                SelectionCard(
+                    title = candidate,
+                    subtitle = "Select this candidate for your final vote.",
+                    selected = selectedCandidate == candidate,
+                    onSelected = { onCandidateSelected(candidate) },
+                    enabled = !isBusy
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Button(
+                onClick = onSubmitVote,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                enabled = !isBusy,
+                shape = RoundedCornerShape(18.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+            ) {
+                Text(
+                    if (isSubmittingVote) "Submitting Vote..." else "Submit Vote",
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionTitle(
+    title: String,
+    subtitle: String
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         Text(
-            text = "Vote Now",
-            style = MaterialTheme.typography.headlineMedium,
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
-
         Text(
-            text = "This screen validates the signed-in voter session and submits the vote. QR check-in must be completed first by the polling officer or admin.",
+            text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+@Composable
+private fun SelectionCard(
+    title: String,
+    subtitle: String,
+    selected: Boolean,
+    onSelected: () -> Unit,
+    enabled: Boolean
+) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 4.dp else 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            RadioButton(
+                selected = selected,
+                onClick = onSelected,
+                enabled = enabled
+            )
+
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier.padding(start = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = "Wallet Identity",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor
                 )
-
                 Text(
-                    text = if (authUiState.canAccessVoter() && voterWalletAddress.isNotBlank()) {
-                        "Your signed-in voter wallet is locked as the identity for eligibility checks, check-in matching, and vote submission."
-                    } else {
-                        "No active voter wallet session was found. Go back to the voter access portal and continue again."
-                    },
-                    style = MaterialTheme.typography.bodyMedium
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = contentColor.copy(alpha = 0.82f)
                 )
-
-                OutlinedTextField(
-                    value = voterWalletAddress,
-                    onValueChange = {},
-                    label = { Text("Signed-In Voter Wallet") },
-                    placeholder = { Text("0x...") },
-                    singleLine = true,
-                    readOnly = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = false
-                )
-
-                if (voterWalletAddress.isNotBlank()) {
-                    Text(
-                        text = "Current voter wallet: ${shortenWalletAddress(voterWalletAddress)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
         }
+    }
+}
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+@Composable
+private fun StatusInfoBadge(
+    text: String,
+    positive: Boolean
+) {
+    val containerColor = if (positive) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.tertiaryContainer
+    }
+
+    val contentColor = if (positive) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onTertiaryContainer
+    }
+
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = containerColor
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = contentColor
+        )
+    }
+}
+
+@Composable
+private fun PillColumn(
+    items: List<String>
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        items.forEach { item ->
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
             ) {
                 Text(
-                    text = "Select Election",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    text = item,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.Bold
                 )
-
-                if (elections.isEmpty()) {
-                    Text(
-                        text = "No elections created yet. Please create an election first.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                } else {
-                    elections.forEach { election ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = selectedElectionId == election.id,
-                                    onClick = {
-                                        if (!isBusy) {
-                                            selectedElectionId = election.id
-                                            selectedCandidate = ""
-                                        }
-                                    },
-                                    enabled = !isBusy
-                                )
-
-                                Column(
-                                    modifier = Modifier.padding(start = 8.dp)
-                                ) {
-                                    Text(
-                                        text = election.title,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "Election ID: ${election.id}",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             }
-        }
-
-        selectedElection?.let { election ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Election Status",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Text(
-                        text = "Status: ${getElectionStatusText()}",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    Text(
-                        text = "Voting Access: ${getVotingAccessText()}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "Candidates",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    election.candidates.forEach { candidate ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                RadioButton(
-                                    selected = selectedCandidate == candidate,
-                                    onClick = {
-                                        if (!isBusy) {
-                                            selectedCandidate = candidate
-                                        }
-                                    },
-                                    enabled = !isBusy
-                                )
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                Text(
-                                    text = candidate,
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Button(
-                        onClick = {
-                            if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
-                                coroutineScope.launch {
-                                    snackBarHostState.showSnackbar(
-                                        "No active voter session found. Please return to Voter Access."
-                                    )
-                                }
-                                return@Button
-                            }
-
-                            if (selectedCandidate.isBlank()) {
-                                coroutineScope.launch {
-                                    snackBarHostState.showSnackbar("Please select a candidate")
-                                }
-                                return@Button
-                            }
-
-                            isSubmittingVote = true
-
-                            coroutineScope.launch {
-                                val result = runCatching {
-                                    withContext(Dispatchers.IO) {
-                                        adminViewModel.submitVote(
-                                            electionId = election.id,
-                                            voterId = voterWalletAddress,
-                                            candidateName = selectedCandidate
-                                        )
-                                    }
-                                }
-
-                                isSubmittingVote = false
-
-                                val finalResult = result.getOrElse { exception ->
-                                    VoteValidationResult(
-                                        success = false,
-                                        message = exception.message ?: "Blockchain vote failed."
-                                    )
-                                }
-
-                                snackBarHostState.showSnackbar(finalResult.message)
-
-                                if (finalResult.success) {
-                                    val transactionHash = finalResult.receipt?.transactionHash.orEmpty()
-
-                                    if (transactionHash.isNotBlank()) {
-                                        navController.navigate(
-                                            AppRoutes.receiptRoute(transactionHash)
-                                        )
-                                    } else {
-                                        navController.navigate(AppRoutes.RECEIPT)
-                                    }
-                                }
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isBusy
-                    ) {
-                        Text(if (isSubmittingVote) "Submitting Vote..." else "Submit Vote")
-                    }
-                }
-            }
-        }
-
-        TextButton(
-            onClick = { navController.popBackStack() },
-            enabled = !isBusy
-        ) {
-            Text("Back")
         }
     }
 }
