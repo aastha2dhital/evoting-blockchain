@@ -279,4 +279,25 @@
     <string name="results_vote_share">मत हिस्सा: %1$s</string>
     <string name="results_close_failed">निर्वाचन चाँडै बन्द गर्न असफल भयो।</string>
     <string name="results_back_button">पछाडि</string>
+
+    <!-- Blockchain Records Screen -->
+    <string name="blockchain_records_title">ब्लकचेन अभिलेखहरू</string>
+    <string name="blockchain_records_subtitle">App flow बाट सङ्कलन भएको contract connection status र vote receipt audit trail समीक्षा गर्नुहोस्।</string>
+    <string name="blockchain_records_pill_contract">Contract स्थिति</string>
+    <string name="blockchain_records_pill_receipts">Vote Receipts</string>
+    <string name="blockchain_records_pill_audit">Audit Trail</string>
+    <string name="blockchain_records_connection_status">Blockchain Connection Status</string>
+    <string name="blockchain_records_connected_audit_view">Connected Audit View</string>
+    <string name="blockchain_records_contract_summary">Contract Summary</string>
+    <string name="blockchain_records_latest_block">Latest Block</string>
+    <string name="blockchain_records_audit_trail_title">Vote Receipt Audit Trail</string>
+    <string name="blockchain_records_empty_title">अहिलेसम्म कुनै blockchain record छैन</string>
+    <string name="blockchain_records_empty_message">Vote सफलतापूर्वक submit भएपछि audit review का लागि receipt details यहाँ देखिनेछन्।</string>
+    <string name="blockchain_records_recorded">Recorded</string>
+    <string name="blockchain_records_election_id">निर्वाचन ID</string>
+    <string name="blockchain_records_voter_id">Voter ID</string>
+    <string name="blockchain_records_candidate_name">Candidate Name</string>
+    <string name="blockchain_records_timestamp">समय</string>
+    <string name="blockchain_records_transaction_hash">Transaction Hash</string>
+    <string name="blockchain_records_not_loaded">लोड भएको छैन</string>
 </resources>

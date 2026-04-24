@@ -279,4 +279,25 @@
     <string name="results_vote_share">Vote Share: %1$s</string>
     <string name="results_close_failed">Failed to close election early.</string>
     <string name="results_back_button">Back</string>
+
+    <!-- Blockchain Records Screen -->
+    <string name="blockchain_records_title">Blockchain Records</string>
+    <string name="blockchain_records_subtitle">Review the contract connection status and the vote receipt audit trail collected from the app flow.</string>
+    <string name="blockchain_records_pill_contract">Contract Status</string>
+    <string name="blockchain_records_pill_receipts">Vote Receipts</string>
+    <string name="blockchain_records_pill_audit">Audit Trail</string>
+    <string name="blockchain_records_connection_status">Blockchain Connection Status</string>
+    <string name="blockchain_records_connected_audit_view">Connected Audit View</string>
+    <string name="blockchain_records_contract_summary">Contract Summary</string>
+    <string name="blockchain_records_latest_block">Latest Block</string>
+    <string name="blockchain_records_audit_trail_title">Vote Receipt Audit Trail</string>
+    <string name="blockchain_records_empty_title">No blockchain records yet</string>
+    <string name="blockchain_records_empty_message">Once a vote is successfully submitted, its receipt details will appear here for audit review.</string>
+    <string name="blockchain_records_recorded">Recorded</string>
+    <string name="blockchain_records_election_id">Election ID</string>
+    <string name="blockchain_records_voter_id">Voter ID</string>
+    <string name="blockchain_records_candidate_name">Candidate Name</string>
+    <string name="blockchain_records_timestamp">Timestamp</string>
+    <string name="blockchain_records_transaction_hash">Transaction Hash</string>
+    <string name="blockchain_records_not_loaded">Not loaded</string>
 </resources>
