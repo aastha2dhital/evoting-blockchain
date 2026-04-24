@@ -105,7 +105,11 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
 
     implementation("org.conscrypt:conscrypt-android:2.5.2")
-    implementation("org.web3j:core:4.12.3")
+
+    // Use 4.12.0 for Android compatibility.
+    // 4.12.3 causes BigInteger runtime crash on some Android devices.
+    implementation("org.web3j:core:4.12.0")
+
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 

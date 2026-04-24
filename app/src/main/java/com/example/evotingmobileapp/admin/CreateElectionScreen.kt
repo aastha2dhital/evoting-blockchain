@@ -1,23 +1,31 @@
 package com.example.evotingmobileapp.admin
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,18 +35,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.evotingmobileapp.BuildConfig
 import com.example.evotingmobileapp.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun CreateElectionScreen(
@@ -51,7 +63,7 @@ fun CreateElectionScreen(
     var title by rememberSaveable { mutableStateOf("") }
     var candidatesInput by rememberSaveable { mutableStateOf("") }
     var eligibleVoterIdsInput by rememberSaveable { mutableStateOf("") }
-    var startDateTimeInput by rememberSaveable { mutableStateOf(formatDateTime(now + 5 * 60 * 1000)) }
+    var startDateTimeInput by rememberSaveable { mutableStateOf(formatDateTime(now - 60 * 1000)) }
     var endDateTimeInput by rememberSaveable { mutableStateOf(formatDateTime(now + 60 * 60 * 1000)) }
     var errorMessage by rememberSaveable { mutableStateOf("") }
     var isCreating by rememberSaveable { mutableStateOf(false) }
@@ -65,6 +77,9 @@ fun CreateElectionScreen(
     val endTimeBeforeStartError = stringResource(R.string.create_election_error_end_after_start)
     val genericCreateError = stringResource(R.string.create_election_error_generic)
 
+    val candidateCount = parseMultiValueInput(candidatesInput).size
+    val voterCount = parseMultiValueInput(eligibleVoterIdsInput).size
+
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = {
@@ -74,7 +89,7 @@ fun CreateElectionScreen(
             title = {
                 Text(
                     text = stringResource(R.string.create_election_success_title),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.ExtraBold
                 )
             },
             text = {
@@ -94,37 +109,38 @@ fun CreateElectionScreen(
     }
 
     Scaffold { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.create_election_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = stringResource(R.string.create_election_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f),
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
                 )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                HeroCard(
+                    candidateCount = candidateCount,
+                    voterCount = voterCount
+                )
+
+                FancySectionCard(
+                    step = "01",
+                    title = "Election identity",
+                    subtitle = "Name the election clearly so voters know exactly what they are voting for."
                 ) {
                     OutlinedTextField(
                         value = title,
@@ -132,66 +148,129 @@ fun CreateElectionScreen(
                             title = it
                             errorMessage = ""
                         },
-                        label = {
-                            Text(text = stringResource(R.string.create_election_label_title))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(R.string.create_election_placeholder_title))
-                        },
+                        label = { Text(text = stringResource(R.string.create_election_label_title)) },
+                        placeholder = { Text(text = "e.g. Student Council Election 2026") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isCreating
+                        enabled = !isCreating,
+                        shape = RoundedCornerShape(18.dp)
                     )
+                }
 
+                FancySectionCard(
+                    step = "02",
+                    title = "Candidates",
+                    subtitle = "Add candidates one per line. The system requires at least two candidates."
+                ) {
                     OutlinedTextField(
                         value = candidatesInput,
                         onValueChange = {
                             candidatesInput = it
                             errorMessage = ""
                         },
-                        label = {
-                            Text(text = stringResource(R.string.create_election_label_candidates))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(R.string.create_election_placeholder_candidates))
-                        },
+                        label = { Text(text = stringResource(R.string.create_election_label_candidates)) },
+                        placeholder = { Text(text = "Ram\nSita") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 4,
-                        enabled = !isCreating
+                        enabled = !isCreating,
+                        shape = RoundedCornerShape(18.dp)
                     )
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                candidatesInput = "Ram\nSita"
+                                errorMessage = ""
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !isCreating,
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = "Use demo candidates",
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        CountBadge(text = "$candidateCount added")
+                    }
+                }
+
+                FancySectionCard(
+                    step = "03",
+                    title = "Eligible voter whitelist",
+                    subtitle = "Only wallets added here can check in and vote in this election."
+                ) {
                     OutlinedTextField(
                         value = eligibleVoterIdsInput,
                         onValueChange = {
                             eligibleVoterIdsInput = it
                             errorMessage = ""
                         },
-                        label = {
-                            Text(text = stringResource(R.string.create_election_label_eligible_voters))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(R.string.create_election_placeholder_eligible_voters))
-                        },
+                        label = { Text(text = stringResource(R.string.create_election_label_eligible_voters)) },
+                        placeholder = { Text(text = "Tap + Use Demo Voter") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 4,
-                        enabled = !isCreating
+                        enabled = !isCreating,
+                        shape = RoundedCornerShape(18.dp)
                     )
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = {
+                                eligibleVoterIdsInput = appendUniqueValue(
+                                    input = eligibleVoterIdsInput,
+                                    value = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
+                                )
+                                errorMessage = ""
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !isCreating,
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = "+ Use Demo Voter",
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        CountBadge(text = "$voterCount voter")
+                    }
+
+                    InfoPanel(
+                        title = "Demo voter wallet",
+                        message = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
+                    )
+                }
+
+                FancySectionCard(
+                    step = "04",
+                    title = "Election schedule",
+                    subtitle = "Set the opening and closing time. Results stay locked until the election is closed."
+                ) {
                     OutlinedTextField(
                         value = startDateTimeInput,
                         onValueChange = {
                             startDateTimeInput = it
                             errorMessage = ""
                         },
-                        label = {
-                            Text(text = stringResource(R.string.create_election_label_start_time))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(R.string.create_election_placeholder_datetime))
-                        },
+                        label = { Text(text = stringResource(R.string.create_election_label_start_time)) },
+                        placeholder = { Text(text = stringResource(R.string.create_election_placeholder_datetime)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isCreating
+                        enabled = !isCreating,
+                        shape = RoundedCornerShape(18.dp)
                     )
 
                     OutlinedTextField(
@@ -200,48 +279,61 @@ fun CreateElectionScreen(
                             endDateTimeInput = it
                             errorMessage = ""
                         },
-                        label = {
-                            Text(text = stringResource(R.string.create_election_label_end_time))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(R.string.create_election_placeholder_datetime))
-                        },
+                        label = { Text(text = stringResource(R.string.create_election_label_end_time)) },
+                        placeholder = { Text(text = stringResource(R.string.create_election_placeholder_datetime)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !isCreating
+                        enabled = !isCreating,
+                        shape = RoundedCornerShape(18.dp)
                     )
 
-                    Text(
-                        text = stringResource(R.string.create_election_helper_text),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                val currentTime = System.currentTimeMillis()
+                                startDateTimeInput = formatDateTime(currentTime - 60 * 1000)
+                                endDateTimeInput = formatDateTime(currentTime + 60 * 60 * 1000)
+                                errorMessage = ""
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !isCreating,
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(text = "Start now")
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                val startMillis = parseDateTimeToMillis(startDateTimeInput)
+                                    ?: System.currentTimeMillis()
+                                endDateTimeInput = formatDateTime(startMillis + 3 * 60 * 60 * 1000)
+                                errorMessage = ""
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !isCreating,
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(text = "+3 hours")
+                        }
+                    }
+
+                    InfoPanel(
+                        title = "Date format",
+                        message = "Use dd/MM/yyyy hh:mm AM/PM, for example 24/04/2026 10:45 PM."
                     )
                 }
-            }
 
-            if (errorMessage.isNotBlank()) {
-                Text(
-                    text = errorMessage,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.weight(1f),
-                    enabled = !isCreating
-                ) {
-                    Text(text = stringResource(R.string.create_election_cancel_button))
+                if (errorMessage.isNotBlank()) {
+                    ErrorPanel(message = errorMessage)
                 }
 
-                Button(
-                    onClick = {
+                DeployCard(
+                    isCreating = isCreating,
+                    onCancel = { navController.popBackStack() },
+                    onCreate = {
                         val cleanedTitle = title.trim()
                         val cleanedCandidates = parseMultiValueInput(candidatesInput)
                         val cleanedEligibleVoters = parseMultiValueInput(eligibleVoterIdsInput)
@@ -285,7 +377,7 @@ fun CreateElectionScreen(
                                                 candidates = cleanedCandidates,
                                                 startTimeMillis = startTimeMillis,
                                                 endTimeMillis = endTimeMillis,
-                                                eligibleVoterIdsInput = eligibleVoterIdsInput
+                                                eligibleVoterIdsInput = cleanedEligibleVoters.joinToString("\n")
                                             )
                                         }
                                     }
@@ -300,19 +392,327 @@ fun CreateElectionScreen(
                                 }
                             }
                         }
-                    },
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroCard(
+    candidateCount: Int,
+    voterCount: Int
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                )
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+            ) {
+                Text(
+                    text = "ADMIN SETUP",
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+
+            Text(
+                text = "Create Election",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = "Build a blockchain election with candidates, whitelist, schedule and secure voting rules.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                HeroMetric(
+                    label = "Candidates",
+                    value = candidateCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+
+                HeroMetric(
+                    label = "Voters",
+                    value = voterCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun FancySectionCard(
+    step: String,
+    title: String,
+    subtitle: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = step,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                Column(
                     modifier = Modifier.weight(1f),
-                    enabled = !isCreating
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.75f)
+            )
+
+            content()
+        }
+    }
+}
+
+@Composable
+private fun CountBadge(text: String) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
+}
+
+@Composable
+private fun InfoPanel(
+    title: String,
+    message: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorPanel(message: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.errorContainer
+    ) {
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun DeployCard(
+    isCreating: Boolean,
+    onCancel: () -> Unit,
+    onCreate: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Ready to create on blockchain?",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = "This will deploy the election data and whitelist rules to your local blockchain prototype.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    enabled = !isCreating,
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text(text = stringResource(R.string.create_election_cancel_button))
+                }
+
+                Button(
+                    onClick = onCreate,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    enabled = !isCreating,
+                    shape = RoundedCornerShape(18.dp)
                 ) {
                     Text(
                         text = if (isCreating) {
                             stringResource(R.string.create_election_creating_button)
                         } else {
                             stringResource(R.string.create_election_create_button)
-                        }
+                        },
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
+        }
+    }
+}
+
+private fun appendUniqueValue(
+    input: String,
+    value: String
+): String {
+    val existingValues = parseMultiValueInput(input)
+
+    return if (existingValues.any { it.equals(value, ignoreCase = true) }) {
+        input
+    } else {
+        if (input.isBlank()) {
+            value
+        } else {
+            input.trimEnd() + "\n" + value
         }
     }
 }

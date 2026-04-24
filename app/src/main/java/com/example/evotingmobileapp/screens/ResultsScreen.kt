@@ -1,7 +1,9 @@
 package com.example.evotingmobileapp.screens
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,9 +16,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -33,10 +37,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.R
@@ -73,66 +80,65 @@ fun ResultsScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
                 .navigationBarsPadding(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = 18.dp,
+                bottom = 24.dp
+            ),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            ResultsHeroCard()
+            item {
+                ResultsHeroCard()
+            }
 
             if (elections.isEmpty()) {
-                EmptyResultsState()
-
-                navController?.let { controller ->
-                    ResultsBackButton(navController = controller)
+                item {
+                    EmptyResultsState()
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(elections) { election ->
-                        ElectionResultCard(
-                            election = election,
-                            turnoutCount = turnoutCounts[election.id],
-                            isClosing = closingElectionId == election.id,
-                            onCloseElectionEarly = {
-                                if (closingElectionId != null) {
-                                    return@ElectionResultCard
+                items(
+                    items = elections,
+                    key = { election -> election.id }
+                ) { election ->
+                    ElectionResultCard(
+                        election = election,
+                        turnoutCount = turnoutCounts[election.id],
+                        isClosing = closingElectionId == election.id,
+                        onCloseElectionEarly = {
+                            if (closingElectionId != null) return@ElectionResultCard
+
+                            closingElectionId = election.id
+
+                            coroutineScope.launch {
+                                val result = withContext(Dispatchers.IO) {
+                                    adminViewModel.closeElectionEarly(election.id)
                                 }
 
-                                closingElectionId = election.id
+                                closingElectionId = null
 
-                                coroutineScope.launch {
-                                    val result = withContext(Dispatchers.IO) {
-                                        adminViewModel.closeElectionEarly(election.id)
+                                val message = result.fold(
+                                    onSuccess = { successMessage -> successMessage },
+                                    onFailure = { exception ->
+                                        exception.message ?: closeElectionFailedMessage
                                     }
+                                )
 
-                                    closingElectionId = null
-
-                                    val message = result.fold(
-                                        onSuccess = { successMessage -> successMessage },
-                                        onFailure = { exception ->
-                                            exception.message ?: closeElectionFailedMessage
-                                        }
-                                    )
-
-                                    snackbarHostState.showSnackbar(message)
-                                }
+                                snackbarHostState.showSnackbar(message)
                             }
-                        )
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                        }
+                    )
                 }
+            }
 
-                navController?.let { controller ->
+            navController?.let { controller ->
+                item {
                     ResultsBackButton(navController = controller)
                 }
             }
@@ -151,7 +157,7 @@ private fun ResultsHeroCard() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
@@ -159,7 +165,7 @@ private fun ResultsHeroCard() {
             modifier = Modifier
                 .background(brush = gradient)
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
                 text = stringResource(R.string.results_title),
@@ -171,10 +177,11 @@ private fun ResultsHeroCard() {
             Text(
                 text = stringResource(R.string.results_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f),
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
             )
 
-            PillColumn(
+            HeroPillColumn(
                 items = listOf(
                     stringResource(R.string.results_pill_turnout),
                     stringResource(R.string.results_pill_locking),
@@ -189,14 +196,14 @@ private fun ResultsHeroCard() {
 private fun EmptyResultsState() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
@@ -223,7 +230,9 @@ private fun ElectionResultCard(
 ) {
     val formatter = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     val totalVotes = election.voteCounts.values.sum()
-    val statusText = if (election.isClosed()) {
+    val isClosed = election.isClosed()
+
+    val statusText = if (isClosed) {
         stringResource(R.string.results_status_closed)
     } else {
         stringResource(R.string.results_status_open)
@@ -233,7 +242,7 @@ private fun ElectionResultCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -241,42 +250,34 @@ private fun ElectionResultCard(
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            SectionTitle(
+            ElectionHeader(
                 title = election.title,
-                subtitle = stringResource(R.string.results_election_overview_subtitle)
+                subtitle = stringResource(R.string.results_election_overview_subtitle),
+                statusText = statusText,
+                isClosed = isClosed
             )
 
-            PillColumn(
-                items = listOf(
-                    stringResource(R.string.results_status_summary, statusText),
-                    stringResource(R.string.results_turnout_summary, turnoutText),
-                    stringResource(R.string.results_total_votes_summary, totalVotes)
-                )
+            SummaryPanel(
+                statusText = statusText,
+                turnoutText = turnoutText,
+                totalVotes = totalVotes
             )
 
-            ResultInfoRow(
-                label = stringResource(R.string.results_start_label),
-                value = formatter.format(Date(election.startTimeMillis))
+            DatePanel(
+                startText = formatter.format(Date(election.startTimeMillis)),
+                endText = formatter.format(Date(election.endTimeMillis))
             )
 
-            ResultInfoRow(
-                label = stringResource(R.string.results_end_label),
-                value = formatter.format(Date(election.endTimeMillis))
-            )
+            if (!isClosed) {
+                LockedResultsPanel()
 
-            if (!election.isClosed()) {
-                StatusSurface(
-                    text = stringResource(R.string.results_locked_until_close),
-                    positive = false
-                )
-
-                OutlinedButton(
+                Button(
                     onClick = onCloseElectionEarly,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .height(56.dp),
                     enabled = !isClosing,
                     shape = RoundedCornerShape(18.dp)
                 ) {
@@ -285,45 +286,38 @@ private fun ElectionResultCard(
                             stringResource(R.string.results_closing_button)
                         } else {
                             stringResource(R.string.results_close_early_button)
-                        }
+                        },
+                        fontWeight = FontWeight.Bold
                     )
                 }
+            } else {
+                FinalResultsPanel()
 
-                return@Column
-            }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            StatusSurface(
-                text = stringResource(R.string.results_final_available),
-                positive = true
-            )
-
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-            Text(
-                text = stringResource(R.string.results_candidate_results_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            election.candidates.forEachIndexed { index, candidate ->
-                val voteCount = election.voteCounts[candidate] ?: 0
-                val percentage = if (totalVotes > 0) {
-                    (voteCount.toFloat() / totalVotes.toFloat()) * 100f
-                } else {
-                    0f
-                }
-
-                CandidateResultCard(
-                    candidate = candidate,
-                    voteCount = voteCount,
-                    percentageText = String.format(Locale.getDefault(), "%.1f%%", percentage)
+                Text(
+                    text = stringResource(R.string.results_candidate_results_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
 
-                if (index != election.candidates.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 2.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    election.candidates.forEach { candidate ->
+                        val voteCount = election.voteCounts[candidate] ?: 0
+                        val percentage = if (totalVotes > 0) {
+                            (voteCount.toFloat() / totalVotes.toFloat()) * 100f
+                        } else {
+                            0f
+                        }
+
+                        CandidateResultCard(
+                            candidate = candidate,
+                            voteCount = voteCount,
+                            percentage = percentage
+                        )
+                    }
                 }
             }
         }
@@ -331,44 +325,234 @@ private fun ElectionResultCard(
 }
 
 @Composable
-private fun CandidateResultCard(
-    candidate: String,
-    voteCount: Int,
-    percentageText: String
+private fun ElectionHeader(
+    title: String,
+    subtitle: String,
+    statusText: String,
+    isClosed: Boolean
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            StatusChip(
+                text = statusText,
+                isClosed = isClosed
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryPanel(
+    statusText: String,
+    turnoutText: String,
+    totalVotes: Int
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        SummaryTile(
+            text = stringResource(R.string.results_status_summary, statusText)
+        )
+
+        SummaryTile(
+            text = stringResource(R.string.results_turnout_summary, turnoutText)
+        )
+
+        SummaryTile(
+            text = stringResource(R.string.results_total_votes_summary, totalVotes)
+        )
+    }
+}
+
+@Composable
+private fun SummaryTile(text: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun DatePanel(
+    startText: String,
+    endText: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            ResultInfoRow(
+                label = stringResource(R.string.results_start_label),
+                value = startText
+            )
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+            )
+
+            ResultInfoRow(
+                label = stringResource(R.string.results_end_label),
+                value = endText
+            )
+        }
+    }
+}
+
+@Composable
+private fun LockedResultsPanel() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.results_locked_until_close),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = stringResource(R.string.results_pill_locking),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.82f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun FinalResultsPanel() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer
+    ) {
+        Text(
+            text = stringResource(R.string.results_final_available),
+            modifier = Modifier.padding(18.dp),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun CandidateResultCard(
+    candidate: String,
+    voteCount: Int,
+    percentage: Float
+) {
+    val progress by animateFloatAsState(
+        targetValue = (percentage / 100f).coerceIn(0f, 1f),
+        label = "candidateResultProgress"
+    )
+
+    val percentageText = String.format(Locale.getDefault(), "%.1f%%", percentage)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
             ) {
                 Text(
                     text = candidate,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
+
                 Text(
                     text = stringResource(R.string.results_vote_count, voteCount),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
-            StatusSurface(
-                text = stringResource(R.string.results_vote_share, percentageText),
-                positive = true
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(9.dp)
+                    .clip(RoundedCornerShape(999.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surface
             )
+
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Text(
+                    text = stringResource(R.string.results_vote_share, percentageText),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
@@ -379,74 +563,57 @@ private fun ResultInfoRow(
     value: String
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.ExtraBold
         )
+
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium
         )
     }
 }
 
 @Composable
-private fun SectionTitle(
-    title: String,
-    subtitle: String
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun StatusSurface(
+private fun StatusChip(
     text: String,
-    positive: Boolean
+    isClosed: Boolean
 ) {
-    val containerColor = if (positive) {
+    val containerColor = if (isClosed) {
         MaterialTheme.colorScheme.secondaryContainer
     } else {
         MaterialTheme.colorScheme.tertiaryContainer
     }
 
-    val contentColor = if (positive) {
+    val contentColor = if (isClosed) {
         MaterialTheme.colorScheme.onSecondaryContainer
     } else {
         MaterialTheme.colorScheme.onTertiaryContainer
     }
 
     Surface(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(999.dp),
         color = containerColor
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = contentColor
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = contentColor,
+            fontWeight = FontWeight.ExtraBold
         )
     }
 }
 
 @Composable
-private fun PillColumn(
+private fun HeroPillColumn(
     items: List<String>
 ) {
     Column(
@@ -455,7 +622,7 @@ private fun PillColumn(
         items.forEach { item ->
             Surface(
                 shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
             ) {
                 Text(
                     text = item,
@@ -477,9 +644,12 @@ private fun ResultsBackButton(
         onClick = { navController.popBackStack() },
         modifier = Modifier
             .fillMaxWidth()
-            .height(54.dp),
+            .height(56.dp),
         shape = RoundedCornerShape(18.dp)
     ) {
-        Text(text = stringResource(R.string.results_back_button))
+        Text(
+            text = stringResource(R.string.results_back_button),
+            fontWeight = FontWeight.Bold
+        )
     }
 }

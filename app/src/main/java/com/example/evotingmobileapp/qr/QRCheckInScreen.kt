@@ -4,7 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -46,10 +49,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.evotingmobileapp.BuildConfig
 import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.model.Election
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
@@ -104,227 +110,529 @@ fun QRCheckInScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-                .navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f),
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
+                )
         ) {
-            QRCheckInHeroCard()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                QRHeroCard(
+                    electionCount = elections.size,
+                    selectedElectionTitle = selectedElection?.title,
+                    walletAddress = voterWalletAddress
+                )
 
-            ElectionSelectionCard(
-                elections = elections,
-                selectedElectionId = selectedElectionId,
-                onElectionSelected = { electionId ->
-                    if (!isCheckingIn) {
-                        selectedElectionId = electionId
+                FancyStepCard(
+                    step = "01",
+                    title = "Choose active election",
+                    subtitle = "Select the election before checking in a voter."
+                ) {
+                    if (elections.isEmpty()) {
+                        InfoPanel(
+                            title = "No elections available",
+                            message = stringResource(R.string.qr_check_in_no_elections),
+                            positive = false
+                        )
+                    } else {
+                        elections.forEach { election ->
+                            ElectionChoiceCard(
+                                election = election,
+                                selected = selectedElectionId == election.id,
+                                enabled = !isCheckingIn,
+                                onSelected = {
+                                    if (!isCheckingIn) selectedElectionId = election.id
+                                }
+                            )
+                        }
                     }
-                },
-                isBusy = isCheckingIn
-            )
-
-            ScanWalletCard(
-                voterWalletAddress = voterWalletAddress,
-                lastScannedValue = lastScannedValue,
-                isBusy = isCheckingIn,
-                onWalletAddressChanged = { voterWalletAddress = it },
-                onScanQr = {
-                    if (activity == null) {
-                        statusMessage = scannerNoActivityMessage
-                        statusIsPositive = false
-                        coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
-                        return@ScanWalletCard
-                    }
-
-                    val scanner = GmsBarcodeScanning.getClient(activity, scannerOptions)
-
-                    scanner.startScan()
-                        .addOnSuccessListener { barcode: Barcode ->
-                            val scannedValue = barcode.rawValue?.trim().orEmpty()
-
-                            if (scannedValue.isBlank()) {
-                                statusMessage = qrNoReadableValueMessage
-                                statusIsPositive = false
-                            } else {
-                                voterWalletAddress = scannedValue
-                                lastScannedValue = scannedValue
-                                statusMessage = qrScanSuccessMessage
-                                statusIsPositive = true
-                            }
-
-                            coroutineScope.launch {
-                                snackBarHostState.showSnackbar(statusMessage)
-                            }
-                        }
-                        .addOnCanceledListener {
-                            statusMessage = qrScanCanceledMessage
-                            statusIsPositive = false
-                            coroutineScope.launch {
-                                snackBarHostState.showSnackbar(statusMessage)
-                            }
-                        }
-                        .addOnFailureListener { exception: Exception ->
-                            statusMessage = exception.message ?: qrScanFailedMessage
-                            statusIsPositive = false
-                            coroutineScope.launch {
-                                snackBarHostState.showSnackbar(statusMessage)
-                            }
-                        }
                 }
-            )
 
-            CheckInSummaryCard(
-                selectedElectionTitle = selectedElection?.title,
-                voterWalletAddress = voterWalletAddress,
-                statusMessage = statusMessage,
-                statusIsPositive = statusIsPositive,
-                isCheckingIn = isCheckingIn,
-                onCheckIn = {
-                    val trimmedWalletAddress = voterWalletAddress.trim()
+                FancyStepCard(
+                    step = "02",
+                    title = "Scan or enter voter wallet",
+                    subtitle = "Use the camera for QR check-in or use the demo wallet for phone testing."
+                ) {
+                    OutlinedTextField(
+                        value = voterWalletAddress,
+                        onValueChange = {
+                            voterWalletAddress = it
+                            statusMessage = ""
+                        },
+                        label = { Text(text = stringResource(R.string.qr_check_in_wallet_label)) },
+                        placeholder = { Text(text = stringResource(R.string.qr_check_in_wallet_placeholder)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCheckingIn,
+                        shape = RoundedCornerShape(18.dp)
+                    )
 
-                    if (selectedElection == null) {
-                        statusMessage = selectElectionFirstMessage
-                        statusIsPositive = false
-                        coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
-                        return@CheckInSummaryCard
-                    }
-
-                    if (trimmedWalletAddress.isBlank()) {
-                        statusMessage = enterWalletFirstMessage
-                        statusIsPositive = false
-                        coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
-                        return@CheckInSummaryCard
-                    }
-
-                    isCheckingIn = true
-                    statusMessage = checkingBlockchainMessage
-                    statusIsPositive = false
-
-                    coroutineScope.launch {
-                        snackBarHostState.showSnackbar(statusMessage)
-
-                        val result = withContext(Dispatchers.IO) {
-                            adminViewModel.checkInVoterOnChain(
-                                context = context,
-                                electionId = selectedElection.id,
-                                voterWalletAddress = trimmedWalletAddress
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                voterWalletAddress = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
+                                lastScannedValue = ""
+                                statusMessage = "Demo voter wallet added."
+                                statusIsPositive = true
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(54.dp),
+                            enabled = !isCheckingIn,
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Text(
+                                text = "Use Demo Voter",
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
-                        isCheckingIn = false
-
-                        result.fold(
-                            onSuccess = { message ->
-                                statusMessage = message
-                                statusIsPositive = true
-                                snackBarHostState.showSnackbar(message)
+                        OutlinedButton(
+                            onClick = {
+                                voterWalletAddress = ""
+                                lastScannedValue = ""
+                                statusMessage = ""
                             },
-                            onFailure = { exception ->
-                                statusMessage = exception.message ?: blockchainFailedMessage
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(54.dp),
+                            enabled = !isCheckingIn,
+                            shape = RoundedCornerShape(18.dp)
+                        ) {
+                            Text(text = "Clear")
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            if (activity == null) {
+                                statusMessage = scannerNoActivityMessage
                                 statusIsPositive = false
-                                snackBarHostState.showSnackbar(statusMessage)
+                                coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
+                                return@Button
                             }
+
+                            val scanner = GmsBarcodeScanning.getClient(activity, scannerOptions)
+
+                            scanner.startScan()
+                                .addOnSuccessListener { barcode: Barcode ->
+                                    val scannedValue = barcode.rawValue?.trim().orEmpty()
+
+                                    if (scannedValue.isBlank()) {
+                                        statusMessage = qrNoReadableValueMessage
+                                        statusIsPositive = false
+                                    } else {
+                                        voterWalletAddress = scannedValue
+                                        lastScannedValue = scannedValue
+                                        statusMessage = qrScanSuccessMessage
+                                        statusIsPositive = true
+                                    }
+
+                                    coroutineScope.launch {
+                                        snackBarHostState.showSnackbar(statusMessage)
+                                    }
+                                }
+                                .addOnCanceledListener {
+                                    statusMessage = qrScanCanceledMessage
+                                    statusIsPositive = false
+                                    coroutineScope.launch {
+                                        snackBarHostState.showSnackbar(statusMessage)
+                                    }
+                                }
+                                .addOnFailureListener { exception: Exception ->
+                                    statusMessage = exception.message ?: qrScanFailedMessage
+                                    statusIsPositive = false
+                                    coroutineScope.launch {
+                                        snackBarHostState.showSnackbar(statusMessage)
+                                    }
+                                }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(58.dp),
+                        enabled = !isCheckingIn,
+                        shape = RoundedCornerShape(20.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.qr_check_in_scan_qr_button),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    if (lastScannedValue.isNotBlank()) {
+                        InfoPanel(
+                            title = "Last scanned wallet",
+                            message = shortenWalletAddress(lastScannedValue),
+                            positive = true
                         )
                     }
                 }
-            )
 
-            TextButton(
-                onClick = { navController.popBackStack() },
-                enabled = !isCheckingIn
-            ) {
-                Text(text = stringResource(R.string.qr_check_in_back_button))
+                CheckInActionCard(
+                    selectedElectionTitle = selectedElection?.title,
+                    voterWalletAddress = voterWalletAddress,
+                    statusMessage = statusMessage,
+                    statusIsPositive = statusIsPositive,
+                    isCheckingIn = isCheckingIn,
+                    onCheckIn = {
+                        val trimmedWalletAddress = voterWalletAddress.trim()
+
+                        if (selectedElection == null) {
+                            statusMessage = selectElectionFirstMessage
+                            statusIsPositive = false
+                            coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
+                            return@CheckInActionCard
+                        }
+
+                        if (trimmedWalletAddress.isBlank()) {
+                            statusMessage = enterWalletFirstMessage
+                            statusIsPositive = false
+                            coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
+                            return@CheckInActionCard
+                        }
+
+                        isCheckingIn = true
+                        statusMessage = checkingBlockchainMessage
+                        statusIsPositive = false
+
+                        coroutineScope.launch {
+                            snackBarHostState.showSnackbar(statusMessage)
+
+                            val result = withContext(Dispatchers.IO) {
+                                adminViewModel.checkInVoterOnChain(
+                                    context = context,
+                                    electionId = selectedElection.id,
+                                    voterWalletAddress = trimmedWalletAddress
+                                )
+                            }
+
+                            isCheckingIn = false
+
+                            result.fold(
+                                onSuccess = { message ->
+                                    statusMessage = message
+                                    statusIsPositive = true
+                                    snackBarHostState.showSnackbar(message)
+                                },
+                                onFailure = { exception ->
+                                    statusMessage = exception.message ?: blockchainFailedMessage
+                                    statusIsPositive = false
+                                    snackBarHostState.showSnackbar(statusMessage)
+                                }
+                            )
+                        }
+                    }
+                )
+
+                TextButton(
+                    onClick = { navController.popBackStack() },
+                    enabled = !isCheckingIn,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.qr_check_in_back_button),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
 
 @Composable
-private fun QRCheckInHeroCard() {
-    val gradient = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.secondary
-        )
-    )
-
+private fun QRHeroCard(
+    electionCount: Int,
+    selectedElectionTitle: String?,
+    walletAddress: String
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
     ) {
         Column(
             modifier = Modifier
-                .background(brush = gradient)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                )
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+            ) {
+                Text(
+                    text = "POLLING OFFICER MODE",
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+
             Text(
                 text = stringResource(R.string.qr_check_in_title),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.ExtraBold
             )
 
             Text(
-                text = stringResource(R.string.qr_check_in_subtitle),
+                text = "Verify voter attendance before voting. This keeps the flow secure: select election → scan wallet → mark checked-in.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
             )
 
-            PillColumn(
-                items = listOf(
-                    stringResource(R.string.qr_check_in_step_select_election),
-                    stringResource(R.string.qr_check_in_step_scan_wallet),
-                    stringResource(R.string.qr_check_in_step_complete_check_in)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                HeroMetric(
+                    label = "Elections",
+                    value = electionCount.toString(),
+                    modifier = Modifier.weight(1f)
                 )
+
+                HeroMetric(
+                    label = "Wallet",
+                    value = if (walletAddress.isBlank()) "—" else "Ready",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            InfoStrip(
+                text = selectedElectionTitle ?: "No election selected yet"
             )
         }
     }
 }
 
 @Composable
-private fun ElectionSelectionCard(
-    elections: List<com.example.evotingmobileapp.model.Election>,
-    selectedElectionId: String,
-    onElectionSelected: (String) -> Unit,
-    isBusy: Boolean
+private fun HeroMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoStrip(text: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.13f)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimary,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun FancyStepCard(
+    step: String,
+    title: String,
+    subtitle: String,
+    content: @Composable () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SectionTitle(
-                title = stringResource(R.string.qr_check_in_select_election_title),
-                subtitle = stringResource(R.string.qr_check_in_select_election_subtitle)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        text = step,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.75f)
             )
 
-            if (elections.isEmpty()) {
-                StatusInfoBadge(
-                    text = stringResource(R.string.qr_check_in_no_elections),
-                    positive = false,
-                    usePrimaryText = false
+            content()
+        }
+    }
+}
+
+@Composable
+private fun ElectionChoiceCard(
+    election: Election,
+    selected: Boolean,
+    enabled: Boolean,
+    onSelected: () -> Unit
+) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onSelected() },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 5.dp else 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(
+                selected = selected,
+                onClick = onSelected,
+                enabled = enabled
+            )
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = election.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
-            } else {
-                elections.forEach { election ->
-                    SelectionCard(
-                        title = election.title,
-                        subtitle = stringResource(R.string.qr_check_in_election_id, election.id),
-                        selected = selectedElectionId == election.id,
-                        onSelected = { onElectionSelected(election.id) },
-                        enabled = !isBusy
+
+                Text(
+                    text = stringResource(R.string.qr_check_in_election_id, election.id),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            if (selected) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(
+                        text = "Selected",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -333,65 +641,7 @@ private fun ElectionSelectionCard(
 }
 
 @Composable
-private fun ScanWalletCard(
-    voterWalletAddress: String,
-    lastScannedValue: String,
-    isBusy: Boolean,
-    onWalletAddressChanged: (String) -> Unit,
-    onScanQr: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            SectionTitle(
-                title = stringResource(R.string.qr_check_in_scan_wallet_title),
-                subtitle = stringResource(R.string.qr_check_in_scan_wallet_subtitle)
-            )
-
-            OutlinedTextField(
-                value = voterWalletAddress,
-                onValueChange = onWalletAddressChanged,
-                label = { Text(text = stringResource(R.string.qr_check_in_wallet_label)) },
-                placeholder = { Text(text = stringResource(R.string.qr_check_in_wallet_placeholder)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isBusy
-            )
-
-            if (lastScannedValue.isNotBlank()) {
-                StatusInfoBadge(
-                    text = stringResource(R.string.qr_check_in_last_scanned, lastScannedValue),
-                    positive = true,
-                    usePrimaryText = false
-                )
-            }
-
-            Button(
-                onClick = onScanQr,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !isBusy,
-                shape = RoundedCornerShape(18.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.qr_check_in_scan_qr_button),
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CheckInSummaryCard(
+private fun CheckInActionCard(
     selectedElectionTitle: String?,
     voterWalletAddress: String,
     statusMessage: String,
@@ -408,35 +658,47 @@ private fun CheckInSummaryCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SectionTitle(
-                title = stringResource(R.string.qr_check_in_complete_title),
-                subtitle = stringResource(R.string.qr_check_in_complete_subtitle)
+            Text(
+                text = "Complete voter check-in",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.ExtraBold
             )
 
-            PillColumn(
-                items = listOf(
-                    stringResource(R.string.qr_check_in_summary_election, electionText),
-                    stringResource(R.string.qr_check_in_summary_wallet, walletText)
-                )
+            Text(
+                text = "Confirm the selected election and wallet before writing the check-in to blockchain.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f)
             )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SummaryTile(
+                label = "Election",
+                value = electionText
+            )
+
+            SummaryTile(
+                label = "Wallet",
+                value = walletText
+            )
 
             Button(
                 onClick = onCheckIn,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(58.dp),
                 enabled = !isCheckingIn,
-                shape = RoundedCornerShape(18.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                shape = RoundedCornerShape(20.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
             ) {
                 Text(
                     text = if (isCheckingIn) {
@@ -444,15 +706,15 @@ private fun CheckInSummaryCard(
                     } else {
                         stringResource(R.string.qr_check_in_check_in_button)
                     },
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
             if (statusMessage.isNotBlank()) {
-                StatusInfoBadge(
-                    text = statusMessage,
-                    positive = statusIsPositive,
-                    usePrimaryText = true
+                StatusPanel(
+                    message = statusMessage,
+                    positive = statusIsPositive
                 )
             }
         }
@@ -460,89 +722,43 @@ private fun CheckInSummaryCard(
 }
 
 @Composable
-private fun SectionTitle(
-    title: String,
-    subtitle: String
+private fun SummaryTile(
+    label: String,
+    value: String
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun SelectionCard(
-    title: String,
-    subtitle: String,
-    selected: Boolean,
-    onSelected: () -> Unit,
-    enabled: Boolean
-) {
-    val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-
-    val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
-
-    Card(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 4.dp else 2.dp)
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            RadioButton(
-                selected = selected,
-                onClick = onSelected,
-                enabled = enabled
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
             )
 
-            Column(
-                modifier = Modifier.padding(start = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = contentColor
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.82f)
-                )
-            }
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
 
 @Composable
-private fun StatusInfoBadge(
-    text: String,
-    positive: Boolean,
-    usePrimaryText: Boolean
+private fun InfoPanel(
+    title: String,
+    message: String,
+    positive: Boolean
 ) {
     val containerColor = if (positive) {
         MaterialTheme.colorScheme.secondaryContainer
@@ -550,46 +766,66 @@ private fun StatusInfoBadge(
         MaterialTheme.colorScheme.tertiaryContainer
     }
 
-    val contentColor = when {
-        usePrimaryText && positive -> MaterialTheme.colorScheme.primary
-        positive -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onTertiaryContainer
+    val contentColor = if (positive) {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    } else {
+        MaterialTheme.colorScheme.onTertiaryContainer
     }
 
     Surface(
-        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
         color = containerColor
     ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = contentColor
-        )
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = contentColor,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.86f)
+            )
+        }
     }
 }
 
 @Composable
-private fun PillColumn(
-    items: List<String>
+private fun StatusPanel(
+    message: String,
+    positive: Boolean
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    val containerColor = if (positive) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.errorContainer
+    }
+
+    val contentColor = if (positive) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onErrorContainer
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = containerColor
     ) {
-        items.forEach { item ->
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
-            ) {
-                Text(
-                    text = item,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+        Text(
+            text = message,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = contentColor,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
