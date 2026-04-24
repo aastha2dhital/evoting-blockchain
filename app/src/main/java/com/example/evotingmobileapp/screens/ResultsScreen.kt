@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -37,9 +35,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.model.Election
 import java.text.SimpleDateFormat
@@ -68,6 +68,8 @@ fun ResultsScreen(
     val coroutineScope = rememberCoroutineScope()
     var closingElectionId by rememberSaveable { mutableStateOf<String?>(null) }
 
+    val closeElectionFailedMessage = stringResource(R.string.results_close_failed)
+
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
@@ -84,46 +86,54 @@ fun ResultsScreen(
 
             if (elections.isEmpty()) {
                 EmptyResultsState()
-                return@Column
-            }
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                items(elections) { election ->
-                    ElectionResultCard(
-                        election = election,
-                        turnoutCount = turnoutCounts[election.id],
-                        isClosing = closingElectionId == election.id,
-                        onCloseElectionEarly = {
-                            if (closingElectionId != null) {
-                                return@ElectionResultCard
-                            }
-
-                            closingElectionId = election.id
-
-                            coroutineScope.launch {
-                                val result = withContext(Dispatchers.IO) {
-                                    adminViewModel.closeElectionEarly(election.id)
+                navController?.let { controller ->
+                    ResultsBackButton(navController = controller)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(elections) { election ->
+                        ElectionResultCard(
+                            election = election,
+                            turnoutCount = turnoutCounts[election.id],
+                            isClosing = closingElectionId == election.id,
+                            onCloseElectionEarly = {
+                                if (closingElectionId != null) {
+                                    return@ElectionResultCard
                                 }
 
-                                closingElectionId = null
+                                closingElectionId = election.id
 
-                                val message = result.fold(
-                                    onSuccess = { successMessage -> successMessage },
-                                    onFailure = { exception ->
-                                        exception.message ?: "Failed to close election early."
+                                coroutineScope.launch {
+                                    val result = withContext(Dispatchers.IO) {
+                                        adminViewModel.closeElectionEarly(election.id)
                                     }
-                                )
 
-                                snackbarHostState.showSnackbar(message)
+                                    closingElectionId = null
+
+                                    val message = result.fold(
+                                        onSuccess = { successMessage -> successMessage },
+                                        onFailure = { exception ->
+                                            exception.message ?: closeElectionFailedMessage
+                                        }
+                                    )
+
+                                    snackbarHostState.showSnackbar(message)
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
 
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                navController?.let { controller ->
+                    ResultsBackButton(navController = controller)
                 }
             }
         }
@@ -152,20 +162,24 @@ private fun ResultsHeroCard() {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "Election Results",
+                text = stringResource(R.string.results_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.ExtraBold
             )
 
             Text(
-                text = "Review turnout, election status, and final vote totals. Results are displayed only after closure, and admins can close elections early when needed.",
+                text = stringResource(R.string.results_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
             )
 
             PillColumn(
-                items = listOf("Turnout Monitoring", "Result Locking", "Admin Close Control")
+                items = listOf(
+                    stringResource(R.string.results_pill_turnout),
+                    stringResource(R.string.results_pill_locking),
+                    stringResource(R.string.results_pill_admin_close)
+                )
             )
         }
     }
@@ -186,13 +200,13 @@ private fun EmptyResultsState() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "No elections created yet",
+                text = stringResource(R.string.results_empty_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "Create an election first to review turnout and final results here.",
+                text = stringResource(R.string.results_empty_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -209,7 +223,13 @@ private fun ElectionResultCard(
 ) {
     val formatter = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     val totalVotes = election.voteCounts.values.sum()
-    val statusText = if (election.isClosed()) "Closed" else "Open"
+    val statusText = if (election.isClosed()) {
+        stringResource(R.string.results_status_closed)
+    } else {
+        stringResource(R.string.results_status_open)
+    }
+
+    val turnoutText = turnoutCount?.toString() ?: stringResource(R.string.results_loading)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -225,30 +245,30 @@ private fun ElectionResultCard(
         ) {
             SectionTitle(
                 title = election.title,
-                subtitle = "Election results overview and turnout status."
+                subtitle = stringResource(R.string.results_election_overview_subtitle)
             )
 
             PillColumn(
                 items = listOf(
-                    "Status: $statusText",
-                    "Turnout: ${turnoutCount?.toString() ?: "Loading..."}",
-                    "Total Votes: $totalVotes"
+                    stringResource(R.string.results_status_summary, statusText),
+                    stringResource(R.string.results_turnout_summary, turnoutText),
+                    stringResource(R.string.results_total_votes_summary, totalVotes)
                 )
             )
 
             ResultInfoRow(
-                label = "Start",
+                label = stringResource(R.string.results_start_label),
                 value = formatter.format(Date(election.startTimeMillis))
             )
 
             ResultInfoRow(
-                label = "End",
+                label = stringResource(R.string.results_end_label),
                 value = formatter.format(Date(election.endTimeMillis))
             )
 
             if (!election.isClosed()) {
                 StatusSurface(
-                    text = "Results are locked until this election closes.",
+                    text = stringResource(R.string.results_locked_until_close),
                     positive = false
                 )
 
@@ -261,7 +281,11 @@ private fun ElectionResultCard(
                     shape = RoundedCornerShape(18.dp)
                 ) {
                     Text(
-                        text = if (isClosing) "Closing Election..." else "Close Election Early"
+                        text = if (isClosing) {
+                            stringResource(R.string.results_closing_button)
+                        } else {
+                            stringResource(R.string.results_close_early_button)
+                        }
                     )
                 }
 
@@ -269,14 +293,14 @@ private fun ElectionResultCard(
             }
 
             StatusSurface(
-                text = "Final results are now available for review.",
+                text = stringResource(R.string.results_final_available),
                 positive = true
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Text(
-                text = "Candidate Results",
+                text = stringResource(R.string.results_candidate_results_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -284,7 +308,7 @@ private fun ElectionResultCard(
             election.candidates.forEachIndexed { index, candidate ->
                 val voteCount = election.voteCounts[candidate] ?: 0
                 val percentage = if (totalVotes > 0) {
-                    ((voteCount.toFloat() / totalVotes.toFloat()) * 100f)
+                    (voteCount.toFloat() / totalVotes.toFloat()) * 100f
                 } else {
                     0f
                 }
@@ -334,7 +358,7 @@ private fun CandidateResultCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "$voteCount votes",
+                    text = stringResource(R.string.results_vote_count, voteCount),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
@@ -342,7 +366,7 @@ private fun CandidateResultCard(
             }
 
             StatusSurface(
-                text = "Vote Share: $percentageText",
+                text = stringResource(R.string.results_vote_share, percentageText),
                 positive = true
             )
         }
@@ -442,5 +466,20 @@ private fun PillColumn(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ResultsBackButton(
+    navController: NavHostController
+) {
+    OutlinedButton(
+        onClick = { navController.popBackStack() },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(54.dp),
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Text(text = stringResource(R.string.results_back_button))
     }
 }

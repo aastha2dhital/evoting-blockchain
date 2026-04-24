@@ -174,7 +174,6 @@
     <string name="receipt_step_enter_hash">१. Hash प्रविष्ट गर्नुहोस्</string>
     <string name="receipt_step_verify_on_chain">२. On-Chain verify गर्नुहोस्</string>
     <string name="receipt_step_review_receipt">३. रसिद समीक्षा गर्नुहोस्</string>
-
     <string name="receipt_verify_hash_title">Transaction Hash बाट verify गर्नुहोस्</string>
     <string name="receipt_verify_hash_subtitle">मत blockchain मा छ कि छैन पुष्टि गर्न blockchain transaction hash प्रविष्ट गर्नुहोस्।</string>
     <string name="receipt_transaction_hash_label">Transaction Hash</string>
@@ -185,10 +184,8 @@
     <string name="receipt_verifying_button">Verify हुँदैछ...</string>
     <string name="receipt_back_button">पछाडि</string>
     <string name="receipt_done_button">ठीक छ</string>
-
     <string name="receipt_error_enter_hash">Verify गर्नु अघि transaction hash प्रविष्ट गर्नुहोस्।</string>
     <string name="receipt_verifying_blockchain">Blockchain मा transaction verify हुँदैछ...</string>
-
     <string name="receipt_verification_success_title">Verification सफल भयो</string>
     <string name="receipt_verification_success_message">यो transaction blockchain मा फेला पर्‍यो।</string>
     <string name="receipt_matched_local_title">मिल्दो local receipt</string>
@@ -199,7 +196,6 @@
     <string name="receipt_latest_saved_message">तल आफ्नो पछिल्लो local receipt समीक्षा गर्नुहोस्। यसलाई on-chain confirm गर्न माथिको transaction verification प्रयोग गर्नुहोस्।</string>
     <string name="receipt_latest_local_title">पछिल्लो local receipt</string>
     <string name="receipt_latest_local_subtitle">यो app मा saved पछिल्लो receipt हो। यो review का लागि उपयोगी छ, तर on-chain verification जस्तै होइन।</string>
-
     <string name="receipt_verified_on_chain_title">Verified On-Chain Transaction</string>
     <string name="receipt_verified_on_chain_subtitle">यी values blockchain verification result बाट आएका हुन्, केवल local app storage बाट होइन।</string>
     <string name="receipt_empty_title">कुनै receipt उपलब्ध छैन</string>
@@ -207,7 +203,6 @@
     <string name="receipt_no_local_match_title">Local receipt match छैन</string>
     <string name="receipt_no_local_match_message">Blockchain transaction सफलतापूर्वक verify भयो, तर current local receipt list मा matching receipt भेटिएन।</string>
     <string name="receipt_verification_failed_title">On-chain verification असफल भयो</string>
-
     <string name="receipt_label_election_id">निर्वाचन ID</string>
     <string name="receipt_label_election_title">निर्वाचन शीर्षक</string>
     <string name="receipt_label_wallet_address">Wallet Address</string>
@@ -229,38 +224,59 @@
     <string name="voting_step_wallet_verified">१. Wallet verify भयो</string>
     <string name="voting_step_check_in_required">२. Check-In आवश्यक</string>
     <string name="voting_step_submit_vote">३. Vote submit गर्नुहोस्</string>
-
     <string name="voting_wallet_identity_title">Wallet पहिचान</string>
     <string name="voting_wallet_identity_subtitle">तपाईंको signed-in voter wallet eligibility, check-in matching, र vote submission का लागि प्रयोग हुन्छ।</string>
     <string name="voting_signed_in_wallet_label">Signed-In Voter Wallet</string>
     <string name="voting_wallet_placeholder">0x...</string>
     <string name="voting_active_session">Active voter session: %1$s</string>
     <string name="voting_no_active_wallet_session">Active voter wallet session भेटिएन।</string>
-
     <string name="voting_select_election_title">निर्वाचन छान्नुहोस्</string>
     <string name="voting_select_election_subtitle">तपाईं सहभागी हुन चाहेको निर्वाचन छान्नुहोस्।</string>
     <string name="voting_no_elections">अहिलेसम्म कुनै निर्वाचन सिर्जना गरिएको छैन।</string>
     <string name="voting_election_id">निर्वाचन ID: %1$s</string>
     <string name="voting_election_review_subtitle">निर्वाचन review र candidate selection का लागि तयार छ।</string>
     <string name="voting_status_summary">स्थिति: %1$s</string>
-
     <string name="voting_candidates_title">उम्मेदवारहरू</string>
     <string name="voting_candidate_select_subtitle">आफ्नो final vote का लागि यो उम्मेदवार छान्नुहोस्।</string>
     <string name="voting_submit_vote_button">Vote submit गर्नुहोस्</string>
     <string name="voting_submitting_vote_button">Vote submit हुँदैछ...</string>
     <string name="voting_back_button">पछाडि</string>
-
     <string name="voting_status_no_election_selected">निर्वाचन छानिएको छैन</string>
     <string name="voting_status_closed">बन्द</string>
     <string name="voting_status_active">सक्रिय</string>
     <string name="voting_status_not_started">सुरु भएको छैन</string>
-
     <string name="voting_access_select_election_first">कृपया पहिले निर्वाचन छान्नुहोस्।</string>
     <string name="voting_access_no_active_session">Active voter session भेटिएन। पहिले voter access portal मा फर्कनुहोस्।</string>
     <string name="voting_access_ready">योग्य र checked-in। मतदान गर्न तयार।</string>
-
     <string name="voting_error_no_active_session">Active voter session भेटिएन। कृपया Voter Access मा फर्कनुहोस्।</string>
     <string name="voting_error_select_candidate">कृपया उम्मेदवार छान्नुहोस्।</string>
     <string name="voting_error_blockchain_vote_failed">Blockchain vote असफल भयो।</string>
     <string name="voting_success_vote_recorded">बधाई छ। तपाईंको vote सफलतापूर्वक record भयो।</string>
+
+    <!-- Results Screen -->
+    <string name="results_title">निर्वाचन नतिजा</string>
+    <string name="results_subtitle">सहभागिता, निर्वाचन स्थिति, र अन्तिम मत गणना समीक्षा गर्नुहोस्। निर्वाचन बन्द भएपछि मात्र नतिजा देखाइन्छ, र आवश्यक पर्दा प्रशासकले निर्वाचन चाँडै बन्द गर्न सक्छन्।</string>
+    <string name="results_pill_turnout">सहभागिता निगरानी</string>
+    <string name="results_pill_locking">नतिजा लकिङ</string>
+    <string name="results_pill_admin_close">प्रशासक बन्द नियन्त्रण</string>
+    <string name="results_empty_title">अहिलेसम्म कुनै निर्वाचन सिर्जना गरिएको छैन</string>
+    <string name="results_empty_message">यहाँ सहभागिता र अन्तिम नतिजा समीक्षा गर्न पहिले निर्वाचन सिर्जना गर्नुहोस्।</string>
+    <string name="results_election_overview_subtitle">निर्वाचन नतिजा अवलोकन र सहभागिता स्थिति।</string>
+    <string name="results_status_closed">बन्द</string>
+    <string name="results_status_open">खुला</string>
+    <string name="results_loading">लोड हुँदैछ...</string>
+    <string name="results_status_summary">स्थिति: %1$s</string>
+    <string name="results_turnout_summary">सहभागिता: %1$s</string>
+    <string name="results_total_votes_summary">कुल मत: %1$d</string>
+    <string name="results_start_label">सुरु</string>
+    <string name="results_end_label">अन्त्य</string>
+    <string name="results_locked_until_close">यो निर्वाचन बन्द नभएसम्म नतिजा लक गरिएको छ।</string>
+    <string name="results_closing_button">निर्वाचन बन्द हुँदैछ...</string>
+    <string name="results_close_early_button">निर्वाचन चाँडै बन्द गर्नुहोस्</string>
+    <string name="results_final_available">अन्तिम नतिजा अब समीक्षाका लागि उपलब्ध छ।</string>
+    <string name="results_candidate_results_title">उम्मेदवार नतिजा</string>
+    <string name="results_vote_count">%1$d मत</string>
+    <string name="results_vote_share">मत हिस्सा: %1$s</string>
+    <string name="results_close_failed">निर्वाचन चाँडै बन्द गर्न असफल भयो।</string>
+    <string name="results_back_button">पछाडि</string>
 </resources>
