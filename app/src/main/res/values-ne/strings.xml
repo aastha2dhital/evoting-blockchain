@@ -67,26 +67,19 @@
     <!-- Create Election Screen -->
     <string name="create_election_title">निर्वाचन सिर्जना गर्नुहोस्</string>
     <string name="create_election_subtitle">निर्वाचन विवरण, उम्मेदवार सूची, समयतालिका, र योग्य मतदाता सूची सेट गर्नुहोस्।</string>
-
     <string name="create_election_label_title">निर्वाचन शीर्षक</string>
     <string name="create_election_placeholder_title">विद्यार्थी परिषद निर्वाचन २०२६</string>
-
     <string name="create_election_label_candidates">उम्मेदवारहरू</string>
     <string name="create_election_placeholder_candidates">उम्मेदवारको नाम comma वा नयाँ लाइनमा राख्नुहोस्\nउदाहरण:\nAlice\nBob\nCharlie</string>
-
     <string name="create_election_label_eligible_voters">योग्य मतदाताका wallet address / whitelist</string>
     <string name="create_election_placeholder_eligible_voters">Wallet address हरू comma वा नयाँ लाइनमा राख्नुहोस्\nउदाहरण:\n0x70997970c51812dc3a010c7d01b50e0d17dc79c8\n0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc</string>
-
     <string name="create_election_label_start_time">सुरु मिति र समय</string>
     <string name="create_election_label_end_time">अन्त्य मिति र समय</string>
     <string name="create_election_placeholder_datetime">dd/MM/yyyy hh:mm a</string>
-
     <string name="create_election_helper_text">Whitelist का लागि Ethereum wallet address प्रयोग गर्नुहोस्।\nयो date/time format प्रयोग गर्नुहोस्: dd/MM/yyyy hh:mm a\nउदाहरण: 29/03/2026 08:30 PM</string>
-
     <string name="create_election_cancel_button">रद्द गर्नुहोस्</string>
     <string name="create_election_create_button">सिर्जना गर्नुहोस्</string>
     <string name="create_election_creating_button">सिर्जना हुँदैछ...</string>
-
     <string name="create_election_error_title_required">कृपया निर्वाचन शीर्षक राख्नुहोस्।</string>
     <string name="create_election_error_candidates_required">कृपया कम्तीमा २ जना उम्मेदवार राख्नुहोस्।</string>
     <string name="create_election_error_eligible_voters_required">कृपया कम्तीमा १ जना योग्य मतदाताको wallet address राख्नुहोस्।</string>
@@ -94,10 +87,44 @@
     <string name="create_election_error_invalid_end_time">अन्त्य मिति/समय अमान्य छ। Format प्रयोग गर्नुहोस्: dd/MM/yyyy hh:mm a</string>
     <string name="create_election_error_end_after_start">अन्त्य समय सुरु समयभन्दा पछाडि हुनुपर्छ।</string>
     <string name="create_election_error_generic">Blockchain मा निर्वाचन सिर्जना गर्न असफल भयो।</string>
-
     <string name="create_election_success_title">निर्वाचन सफलतापूर्वक सिर्जना भयो</string>
     <string name="create_election_success_message">निर्वाचन सिर्जना भइसकेको छ र योग्य मतदाताका लागि तयार गरिएको छ।</string>
     <string name="create_election_success_button">ठीक छ</string>
+
+    <!-- QR Check-In Screen -->
+    <string name="qr_check_in_title">QR चेक-इन</string>
+    <string name="qr_check_in_subtitle">निर्वाचन छान्नुहोस्, मतदाताको QR स्क्यान गर्नुहोस्, wallet address पुष्टि गर्नुहोस्, र blockchain-backed voter check-in पूरा गर्नुहोस्।</string>
+    <string name="qr_check_in_step_select_election">१. निर्वाचन छान्नुहोस्</string>
+    <string name="qr_check_in_step_scan_wallet">२. Wallet QR स्क्यान गर्नुहोस्</string>
+    <string name="qr_check_in_step_complete_check_in">३. चेक-इन पूरा गर्नुहोस्</string>
+    <string name="qr_check_in_select_election_title">निर्वाचन छान्नुहोस्</string>
+    <string name="qr_check_in_select_election_subtitle">यस मतदाता check-in का लागि निर्वाचन छान्नुहोस्।</string>
+    <string name="qr_check_in_no_elections">अहिलेसम्म कुनै निर्वाचन उपलब्ध छैन। पहिले निर्वाचन सिर्जना गर्नुहोस्।</string>
+    <string name="qr_check_in_election_id">निर्वाचन ID: %1$s</string>
+    <string name="qr_check_in_scan_wallet_title">मतदाता QR स्क्यान गर्नुहोस्</string>
+    <string name="qr_check_in_scan_wallet_subtitle">QR scanner प्रयोग गर्नुहोस् वा मतदाताको wallet address manually राख्नुहोस्।</string>
+    <string name="qr_check_in_wallet_label">मतदाता Wallet Address</string>
+    <string name="qr_check_in_wallet_placeholder">QR स्क्यान गर्नुहोस् वा मतदाताको wallet address टाइप गर्नुहोस्</string>
+    <string name="qr_check_in_last_scanned">अन्तिम स्क्यान गरिएको value: %1$s</string>
+    <string name="qr_check_in_scan_qr_button">QR Code स्क्यान गर्नुहोस्</string>
+    <string name="qr_check_in_complete_title">चेक-इन पूरा गर्नुहोस्</string>
+    <string name="qr_check_in_complete_subtitle">Final check-in अघि छानिएको निर्वाचन र स्क्यान गरिएको मतदाता wallet review गर्नुहोस्।</string>
+    <string name="qr_check_in_summary_election">निर्वाचन: %1$s</string>
+    <string name="qr_check_in_summary_wallet">Wallet: %1$s</string>
+    <string name="qr_check_in_not_selected">छानिएको छैन</string>
+    <string name="qr_check_in_not_entered">प्रविष्ट गरिएको छैन</string>
+    <string name="qr_check_in_checking_button">चेक-इन हुँदैछ...</string>
+    <string name="qr_check_in_check_in_button">मतदाता चेक-इन गर्नुहोस्</string>
+    <string name="qr_check_in_back_button">पछाडि</string>
+    <string name="qr_check_in_scanner_no_activity">यो screen activity सँग attached नभएकाले scanner सुरु हुन सकेन।</string>
+    <string name="qr_check_in_error_no_readable_value">QR code स्क्यान भयो, तर readable value प्राप्त भएन।</string>
+    <string name="qr_check_in_scan_success">QR scan सफल भयो। मतदाताको wallet address check-in का लागि loaded भयो।</string>
+    <string name="qr_check_in_scan_canceled">QR scan रद्द गरियो।</string>
+    <string name="qr_check_in_scan_failed">QR scanning असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।</string>
+    <string name="qr_check_in_error_select_election">कृपया पहिले निर्वाचन छान्नुहोस्।</string>
+    <string name="qr_check_in_error_enter_wallet">कृपया पहिले मतदाताको wallet address स्क्यान वा प्रविष्ट गर्नुहोस्।</string>
+    <string name="qr_check_in_checking_blockchain">Blockchain मा मतदाता check-in हुँदैछ...</string>
+    <string name="qr_check_in_error_blockchain_failed">Blockchain check-in असफल भयो।</string>
 
     <!-- Dashboard -->
     <string name="dashboard_admin_title">प्रशासक नियन्त्रण केन्द्र</string>

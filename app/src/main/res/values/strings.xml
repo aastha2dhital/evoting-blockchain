@@ -67,26 +67,19 @@
     <!-- Create Election Screen -->
     <string name="create_election_title">Create Election</string>
     <string name="create_election_subtitle">Set up the election details, candidate list, schedule, and eligible voter whitelist.</string>
-
     <string name="create_election_label_title">Election title</string>
     <string name="create_election_placeholder_title">Student Council Election 2026</string>
-
     <string name="create_election_label_candidates">Candidates</string>
     <string name="create_election_placeholder_candidates">Enter candidate names separated by commas or new lines\nExample:\nAlice\nBob\nCharlie</string>
-
     <string name="create_election_label_eligible_voters">Eligible voter wallet addresses / whitelist</string>
     <string name="create_election_placeholder_eligible_voters">Enter wallet addresses separated by commas or new lines\nExample:\n0x70997970c51812dc3a010c7d01b50e0d17dc79c8\n0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc</string>
-
     <string name="create_election_label_start_time">Start date &amp; time</string>
     <string name="create_election_label_end_time">End date &amp; time</string>
     <string name="create_election_placeholder_datetime">dd/MM/yyyy hh:mm a</string>
-
     <string name="create_election_helper_text">Use Ethereum wallet addresses for the whitelist.\nUse this date/time format: dd/MM/yyyy hh:mm a\nExample: 29/03/2026 08:30 PM</string>
-
     <string name="create_election_cancel_button">Cancel</string>
     <string name="create_election_create_button">Create</string>
     <string name="create_election_creating_button">Creating...</string>
-
     <string name="create_election_error_title_required">Please enter an election title.</string>
     <string name="create_election_error_candidates_required">Please enter at least 2 candidates.</string>
     <string name="create_election_error_eligible_voters_required">Please enter at least 1 eligible voter wallet address.</string>
@@ -94,10 +87,44 @@
     <string name="create_election_error_invalid_end_time">Invalid end date/time. Use format: dd/MM/yyyy hh:mm a</string>
     <string name="create_election_error_end_after_start">End time must be later than start time.</string>
     <string name="create_election_error_generic">Failed to create election on blockchain.</string>
-
     <string name="create_election_success_title">Election created successfully</string>
     <string name="create_election_success_message">The election has been created and prepared for eligible voters.</string>
     <string name="create_election_success_button">Done</string>
+
+    <!-- QR Check-In Screen -->
+    <string name="qr_check_in_title">QR Check-In</string>
+    <string name="qr_check_in_subtitle">Select the election, scan the voter QR, confirm the wallet address, and complete blockchain-backed voter check-in.</string>
+    <string name="qr_check_in_step_select_election">1. Select Election</string>
+    <string name="qr_check_in_step_scan_wallet">2. Scan Wallet QR</string>
+    <string name="qr_check_in_step_complete_check_in">3. Complete Check-In</string>
+    <string name="qr_check_in_select_election_title">Select Election</string>
+    <string name="qr_check_in_select_election_subtitle">Choose the election for this voter check-in.</string>
+    <string name="qr_check_in_no_elections">No elections available yet. Create an election first.</string>
+    <string name="qr_check_in_election_id">Election ID: %1$s</string>
+    <string name="qr_check_in_scan_wallet_title">Scan Voter QR</string>
+    <string name="qr_check_in_scan_wallet_subtitle">Use the QR scanner or enter the voter wallet address manually.</string>
+    <string name="qr_check_in_wallet_label">Voter Wallet Address</string>
+    <string name="qr_check_in_wallet_placeholder">Scan QR or type voter wallet address</string>
+    <string name="qr_check_in_last_scanned">Last scanned value: %1$s</string>
+    <string name="qr_check_in_scan_qr_button">Scan QR Code</string>
+    <string name="qr_check_in_complete_title">Complete Check-In</string>
+    <string name="qr_check_in_complete_subtitle">Review the selected election and scanned voter wallet before final check-in.</string>
+    <string name="qr_check_in_summary_election">Election: %1$s</string>
+    <string name="qr_check_in_summary_wallet">Wallet: %1$s</string>
+    <string name="qr_check_in_not_selected">Not selected</string>
+    <string name="qr_check_in_not_entered">Not entered</string>
+    <string name="qr_check_in_checking_button">Checking In...</string>
+    <string name="qr_check_in_check_in_button">Check In Voter</string>
+    <string name="qr_check_in_back_button">Back</string>
+    <string name="qr_check_in_scanner_no_activity">Scanner could not start because this screen is not attached to an activity.</string>
+    <string name="qr_check_in_error_no_readable_value">QR code scanned, but no readable value was returned.</string>
+    <string name="qr_check_in_scan_success">QR scan successful. Voter wallet address loaded for check-in.</string>
+    <string name="qr_check_in_scan_canceled">QR scan was canceled.</string>
+    <string name="qr_check_in_scan_failed">QR scanning failed. Please try again.</string>
+    <string name="qr_check_in_error_select_election">Please select an election first.</string>
+    <string name="qr_check_in_error_enter_wallet">Please scan or enter a voter wallet address first.</string>
+    <string name="qr_check_in_checking_blockchain">Checking voter in on blockchain...</string>
+    <string name="qr_check_in_error_blockchain_failed">Blockchain check-in failed.</string>
 
     <!-- Dashboard -->
     <string name="dashboard_admin_title">Admin Control Center</string>

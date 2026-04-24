@@ -44,9 +44,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
@@ -66,6 +68,7 @@ fun QRCheckInScreen(
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var voterWalletAddress by rememberSaveable { mutableStateOf("") }
     var statusMessage by rememberSaveable { mutableStateOf("") }
+    var statusIsPositive by rememberSaveable { mutableStateOf(false) }
     var lastScannedValue by rememberSaveable { mutableStateOf("") }
     var isCheckingIn by rememberSaveable { mutableStateOf(false) }
 
@@ -74,6 +77,16 @@ fun QRCheckInScreen(
     val activity = remember(context) { context.findActivity() }
     val coroutineScope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
+
+    val scannerNoActivityMessage = stringResource(R.string.qr_check_in_scanner_no_activity)
+    val qrNoReadableValueMessage = stringResource(R.string.qr_check_in_error_no_readable_value)
+    val qrScanSuccessMessage = stringResource(R.string.qr_check_in_scan_success)
+    val qrScanCanceledMessage = stringResource(R.string.qr_check_in_scan_canceled)
+    val qrScanFailedMessage = stringResource(R.string.qr_check_in_scan_failed)
+    val selectElectionFirstMessage = stringResource(R.string.qr_check_in_error_select_election)
+    val enterWalletFirstMessage = stringResource(R.string.qr_check_in_error_enter_wallet)
+    val checkingBlockchainMessage = stringResource(R.string.qr_check_in_checking_blockchain)
+    val blockchainFailedMessage = stringResource(R.string.qr_check_in_error_blockchain_failed)
 
     val scannerOptions = remember {
         GmsBarcodeScannerOptions.Builder()
@@ -121,8 +134,8 @@ fun QRCheckInScreen(
                 onWalletAddressChanged = { voterWalletAddress = it },
                 onScanQr = {
                     if (activity == null) {
-                        statusMessage =
-                            "Scanner could not start because this screen is not attached to an activity."
+                        statusMessage = scannerNoActivityMessage
+                        statusIsPositive = false
                         coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
                         return@ScanWalletCard
                     }
@@ -134,12 +147,13 @@ fun QRCheckInScreen(
                             val scannedValue = barcode.rawValue?.trim().orEmpty()
 
                             if (scannedValue.isBlank()) {
-                                statusMessage = "QR code scanned, but no readable value was returned."
+                                statusMessage = qrNoReadableValueMessage
+                                statusIsPositive = false
                             } else {
                                 voterWalletAddress = scannedValue
                                 lastScannedValue = scannedValue
-                                statusMessage =
-                                    "QR scan successful. Voter wallet address loaded for check-in."
+                                statusMessage = qrScanSuccessMessage
+                                statusIsPositive = true
                             }
 
                             coroutineScope.launch {
@@ -147,13 +161,15 @@ fun QRCheckInScreen(
                             }
                         }
                         .addOnCanceledListener {
-                            statusMessage = "QR scan was canceled."
+                            statusMessage = qrScanCanceledMessage
+                            statusIsPositive = false
                             coroutineScope.launch {
                                 snackBarHostState.showSnackbar(statusMessage)
                             }
                         }
                         .addOnFailureListener { exception: Exception ->
-                            statusMessage = exception.message ?: "QR scanning failed. Please try again."
+                            statusMessage = exception.message ?: qrScanFailedMessage
+                            statusIsPositive = false
                             coroutineScope.launch {
                                 snackBarHostState.showSnackbar(statusMessage)
                             }
@@ -165,24 +181,28 @@ fun QRCheckInScreen(
                 selectedElectionTitle = selectedElection?.title,
                 voterWalletAddress = voterWalletAddress,
                 statusMessage = statusMessage,
+                statusIsPositive = statusIsPositive,
                 isCheckingIn = isCheckingIn,
                 onCheckIn = {
                     val trimmedWalletAddress = voterWalletAddress.trim()
 
                     if (selectedElection == null) {
-                        statusMessage = "Please select an election first."
+                        statusMessage = selectElectionFirstMessage
+                        statusIsPositive = false
                         coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
                         return@CheckInSummaryCard
                     }
 
                     if (trimmedWalletAddress.isBlank()) {
-                        statusMessage = "Please scan or enter a voter wallet address first."
+                        statusMessage = enterWalletFirstMessage
+                        statusIsPositive = false
                         coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
                         return@CheckInSummaryCard
                     }
 
                     isCheckingIn = true
-                    statusMessage = "Checking voter in on blockchain..."
+                    statusMessage = checkingBlockchainMessage
+                    statusIsPositive = false
 
                     coroutineScope.launch {
                         snackBarHostState.showSnackbar(statusMessage)
@@ -200,10 +220,12 @@ fun QRCheckInScreen(
                         result.fold(
                             onSuccess = { message ->
                                 statusMessage = message
+                                statusIsPositive = true
                                 snackBarHostState.showSnackbar(message)
                             },
                             onFailure = { exception ->
-                                statusMessage = exception.message ?: "Blockchain check-in failed."
+                                statusMessage = exception.message ?: blockchainFailedMessage
+                                statusIsPositive = false
                                 snackBarHostState.showSnackbar(statusMessage)
                             }
                         )
@@ -215,7 +237,7 @@ fun QRCheckInScreen(
                 onClick = { navController.popBackStack() },
                 enabled = !isCheckingIn
             ) {
-                Text("Back")
+                Text(text = stringResource(R.string.qr_check_in_back_button))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -245,20 +267,24 @@ private fun QRCheckInHeroCard() {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "QR Check-In",
+                text = stringResource(R.string.qr_check_in_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.ExtraBold
             )
 
             Text(
-                text = "Select the election, scan the voter QR, confirm the wallet address, and complete blockchain-backed voter check-in.",
+                text = stringResource(R.string.qr_check_in_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
             )
 
             PillColumn(
-                items = listOf("1. Select Election", "2. Scan Wallet QR", "3. Complete Check-In")
+                items = listOf(
+                    stringResource(R.string.qr_check_in_step_select_election),
+                    stringResource(R.string.qr_check_in_step_scan_wallet),
+                    stringResource(R.string.qr_check_in_step_complete_check_in)
+                )
             )
         }
     }
@@ -281,13 +307,13 @@ private fun ElectionSelectionCard(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             SectionTitle(
-                title = "Select Election",
-                subtitle = "Choose the election for this voter check-in."
+                title = stringResource(R.string.qr_check_in_select_election_title),
+                subtitle = stringResource(R.string.qr_check_in_select_election_subtitle)
             )
 
             if (elections.isEmpty()) {
                 StatusInfoBadge(
-                    text = "No elections available yet. Create an election first.",
+                    text = stringResource(R.string.qr_check_in_no_elections),
                     positive = false,
                     usePrimaryText = false
                 )
@@ -295,7 +321,7 @@ private fun ElectionSelectionCard(
                 elections.forEach { election ->
                     SelectionCard(
                         title = election.title,
-                        subtitle = "Election ID: ${election.id}",
+                        subtitle = stringResource(R.string.qr_check_in_election_id, election.id),
                         selected = selectedElectionId == election.id,
                         onSelected = { onElectionSelected(election.id) },
                         enabled = !isBusy
@@ -324,15 +350,15 @@ private fun ScanWalletCard(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             SectionTitle(
-                title = "Scan Voter QR",
-                subtitle = "Use the QR scanner or enter the voter wallet address manually."
+                title = stringResource(R.string.qr_check_in_scan_wallet_title),
+                subtitle = stringResource(R.string.qr_check_in_scan_wallet_subtitle)
             )
 
             OutlinedTextField(
                 value = voterWalletAddress,
                 onValueChange = onWalletAddressChanged,
-                label = { Text("Voter Wallet Address") },
-                placeholder = { Text("Scan QR or type voter wallet address") },
+                label = { Text(text = stringResource(R.string.qr_check_in_wallet_label)) },
+                placeholder = { Text(text = stringResource(R.string.qr_check_in_wallet_placeholder)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isBusy
@@ -340,7 +366,7 @@ private fun ScanWalletCard(
 
             if (lastScannedValue.isNotBlank()) {
                 StatusInfoBadge(
-                    text = "Last scanned value: $lastScannedValue",
+                    text = stringResource(R.string.qr_check_in_last_scanned, lastScannedValue),
                     positive = true,
                     usePrimaryText = false
                 )
@@ -356,7 +382,7 @@ private fun ScanWalletCard(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    text = "Scan QR Code",
+                    text = stringResource(R.string.qr_check_in_scan_qr_button),
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -369,9 +395,17 @@ private fun CheckInSummaryCard(
     selectedElectionTitle: String?,
     voterWalletAddress: String,
     statusMessage: String,
+    statusIsPositive: Boolean,
     isCheckingIn: Boolean,
     onCheckIn: () -> Unit
 ) {
+    val electionText = selectedElectionTitle ?: stringResource(R.string.qr_check_in_not_selected)
+    val walletText = if (voterWalletAddress.isBlank()) {
+        stringResource(R.string.qr_check_in_not_entered)
+    } else {
+        shortenWalletAddress(voterWalletAddress.trim())
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -382,14 +416,14 @@ private fun CheckInSummaryCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SectionTitle(
-                title = "Complete Check-In",
-                subtitle = "Review the selected election and scanned voter wallet before final check-in."
+                title = stringResource(R.string.qr_check_in_complete_title),
+                subtitle = stringResource(R.string.qr_check_in_complete_subtitle)
             )
 
             PillColumn(
                 items = listOf(
-                    "Election: ${selectedElectionTitle ?: "Not selected"}",
-                    "Wallet: ${if (voterWalletAddress.isBlank()) "Not entered" else shortenWalletAddress(voterWalletAddress.trim())}"
+                    stringResource(R.string.qr_check_in_summary_election, electionText),
+                    stringResource(R.string.qr_check_in_summary_wallet, walletText)
                 )
             )
 
@@ -405,7 +439,11 @@ private fun CheckInSummaryCard(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    text = if (isCheckingIn) "Checking In..." else "Check In Voter",
+                    text = if (isCheckingIn) {
+                        stringResource(R.string.qr_check_in_checking_button)
+                    } else {
+                        stringResource(R.string.qr_check_in_check_in_button)
+                    },
                     style = MaterialTheme.typography.labelLarge
                 )
             }
@@ -413,8 +451,7 @@ private fun CheckInSummaryCard(
             if (statusMessage.isNotBlank()) {
                 StatusInfoBadge(
                     text = statusMessage,
-                    positive = statusMessage.contains("success", ignoreCase = true) ||
-                            statusMessage.contains("checked in", ignoreCase = true),
+                    positive = statusIsPositive,
                     usePrimaryText = true
                 )
             }
