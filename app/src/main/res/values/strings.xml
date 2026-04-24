@@ -34,33 +34,110 @@
     <string name="admin_chip_qr">QR check-in</string>
     <string name="admin_protected_badge">PROTECTED ACCESS</string>
     <string name="admin_access_code_title">Admin Access Code</string>
-    <string name="admin_access_code_description">Only authorized election administrators or polling officers should continue. This prototype uses a controlled access code before wallet-based admin actions are enabled.</string>
+    <string name="admin_access_code_description">Only authorized election administrators or polling officers should continue. This prototype uses a controlled access code before supervised admin wallet actions are enabled.</string>
     <string name="admin_pin_label">Enter admin PIN</string>
-    <string name="admin_pin_supporting">Required to unlock the admin control portal.</string>
+    <string name="admin_pin_supporting">Required to unlock the protected admin control portal for this prototype.</string>
     <string name="admin_continue_dashboard">Continue to Admin Dashboard</string>
     <string name="admin_error_blank">Enter the admin access code to continue.</string>
     <string name="admin_error_incorrect">Incorrect admin access code. Please try again.</string>
     <string name="admin_notes_title">Admin Access Notes</string>
     <string name="admin_note_authorized">• Use this portal only for authorized election administration tasks.</string>
     <string name="admin_note_voter_separation">• Voter access remains separated through its own portal and check-in flow.</string>
-    <string name="admin_note_blockchain">• Blockchain-backed actions improve transparency and auditability during the prototype workflow.</string>
-    <string name="admin_footer">In a production deployment, this step should be replaced by secure backend authentication, protected credential handling, and stronger role verification.</string>
+    <string name="admin_note_blockchain">• Blockchain-backed actions support transparency and auditability in this supervised prototype workflow.</string>
+    <string name="admin_footer">In a production deployment, this step would be replaced by secure backend authentication, protected credential handling, and stronger role verification.</string>
 
     <!-- Voter Access -->
     <string name="voter_portal_title">Voter Access Portal</string>
-    <string name="voter_portal_description">This portal guides eligible voters through QR-based check-in, controlled vote access, and receipt verification after submission.</string>
+    <string name="voter_portal_description">This portal guides eligible voters through supervised QR-based check-in, controlled vote access, and receipt verification after submission.</string>
     <string name="voter_chip_qr">QR check-in</string>
     <string name="voter_chip_receipt">Receipt verification</string>
     <string name="voter_qr_badge">CHECK-IN QR</string>
     <string name="voter_qr_title">Voter QR for Polling Officer Check-In</string>
-    <string name="voter_qr_description">Show this QR code to the polling officer during check-in. It contains the voter wallet address used for whitelist matching and controlled access to the voting flow.</string>
-    <string name="voter_fallback_note">For single-emulator testing, manual wallet entry in the admin QR Check-In screen can still be used as a fallback.</string>
+    <string name="voter_qr_description">Show this QR code to the polling officer during check-in. It contains the voter wallet address used for whitelist matching and supervised access to the voting flow.</string>
+    <string name="voter_fallback_note">For controlled single-device testing, manual wallet entry in the admin QR Check-In screen can still be used as a fallback.</string>
     <string name="voter_portal_badge">VOTER PORTAL</string>
     <string name="voter_continue_title">Continue to Voting Access</string>
-    <string name="voter_continue_description">Continue as a voter to view eligible elections, cast a vote when allowed, and verify the receipt after blockchain recording is completed.</string>
+    <string name="voter_continue_description">Continue to the voter portal to review eligible elections, cast a vote when permitted, and verify the receipt after blockchain recording is completed.</string>
     <string name="voter_notes_title">Voter Access Notes</string>
     <string name="voter_note_eligibility">• Voting access still depends on whitelist eligibility, QR check-in status, and election timing rules.</string>
     <string name="voter_note_checked_in">• Only checked-in eligible voters should be able to continue through the final voting workflow.</string>
-    <string name="voter_note_receipt">• Successful vote submission should produce a receipt and transaction hash for later verification.</string>
-    <string name="voter_demo_mode">Demo voter wallet mode is currently enabled for local testing.</string>
+    <string name="voter_note_receipt">• Successful vote submission should produce a receipt and transaction hash for later verification and audit review.</string>
+    <string name="voter_demo_mode">Prototype voter wallet mode is currently enabled for supervised local testing.</string>
+
+    <!-- Create Election Screen -->
+    <string name="create_election_title">Create Election</string>
+    <string name="create_election_subtitle">Set up the election details, candidate list, schedule, and eligible voter whitelist.</string>
+
+    <string name="create_election_label_title">Election title</string>
+    <string name="create_election_placeholder_title">Student Council Election 2026</string>
+
+    <string name="create_election_label_candidates">Candidates</string>
+    <string name="create_election_placeholder_candidates">Enter candidate names separated by commas or new lines\nExample:\nAlice\nBob\nCharlie</string>
+
+    <string name="create_election_label_eligible_voters">Eligible voter wallet addresses / whitelist</string>
+    <string name="create_election_placeholder_eligible_voters">Enter wallet addresses separated by commas or new lines\nExample:\n0x70997970c51812dc3a010c7d01b50e0d17dc79c8\n0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc</string>
+
+    <string name="create_election_label_start_time">Start date &amp; time</string>
+    <string name="create_election_label_end_time">End date &amp; time</string>
+    <string name="create_election_placeholder_datetime">dd/MM/yyyy hh:mm a</string>
+
+    <string name="create_election_helper_text">Use Ethereum wallet addresses for the whitelist.\nUse this date/time format: dd/MM/yyyy hh:mm a\nExample: 29/03/2026 08:30 PM</string>
+
+    <string name="create_election_cancel_button">Cancel</string>
+    <string name="create_election_create_button">Create</string>
+    <string name="create_election_creating_button">Creating...</string>
+
+    <string name="create_election_error_title_required">Please enter an election title.</string>
+    <string name="create_election_error_candidates_required">Please enter at least 2 candidates.</string>
+    <string name="create_election_error_eligible_voters_required">Please enter at least 1 eligible voter wallet address.</string>
+    <string name="create_election_error_invalid_start_time">Invalid start date/time. Use format: dd/MM/yyyy hh:mm a</string>
+    <string name="create_election_error_invalid_end_time">Invalid end date/time. Use format: dd/MM/yyyy hh:mm a</string>
+    <string name="create_election_error_end_after_start">End time must be later than start time.</string>
+    <string name="create_election_error_generic">Failed to create election on blockchain.</string>
+
+    <string name="create_election_success_title">Election created successfully</string>
+    <string name="create_election_success_message">The election has been created and prepared for eligible voters.</string>
+    <string name="create_election_success_button">Done</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_admin_title">Admin Control Center</string>
+    <string name="dashboard_voter_title">Voter Dashboard</string>
+    <string name="dashboard_admin_subtitle">Manage elections, complete QR check-in, monitor turnout, and review blockchain-backed election activity.</string>
+    <string name="dashboard_voter_subtitle">Review active elections, vote after polling-officer check-in, and verify your blockchain receipt.</string>
+    <string name="dashboard_latest_overview_title">Latest Election Overview</string>
+    <string name="dashboard_all_elections_title">All Elections</string>
+    <string name="dashboard_all_elections_subtitle">Review created elections, status, turnout, and schedule.</string>
+    <string name="dashboard_available_elections_title">Available Elections</string>
+    <string name="dashboard_available_elections_subtitle">Review election timing and status before you proceed to vote.</string>
+    <string name="dashboard_role_admin">Role: Admin</string>
+    <string name="dashboard_role_voter">Role: Voter</string>
+    <string name="dashboard_elections_count">Elections: %1$d</string>
+    <string name="dashboard_latest_election">Latest: %1$s</string>
+    <string name="dashboard_no_elections">No elections yet</string>
+    <string name="dashboard_quick_actions_title">Quick Actions</string>
+    <string name="dashboard_admin_actions_subtitle">Core administration tasks for election setup and monitoring.</string>
+    <string name="dashboard_voter_actions_subtitle">Proceed to cast your vote or verify your blockchain receipt.</string>
+    <string name="dashboard_create_election">Create Election</string>
+    <string name="dashboard_qr_checkin">QR Check-In</string>
+    <string name="dashboard_view_results">View Results</string>
+    <string name="dashboard_blockchain_records">Blockchain Records</string>
+    <string name="dashboard_logout">Logout</string>
+    <string name="dashboard_vote_now">Vote Now</string>
+    <string name="dashboard_verify_receipt">Verify Receipt</string>
+    <string name="dashboard_empty_admin_title">No elections available yet</string>
+    <string name="dashboard_empty_admin_description">Create your first election to begin whitelist setup, QR check-in, voting, and receipt tracking.</string>
+    <string name="dashboard_empty_voter_title">No elections available right now</string>
+    <string name="dashboard_empty_voter_description">When an election becomes available, the polling officer will check you in before you vote and verify your receipt.</string>
+    <string name="dashboard_blockchain_election_overview">Blockchain election overview</string>
+    <string name="dashboard_candidates">Candidates</string>
+    <string name="dashboard_eligible">Eligible</string>
+    <string name="dashboard_checked_in">Checked-In</string>
+    <string name="dashboard_votes">Votes</string>
+    <string name="dashboard_election_id">Election ID</string>
+    <string name="dashboard_starts">Starts</string>
+    <string name="dashboard_ends">Ends</string>
+    <string name="dashboard_review_timing">Review timing before voting</string>
+    <string name="dashboard_status_active">Active</string>
+    <string name="dashboard_status_closed">Closed</string>
+    <string name="dashboard_status_scheduled">Scheduled</string>
 </resources>

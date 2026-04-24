@@ -3,8 +3,6 @@ package com.example.evotingmobileapp.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,10 +30,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.model.Election
@@ -47,6 +47,12 @@ import java.util.Locale
 private enum class DashboardMode {
     ADMIN,
     VOTER
+}
+
+private enum class DashboardElectionStatus {
+    ACTIVE,
+    CLOSED,
+    SCHEDULED
 }
 
 @Composable
@@ -67,15 +73,13 @@ fun DashboardScreen(
     }
 
     val title = when (dashboardMode) {
-        DashboardMode.ADMIN -> "Admin Control Center"
-        DashboardMode.VOTER -> "Voter Dashboard"
+        DashboardMode.ADMIN -> stringResource(R.string.dashboard_admin_title)
+        DashboardMode.VOTER -> stringResource(R.string.dashboard_voter_title)
     }
 
     val subtitle = when (dashboardMode) {
-        DashboardMode.ADMIN ->
-            "Manage elections, complete QR check-in, monitor turnout, and review blockchain-backed election activity."
-        DashboardMode.VOTER ->
-            "Review active elections, vote after polling-officer check-in, and verify your blockchain receipt."
+        DashboardMode.ADMIN -> stringResource(R.string.dashboard_admin_subtitle)
+        DashboardMode.VOTER -> stringResource(R.string.dashboard_voter_subtitle)
     }
 
     val onLogout = {
@@ -119,7 +123,7 @@ fun DashboardScreen(
                         )
                     } else {
                         ElectionOverviewCard(
-                            sectionTitle = "Latest Election Overview",
+                            sectionTitle = stringResource(R.string.dashboard_latest_overview_title),
                             election = latestElection,
                             emphasize = true
                         )
@@ -127,8 +131,8 @@ fun DashboardScreen(
 
                     if (elections.isNotEmpty()) {
                         SectionHeading(
-                            title = "All Elections",
-                            subtitle = "Review created elections, status, turnout, and schedule."
+                            title = stringResource(R.string.dashboard_all_elections_title),
+                            subtitle = stringResource(R.string.dashboard_all_elections_subtitle)
                         )
 
                         elections
@@ -160,8 +164,8 @@ fun DashboardScreen(
 
                     if (elections.isNotEmpty()) {
                         SectionHeading(
-                            title = "Available Elections",
-                            subtitle = "Review election timing and status before you proceed to vote."
+                            title = stringResource(R.string.dashboard_available_elections_title),
+                            subtitle = stringResource(R.string.dashboard_available_elections_subtitle)
                         )
 
                         elections
@@ -179,7 +183,6 @@ fun DashboardScreen(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DashboardHeroCard(
     title: String,
@@ -220,16 +223,32 @@ private fun DashboardHeroCard(
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
             )
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    HeroPill(
+                        label = if (dashboardMode == DashboardMode.ADMIN) {
+                            stringResource(R.string.dashboard_role_admin)
+                        } else {
+                            stringResource(R.string.dashboard_role_voter)
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    HeroPill(
+                        label = stringResource(R.string.dashboard_elections_count, electionsCount),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 HeroPill(
-                    label = if (dashboardMode == DashboardMode.ADMIN) "Role: Admin" else "Role: Voter"
-                )
-                HeroPill(label = "Elections: $electionsCount")
-                HeroPill(
-                    label = latestElectionTitle?.let { "Latest: $it" } ?: "No elections yet"
+                    label = latestElectionTitle?.let {
+                        stringResource(R.string.dashboard_latest_election, it)
+                    } ?: stringResource(R.string.dashboard_no_elections)
                 )
             }
         }
@@ -238,9 +257,11 @@ private fun DashboardHeroCard(
 
 @Composable
 private fun HeroPill(
-    label: String
+    label: String,
+    modifier: Modifier = Modifier
 ) {
     Surface(
+        modifier = modifier,
         shape = RoundedCornerShape(999.dp),
         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
     ) {
@@ -260,8 +281,8 @@ private fun AdminDashboardActions(
     onLogout: () -> Unit
 ) {
     SectionHeading(
-        title = "Quick Actions",
-        subtitle = "Core administration tasks for election setup and monitoring."
+        title = stringResource(R.string.dashboard_quick_actions_title),
+        subtitle = stringResource(R.string.dashboard_admin_actions_subtitle)
     )
 
     Column(
@@ -269,17 +290,17 @@ private fun AdminDashboardActions(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         DashboardPrimaryActionButton(
-            text = "Create Election",
+            text = stringResource(R.string.dashboard_create_election),
             onClick = { navController.navigate(AppRoutes.CREATE_ELECTION) }
         )
 
         DashboardPrimaryActionButton(
-            text = "QR Check-In",
+            text = stringResource(R.string.dashboard_qr_checkin),
             onClick = { navController.navigate(AppRoutes.QR_CHECK_IN) }
         )
 
         DashboardPrimaryActionButton(
-            text = "View Results",
+            text = stringResource(R.string.dashboard_view_results),
             onClick = { navController.navigate(AppRoutes.RESULTS) }
         )
 
@@ -291,7 +312,7 @@ private fun AdminDashboardActions(
             shape = RoundedCornerShape(18.dp)
         ) {
             Text(
-                text = "Blockchain Records",
+                text = stringResource(R.string.dashboard_blockchain_records),
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -300,7 +321,7 @@ private fun AdminDashboardActions(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Logout")
+            Text(stringResource(R.string.dashboard_logout))
         }
     }
 }
@@ -311,8 +332,8 @@ private fun VoterDashboardActions(
     onLogout: () -> Unit
 ) {
     SectionHeading(
-        title = "Quick Actions",
-        subtitle = "Proceed to cast your vote or verify your blockchain receipt."
+        title = stringResource(R.string.dashboard_quick_actions_title),
+        subtitle = stringResource(R.string.dashboard_voter_actions_subtitle)
     )
 
     Column(
@@ -320,7 +341,7 @@ private fun VoterDashboardActions(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         DashboardPrimaryActionButton(
-            text = "Vote Now",
+            text = stringResource(R.string.dashboard_vote_now),
             onClick = { navController.navigate(AppRoutes.VOTING) }
         )
 
@@ -332,7 +353,7 @@ private fun VoterDashboardActions(
             shape = RoundedCornerShape(18.dp)
         ) {
             Text(
-                text = "Verify Receipt",
+                text = stringResource(R.string.dashboard_verify_receipt),
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -341,7 +362,7 @@ private fun VoterDashboardActions(
             onClick = onLogout,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Logout")
+            Text(stringResource(R.string.dashboard_logout))
         }
     }
 }
@@ -403,19 +424,19 @@ private fun EmptyElectionState(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "No elections available yet",
+                text = stringResource(R.string.dashboard_empty_admin_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "Create your first election to begin whitelist setup, QR check-in, voting, and receipt tracking.",
+                text = stringResource(R.string.dashboard_empty_admin_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             TextButton(onClick = onCreateElectionClick) {
-                Text("Create Election")
+                Text(stringResource(R.string.dashboard_create_election))
             }
         }
     }
@@ -435,13 +456,13 @@ private fun VoterEmptyState() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "No elections available right now",
+                text = stringResource(R.string.dashboard_empty_voter_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "When an election becomes available, the polling officer will check you in before you vote and verify your receipt.",
+                text = stringResource(R.string.dashboard_empty_voter_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -449,18 +470,13 @@ private fun VoterEmptyState() {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ElectionOverviewCard(
     sectionTitle: String,
     election: Election,
     emphasize: Boolean
 ) {
-    val statusText = when {
-        election.isClosed() -> "Closed"
-        election.isActive() -> "Active"
-        else -> "Scheduled"
-    }
+    val status = dashboardStatusFor(election)
 
     val eligibleCount = election.eligibleVoterIds.size
     val checkedInCount = election.checkedInVoterIds.size
@@ -498,30 +514,65 @@ private fun ElectionOverviewCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Blockchain election overview",
+                        text = stringResource(R.string.dashboard_blockchain_election_overview),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                StatusBadge(statusText = statusText)
+                StatusBadge(status = status)
             }
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                MetricChip(label = "Candidates", value = candidateCount.toString())
-                MetricChip(label = "Eligible", value = eligibleCount.toString())
-                MetricChip(label = "Checked-In", value = checkedInCount.toString())
-                MetricChip(label = "Votes", value = voteCount.toString())
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    MetricChip(
+                        label = stringResource(R.string.dashboard_candidates),
+                        value = candidateCount.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricChip(
+                        label = stringResource(R.string.dashboard_eligible),
+                        value = eligibleCount.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    MetricChip(
+                        label = stringResource(R.string.dashboard_checked_in),
+                        value = checkedInCount.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricChip(
+                        label = stringResource(R.string.dashboard_votes),
+                        value = voteCount.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            DetailRow(label = "Election ID", value = election.id)
-            DetailRow(label = "Starts", value = formatDashboardDateTime(election.startTimeMillis))
-            DetailRow(label = "Ends", value = formatDashboardDateTime(election.endTimeMillis))
+            DetailRow(
+                label = stringResource(R.string.dashboard_election_id),
+                value = election.id
+            )
+            DetailRow(
+                label = stringResource(R.string.dashboard_starts),
+                value = formatDashboardDateTime(election.startTimeMillis)
+            )
+            DetailRow(
+                label = stringResource(R.string.dashboard_ends),
+                value = formatDashboardDateTime(election.endTimeMillis)
+            )
         }
     }
 }
@@ -531,11 +582,7 @@ private fun VoterElectionCard(
     election: Election,
     emphasize: Boolean
 ) {
-    val statusText = when {
-        election.isClosed() -> "Closed"
-        election.isActive() -> "Active"
-        else -> "Scheduled"
-    }
+    val status = dashboardStatusFor(election)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -568,18 +615,27 @@ private fun VoterElectionCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Review timing before voting",
+                        text = stringResource(R.string.dashboard_review_timing),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                StatusBadge(statusText = statusText)
+                StatusBadge(status = status)
             }
 
-            DetailRow(label = "Election ID", value = election.id)
-            DetailRow(label = "Starts", value = formatDashboardDateTime(election.startTimeMillis))
-            DetailRow(label = "Ends", value = formatDashboardDateTime(election.endTimeMillis))
+            DetailRow(
+                label = stringResource(R.string.dashboard_election_id),
+                value = election.id
+            )
+            DetailRow(
+                label = stringResource(R.string.dashboard_starts),
+                value = formatDashboardDateTime(election.startTimeMillis)
+            )
+            DetailRow(
+                label = stringResource(R.string.dashboard_ends),
+                value = formatDashboardDateTime(election.endTimeMillis)
+            )
         }
     }
 }
@@ -587,9 +643,11 @@ private fun VoterElectionCard(
 @Composable
 private fun MetricChip(
     label: String,
-    value: String
+    value: String,
+    modifier: Modifier = Modifier
 ) {
     Surface(
+        modifier = modifier,
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
@@ -614,18 +672,24 @@ private fun MetricChip(
 
 @Composable
 private fun StatusBadge(
-    statusText: String
+    status: DashboardElectionStatus
 ) {
-    val containerColor = when (statusText) {
-        "Active" -> MaterialTheme.colorScheme.primaryContainer
-        "Closed" -> MaterialTheme.colorScheme.secondaryContainer
-        else -> MaterialTheme.colorScheme.tertiaryContainer
+    val containerColor = when (status) {
+        DashboardElectionStatus.ACTIVE -> MaterialTheme.colorScheme.primaryContainer
+        DashboardElectionStatus.CLOSED -> MaterialTheme.colorScheme.secondaryContainer
+        DashboardElectionStatus.SCHEDULED -> MaterialTheme.colorScheme.tertiaryContainer
     }
 
-    val contentColor = when (statusText) {
-        "Active" -> MaterialTheme.colorScheme.onPrimaryContainer
-        "Closed" -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onTertiaryContainer
+    val contentColor = when (status) {
+        DashboardElectionStatus.ACTIVE -> MaterialTheme.colorScheme.onPrimaryContainer
+        DashboardElectionStatus.CLOSED -> MaterialTheme.colorScheme.onSecondaryContainer
+        DashboardElectionStatus.SCHEDULED -> MaterialTheme.colorScheme.onTertiaryContainer
+    }
+
+    val statusText = when (status) {
+        DashboardElectionStatus.ACTIVE -> stringResource(R.string.dashboard_status_active)
+        DashboardElectionStatus.CLOSED -> stringResource(R.string.dashboard_status_closed)
+        DashboardElectionStatus.SCHEDULED -> stringResource(R.string.dashboard_status_scheduled)
     }
 
     Surface(
@@ -660,6 +724,14 @@ private fun DetailRow(
             text = value,
             style = MaterialTheme.typography.bodyLarge
         )
+    }
+}
+
+private fun dashboardStatusFor(election: Election): DashboardElectionStatus {
+    return when {
+        election.isClosed() -> DashboardElectionStatus.CLOSED
+        election.isActive() -> DashboardElectionStatus.ACTIVE
+        else -> DashboardElectionStatus.SCHEDULED
     }
 }
 

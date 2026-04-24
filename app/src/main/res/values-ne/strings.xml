@@ -34,33 +34,110 @@
     <string name="admin_chip_qr">QR चेक-इन</string>
     <string name="admin_protected_badge">सुरक्षित पहुँच</string>
     <string name="admin_access_code_title">प्रशासक पहुँच कोड</string>
-    <string name="admin_access_code_description">अधिकृत निर्वाचन प्रशासक वा मतदान अधिकृत मात्र अगाडि बढ्नुपर्छ। यस प्रोटोटाइपमा वालेट-आधारित प्रशासकीय कार्यहरू सक्षम हुनु अघि नियन्त्रित पहुँच कोड प्रयोग गरिएको छ।</string>
+    <string name="admin_access_code_description">अधिकृत निर्वाचन प्रशासक वा मतदान अधिकृत मात्र अगाडि बढ्नुपर्छ। यस प्रोटोटाइपमा निगरानीसहितका प्रशासकीय वालेट कार्यहरू सक्षम हुनु अघि नियन्त्रित पहुँच कोड प्रयोग गरिएको छ।</string>
     <string name="admin_pin_label">प्रशासक PIN प्रविष्ट गर्नुहोस्</string>
-    <string name="admin_pin_supporting">प्रशासक नियन्त्रण पोर्टल अनलक गर्न आवश्यक छ।</string>
+    <string name="admin_pin_supporting">यस प्रोटोटाइपका लागि सुरक्षित प्रशासक नियन्त्रण पोर्टल अनलक गर्न आवश्यक छ।</string>
     <string name="admin_continue_dashboard">प्रशासक ड्यासबोर्डमा जानुहोस्</string>
     <string name="admin_error_blank">जारी राख्न प्रशासक पहुँच कोड प्रविष्ट गर्नुहोस्।</string>
     <string name="admin_error_incorrect">प्रशासक पहुँच कोड गलत छ। कृपया पुनः प्रयास गर्नुहोस्।</string>
     <string name="admin_notes_title">प्रशासक पहुँच नोटहरू</string>
     <string name="admin_note_authorized">• यो पोर्टल केवल अधिकृत निर्वाचन प्रशासनिक कार्यहरूको लागि प्रयोग गर्नुहोस्।</string>
     <string name="admin_note_voter_separation">• मतदाता पहुँच आफ्नै पोर्टल र चेक-इन प्रवाहमार्फत अलग राखिएको छ।</string>
-    <string name="admin_note_blockchain">• ब्लकचेन-समर्थित कार्यहरूले प्रोटोटाइप कार्यप्रवाहमा पारदर्शिता र लेखापरीक्षणयोग्यता बढाउँछन्।</string>
-    <string name="admin_footer">उत्पादन स्तरको प्रणालीमा, यो चरण सुरक्षित ब्याकएन्ड प्रमाणीकरण, संरक्षित प्रमाणपत्र व्यवस्थापन, र अझ बलियो भूमिका प्रमाणीकरणद्वारा प्रतिस्थापित हुनुपर्छ।</string>
+    <string name="admin_note_blockchain">• ब्लकचेन-समर्थित कार्यहरूले यस निगरानीसहितको प्रोटोटाइप कार्यप्रवाहमा पारदर्शिता र लेखापरीक्षणयोग्यता समर्थन गर्छन्।</string>
+    <string name="admin_footer">उत्पादन स्तरको प्रणालीमा, यो चरण सुरक्षित ब्याकएन्ड प्रमाणीकरण, संरक्षित प्रमाणपत्र व्यवस्थापन, र अझ बलियो भूमिका प्रमाणीकरणद्वारा प्रतिस्थापित हुने थियो।</string>
 
     <!-- Voter Access -->
     <string name="voter_portal_title">मतदाता पहुँच पोर्टल</string>
-    <string name="voter_portal_description">यो पोर्टलले योग्य मतदाताहरूलाई QR-आधारित चेक-इन, नियन्त्रित मतदान पहुँच, र मत पेश गरेपछि रसिद प्रमाणीकरणमार्फत मार्गदर्शन गर्छ।</string>
+    <string name="voter_portal_description">यो पोर्टलले योग्य मतदाताहरूलाई निगरानीसहितको QR-आधारित चेक-इन, नियन्त्रित मतदान पहुँच, र मत पेश गरेपछि रसिद प्रमाणीकरणमार्फत मार्गदर्शन गर्छ।</string>
     <string name="voter_chip_qr">QR चेक-इन</string>
     <string name="voter_chip_receipt">रसिद प्रमाणीकरण</string>
     <string name="voter_qr_badge">चेक-इन QR</string>
     <string name="voter_qr_title">मतदान अधिकृत चेक-इनका लागि मतदाता QR</string>
-    <string name="voter_qr_description">चेक-इनका बेला यो QR कोड मतदान अधिकृतलाई देखाउनुहोस्। यसमा श्वेतसूची मिलान र मतदान प्रवाहमा नियन्त्रित पहुँचका लागि प्रयोग हुने मतदाता वालेट ठेगाना समावेश हुन्छ।</string>
-    <string name="voter_fallback_note">एकल इमुलेटर परीक्षणका लागि, प्रशासक QR चेक-इन स्क्रिनमा म्यानुअल वालेट प्रविष्टि अझै वैकल्पिक रूपमा प्रयोग गर्न सकिन्छ।</string>
+    <string name="voter_qr_description">चेक-इनका बेला यो QR कोड मतदान अधिकृतलाई देखाउनुहोस्। यसमा श्वेतसूची मिलान र मतदान प्रवाहमा निगरानीसहितको पहुँचका लागि प्रयोग हुने मतदाता वालेट ठेगाना समावेश हुन्छ।</string>
+    <string name="voter_fallback_note">नियन्त्रित एकल-डिभाइस परीक्षणका लागि, प्रशासक QR चेक-इन स्क्रिनमा म्यानुअल वालेट प्रविष्टि अझै वैकल्पिक रूपमा प्रयोग गर्न सकिन्छ।</string>
     <string name="voter_portal_badge">मतदाता पोर्टल</string>
     <string name="voter_continue_title">मतदान पहुँचमा जारी राख्नुहोस्</string>
-    <string name="voter_continue_description">योग्य निर्वाचनहरू हेर्न, अनुमति प्राप्त हुँदा मतदान गर्न, र ब्लकचेन अभिलेखन पूरा भएपछि रसिद प्रमाणीकरण गर्न मतदाताको रूपमा अगाडि बढ्नुहोस्।</string>
+    <string name="voter_continue_description">मतदाता पोर्टलमा अगाडि बढेर योग्य निर्वाचनहरू हेर्नुहोस्, अनुमति प्राप्त हुँदा मतदान गर्नुहोस्, र ब्लकचेन अभिलेखन पूरा भएपछि रसिद प्रमाणीकरण गर्नुहोस्।</string>
     <string name="voter_notes_title">मतदाता पहुँच नोटहरू</string>
     <string name="voter_note_eligibility">• मतदान पहुँच अझै पनि श्वेतसूची योग्यता, QR चेक-इन स्थिति, र निर्वाचन समय नियमहरूमा निर्भर गर्दछ।</string>
     <string name="voter_note_checked_in">• अन्तिम मतदान प्रवाहमा अगाडि बढ्न केवल चेक-इन गरिएका योग्य मतदाताहरूलाई मात्र अनुमति हुनुपर्छ।</string>
-    <string name="voter_note_receipt">• सफल मतदान पेशीपछि पछि प्रमाणीकरणका लागि रसिद र लेनदेन ह्यास उपलब्ध हुनुपर्छ।</string>
-    <string name="voter_demo_mode">स्थानीय परीक्षणका लागि डेमो मतदाता वालेट मोड हाल सक्षम गरिएको छ।</string>
+    <string name="voter_note_receipt">• सफल मतदान पेशीपछि पछि प्रमाणीकरण र लेखापरीक्षण समीक्षाका लागि रसिद र लेनदेन ह्यास उपलब्ध हुनुपर्छ।</string>
+    <string name="voter_demo_mode">निगरानीसहितको स्थानीय परीक्षणका लागि प्रोटोटाइप मतदाता वालेट मोड हाल सक्षम गरिएको छ।</string>
+
+    <!-- Create Election Screen -->
+    <string name="create_election_title">निर्वाचन सिर्जना गर्नुहोस्</string>
+    <string name="create_election_subtitle">निर्वाचन विवरण, उम्मेदवार सूची, समयतालिका, र योग्य मतदाता सूची सेट गर्नुहोस्।</string>
+
+    <string name="create_election_label_title">निर्वाचन शीर्षक</string>
+    <string name="create_election_placeholder_title">विद्यार्थी परिषद निर्वाचन २०२६</string>
+
+    <string name="create_election_label_candidates">उम्मेदवारहरू</string>
+    <string name="create_election_placeholder_candidates">उम्मेदवारको नाम comma वा नयाँ लाइनमा राख्नुहोस्\nउदाहरण:\nAlice\nBob\nCharlie</string>
+
+    <string name="create_election_label_eligible_voters">योग्य मतदाताका wallet address / whitelist</string>
+    <string name="create_election_placeholder_eligible_voters">Wallet address हरू comma वा नयाँ लाइनमा राख्नुहोस्\nउदाहरण:\n0x70997970c51812dc3a010c7d01b50e0d17dc79c8\n0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc</string>
+
+    <string name="create_election_label_start_time">सुरु मिति र समय</string>
+    <string name="create_election_label_end_time">अन्त्य मिति र समय</string>
+    <string name="create_election_placeholder_datetime">dd/MM/yyyy hh:mm a</string>
+
+    <string name="create_election_helper_text">Whitelist का लागि Ethereum wallet address प्रयोग गर्नुहोस्।\nयो date/time format प्रयोग गर्नुहोस्: dd/MM/yyyy hh:mm a\nउदाहरण: 29/03/2026 08:30 PM</string>
+
+    <string name="create_election_cancel_button">रद्द गर्नुहोस्</string>
+    <string name="create_election_create_button">सिर्जना गर्नुहोस्</string>
+    <string name="create_election_creating_button">सिर्जना हुँदैछ...</string>
+
+    <string name="create_election_error_title_required">कृपया निर्वाचन शीर्षक राख्नुहोस्।</string>
+    <string name="create_election_error_candidates_required">कृपया कम्तीमा २ जना उम्मेदवार राख्नुहोस्।</string>
+    <string name="create_election_error_eligible_voters_required">कृपया कम्तीमा १ जना योग्य मतदाताको wallet address राख्नुहोस्।</string>
+    <string name="create_election_error_invalid_start_time">सुरु मिति/समय अमान्य छ। Format प्रयोग गर्नुहोस्: dd/MM/yyyy hh:mm a</string>
+    <string name="create_election_error_invalid_end_time">अन्त्य मिति/समय अमान्य छ। Format प्रयोग गर्नुहोस्: dd/MM/yyyy hh:mm a</string>
+    <string name="create_election_error_end_after_start">अन्त्य समय सुरु समयभन्दा पछाडि हुनुपर्छ।</string>
+    <string name="create_election_error_generic">Blockchain मा निर्वाचन सिर्जना गर्न असफल भयो।</string>
+
+    <string name="create_election_success_title">निर्वाचन सफलतापूर्वक सिर्जना भयो</string>
+    <string name="create_election_success_message">निर्वाचन सिर्जना भइसकेको छ र योग्य मतदाताका लागि तयार गरिएको छ।</string>
+    <string name="create_election_success_button">ठीक छ</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_admin_title">प्रशासक नियन्त्रण केन्द्र</string>
+    <string name="dashboard_voter_title">मतदाता ड्यासबोर्ड</string>
+    <string name="dashboard_admin_subtitle">निर्वाचनहरू व्यवस्थापन गर्नुहोस्, QR चेक-इन पूरा गर्नुहोस्, सहभागिता अनुगमन गर्नुहोस्, र ब्लकचेन-समर्थित निर्वाचन गतिविधि समीक्षा गर्नुहोस्।</string>
+    <string name="dashboard_voter_subtitle">सक्रिय निर्वाचनहरू समीक्षा गर्नुहोस्, मतदान अधिकृतको चेक-इनपछि मतदान गर्नुहोस्, र आफ्नो ब्लकचेन रसिद प्रमाणीकरण गर्नुहोस्।</string>
+    <string name="dashboard_latest_overview_title">नवीनतम निर्वाचन अवलोकन</string>
+    <string name="dashboard_all_elections_title">सबै निर्वाचनहरू</string>
+    <string name="dashboard_all_elections_subtitle">सिर्जना गरिएका निर्वाचनहरू, स्थिति, सहभागिता, र तालिका समीक्षा गर्नुहोस्।</string>
+    <string name="dashboard_available_elections_title">उपलब्ध निर्वाचनहरू</string>
+    <string name="dashboard_available_elections_subtitle">मतदान अघि निर्वाचन समय र स्थिति समीक्षा गर्नुहोस्।</string>
+    <string name="dashboard_role_admin">भूमिका: प्रशासक</string>
+    <string name="dashboard_role_voter">भूमिका: मतदाता</string>
+    <string name="dashboard_elections_count">निर्वाचनहरू: %1$d</string>
+    <string name="dashboard_latest_election">नवीनतम: %1$s</string>
+    <string name="dashboard_no_elections">अहिलेसम्म कुनै निर्वाचन छैन</string>
+    <string name="dashboard_quick_actions_title">द्रुत कार्यहरू</string>
+    <string name="dashboard_admin_actions_subtitle">निर्वाचन सेटअप र अनुगमनका लागि मुख्य प्रशासनिक कार्यहरू।</string>
+    <string name="dashboard_voter_actions_subtitle">मतदान गर्न वा आफ्नो ब्लकचेन रसिद प्रमाणीकरण गर्न अगाडि बढ्नुहोस्।</string>
+    <string name="dashboard_create_election">निर्वाचन सिर्जना गर्नुहोस्</string>
+    <string name="dashboard_qr_checkin">QR चेक-इन</string>
+    <string name="dashboard_view_results">नतिजा हेर्नुहोस्</string>
+    <string name="dashboard_blockchain_records">ब्लकचेन अभिलेखहरू</string>
+    <string name="dashboard_logout">लगआउट</string>
+    <string name="dashboard_vote_now">अहिले मतदान गर्नुहोस्</string>
+    <string name="dashboard_verify_receipt">रसिद प्रमाणीकरण गर्नुहोस्</string>
+    <string name="dashboard_empty_admin_title">अहिलेसम्म कुनै निर्वाचन उपलब्ध छैन</string>
+    <string name="dashboard_empty_admin_description">श्वेतसूची सेटअप, QR चेक-इन, मतदान, र रसिद ट्र्याकिङ सुरु गर्न आफ्नो पहिलो निर्वाचन सिर्जना गर्नुहोस्।</string>
+    <string name="dashboard_empty_voter_title">अहिले कुनै निर्वाचन उपलब्ध छैन</string>
+    <string name="dashboard_empty_voter_description">निर्वाचन उपलब्ध भएपछि मतदान अधिकृतले तपाईंलाई चेक-इन गर्नेछन्, त्यसपछि तपाईं मतदान गर्न र आफ्नो रसिद प्रमाणीकरण गर्न सक्नुहुन्छ।</string>
+    <string name="dashboard_blockchain_election_overview">ब्लकचेन निर्वाचन अवलोकन</string>
+    <string name="dashboard_candidates">उम्मेदवारहरू</string>
+    <string name="dashboard_eligible">योग्य</string>
+    <string name="dashboard_checked_in">चेक-इन गरिएका</string>
+    <string name="dashboard_votes">मतहरू</string>
+    <string name="dashboard_election_id">निर्वाचन ID</string>
+    <string name="dashboard_starts">सुरु हुन्छ</string>
+    <string name="dashboard_ends">समाप्त हुन्छ</string>
+    <string name="dashboard_review_timing">मतदान अघि समय समीक्षा गर्नुहोस्</string>
+    <string name="dashboard_status_active">सक्रिय</string>
+    <string name="dashboard_status_closed">बन्द</string>
+    <string name="dashboard_status_scheduled">तालिकाबद्ध</string>
 </resources>
