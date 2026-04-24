@@ -40,9 +40,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.data.VoteValidationResult
@@ -72,6 +74,18 @@ fun VotingScreen(
     val selectedElection = elections.find { it.id == selectedElectionId }
     val voterWalletAddress = authUiState.walletAddress.trim()
 
+    val noElectionSelectedText = stringResource(R.string.voting_status_no_election_selected)
+    val closedStatusText = stringResource(R.string.voting_status_closed)
+    val activeStatusText = stringResource(R.string.voting_status_active)
+    val notStartedStatusText = stringResource(R.string.voting_status_not_started)
+    val selectElectionFirstText = stringResource(R.string.voting_access_select_election_first)
+    val noActiveSessionText = stringResource(R.string.voting_access_no_active_session)
+    val readyToVoteText = stringResource(R.string.voting_access_ready)
+    val noActiveSessionSnackbar = stringResource(R.string.voting_error_no_active_session)
+    val selectCandidateSnackbar = stringResource(R.string.voting_error_select_candidate)
+    val blockchainVoteFailedText = stringResource(R.string.voting_error_blockchain_vote_failed)
+    val voteSuccessSnackbar = stringResource(R.string.voting_success_vote_recorded)
+
     LaunchedEffect(elections, selectedElectionId) {
         if (selectedElectionId.isNotBlank() && selectedElection == null) {
             selectedElectionId = ""
@@ -88,19 +102,19 @@ fun VotingScreen(
     }
 
     fun getElectionStatusText(): String {
-        val election = selectedElection ?: return "No election selected"
+        val election = selectedElection ?: return noElectionSelectedText
         return when {
-            election.isClosed() -> "Closed"
-            election.isActive() -> "Active"
-            else -> "Not Started"
+            election.isClosed() -> closedStatusText
+            election.isActive() -> activeStatusText
+            else -> notStartedStatusText
         }
     }
 
     fun getVotingAccessText(): String {
-        val election = selectedElection ?: return "Please select an election first."
+        val election = selectedElection ?: return selectElectionFirstText
 
         if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
-            return "No active voter session was found. Return to the voter access portal first."
+            return noActiveSessionText
         }
 
         val result = adminViewModel.validateVoting(
@@ -109,7 +123,7 @@ fun VotingScreen(
         )
 
         return if (result.success) {
-            "Eligible and checked-in. Ready to vote."
+            readyToVoteText
         } else {
             result.message
         }
@@ -175,16 +189,14 @@ fun VotingScreen(
                     onSubmitVote = {
                         if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
                             coroutineScope.launch {
-                                snackBarHostState.showSnackbar(
-                                    "No active voter session found. Please return to Voter Access."
-                                )
+                                snackBarHostState.showSnackbar(noActiveSessionSnackbar)
                             }
                             return@ElectionVotingCard
                         }
 
                         if (selectedCandidate.isBlank()) {
                             coroutineScope.launch {
-                                snackBarHostState.showSnackbar("Please select a candidate.")
+                                snackBarHostState.showSnackbar(selectCandidateSnackbar)
                             }
                             return@ElectionVotingCard
                         }
@@ -207,14 +219,12 @@ fun VotingScreen(
                             val finalResult = result.getOrElse { exception ->
                                 VoteValidationResult(
                                     success = false,
-                                    message = exception.message ?: "Blockchain vote failed."
+                                    message = exception.message ?: blockchainVoteFailedText
                                 )
                             }
 
                             if (finalResult.success) {
-                                snackBarHostState.showSnackbar(
-                                    "Congratulations. Your vote was recorded successfully."
-                                )
+                                snackBarHostState.showSnackbar(voteSuccessSnackbar)
 
                                 val transactionHash = finalResult.receipt?.transactionHash.orEmpty()
 
@@ -237,7 +247,7 @@ fun VotingScreen(
                 onClick = { navController.popBackStack() },
                 enabled = !isBusy
             ) {
-                Text("Back")
+                Text(text = stringResource(R.string.voting_back_button))
             }
         }
     }
@@ -265,20 +275,24 @@ private fun VotingHeroCard() {
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "Vote Now",
+                text = stringResource(R.string.voting_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.ExtraBold
             )
 
             Text(
-                text = "Complete your vote securely after QR check-in. This screen validates your voter session, election access, and final submission.",
+                text = stringResource(R.string.voting_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
             )
 
             PillColumn(
-                items = listOf("1. Wallet Verified", "2. Check-In Required", "3. Submit Vote")
+                items = listOf(
+                    stringResource(R.string.voting_step_wallet_verified),
+                    stringResource(R.string.voting_step_check_in_required),
+                    stringResource(R.string.voting_step_submit_vote)
+                )
             )
         }
     }
@@ -289,6 +303,8 @@ private fun WalletIdentityCard(
     voterWalletAddress: String,
     hasVoterAccess: Boolean
 ) {
+    val hasActiveWallet = hasVoterAccess && voterWalletAddress.isNotBlank()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -299,15 +315,15 @@ private fun WalletIdentityCard(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             SectionTitle(
-                title = "Wallet Identity",
-                subtitle = "Your signed-in voter wallet is used for eligibility, check-in matching, and vote submission."
+                title = stringResource(R.string.voting_wallet_identity_title),
+                subtitle = stringResource(R.string.voting_wallet_identity_subtitle)
             )
 
             OutlinedTextField(
                 value = voterWalletAddress,
                 onValueChange = {},
-                label = { Text("Signed-In Voter Wallet") },
-                placeholder = { Text("0x...") },
+                label = { Text(text = stringResource(R.string.voting_signed_in_wallet_label)) },
+                placeholder = { Text(text = stringResource(R.string.voting_wallet_placeholder)) },
                 singleLine = true,
                 readOnly = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -315,12 +331,15 @@ private fun WalletIdentityCard(
             )
 
             StatusInfoBadge(
-                text = if (hasVoterAccess && voterWalletAddress.isNotBlank()) {
-                    "Active voter session: ${shortenWalletAddress(voterWalletAddress)}"
+                text = if (hasActiveWallet) {
+                    stringResource(
+                        R.string.voting_active_session,
+                        shortenWalletAddress(voterWalletAddress)
+                    )
                 } else {
-                    "No active voter wallet session found."
+                    stringResource(R.string.voting_no_active_wallet_session)
                 },
-                positive = hasVoterAccess && voterWalletAddress.isNotBlank()
+                positive = hasActiveWallet
             )
         }
     }
@@ -343,20 +362,20 @@ private fun ElectionSelectionCard(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             SectionTitle(
-                title = "Select Election",
-                subtitle = "Choose the election you want to participate in."
+                title = stringResource(R.string.voting_select_election_title),
+                subtitle = stringResource(R.string.voting_select_election_subtitle)
             )
 
             if (elections.isEmpty()) {
                 StatusInfoBadge(
-                    text = "No elections have been created yet.",
+                    text = stringResource(R.string.voting_no_elections),
                     positive = false
                 )
             } else {
                 elections.forEach { election ->
                     SelectionCard(
                         title = election.title,
-                        subtitle = "Election ID: ${election.id}",
+                        subtitle = stringResource(R.string.voting_election_id, election.id),
                         selected = selectedElectionId == election.id,
                         onSelected = { onElectionSelected(election.id) },
                         enabled = !isBusy
@@ -392,13 +411,13 @@ private fun ElectionVotingCard(
         ) {
             SectionTitle(
                 title = electionTitle,
-                subtitle = "Election ready for review and candidate selection."
+                subtitle = stringResource(R.string.voting_election_review_subtitle)
             )
 
             PillColumn(
                 items = listOf(
-                    "Status: $electionStatus",
-                    "Election ID: $electionId"
+                    stringResource(R.string.voting_status_summary, electionStatus),
+                    stringResource(R.string.voting_election_id, electionId)
                 )
             )
 
@@ -410,7 +429,7 @@ private fun ElectionVotingCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Text(
-                text = "Candidates",
+                text = stringResource(R.string.voting_candidates_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -418,7 +437,7 @@ private fun ElectionVotingCard(
             candidates.forEach { candidate ->
                 SelectionCard(
                     title = candidate,
-                    subtitle = "Select this candidate for your final vote.",
+                    subtitle = stringResource(R.string.voting_candidate_select_subtitle),
                     selected = selectedCandidate == candidate,
                     onSelected = { onCandidateSelected(candidate) },
                     enabled = !isBusy
@@ -437,7 +456,11 @@ private fun ElectionVotingCard(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    if (isSubmittingVote) "Submitting Vote..." else "Submit Vote",
+                    text = if (isSubmittingVote) {
+                        stringResource(R.string.voting_submitting_vote_button)
+                    } else {
+                        stringResource(R.string.voting_submit_vote_button)
+                    },
                     style = MaterialTheme.typography.labelLarge
                 )
             }

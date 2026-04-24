@@ -167,4 +167,100 @@
     <string name="dashboard_status_active">Active</string>
     <string name="dashboard_status_closed">Closed</string>
     <string name="dashboard_status_scheduled">Scheduled</string>
+
+    <!-- Receipt Screen -->
+    <string name="receipt_title">Voting Receipt</string>
+    <string name="receipt_subtitle">Review your latest receipt or verify a transaction hash directly against the blockchain for trusted audit confirmation.</string>
+    <string name="receipt_step_enter_hash">1. Enter Hash</string>
+    <string name="receipt_step_verify_on_chain">2. Verify On-Chain</string>
+    <string name="receipt_step_review_receipt">3. Review Receipt</string>
+
+    <string name="receipt_verify_hash_title">Verify by Transaction Hash</string>
+    <string name="receipt_verify_hash_subtitle">Enter a blockchain transaction hash to confirm the vote exists on-chain.</string>
+    <string name="receipt_transaction_hash_label">Transaction Hash</string>
+    <string name="receipt_transaction_hash_placeholder">0x...</string>
+    <string name="receipt_transaction_hash_supporting">Paste the receipt transaction hash to verify the real blockchain record.</string>
+    <string name="receipt_clear_button">Clear</string>
+    <string name="receipt_verify_button">Verify</string>
+    <string name="receipt_verifying_button">Verifying...</string>
+    <string name="receipt_back_button">Back</string>
+    <string name="receipt_done_button">Done</string>
+
+    <string name="receipt_error_enter_hash">Enter a transaction hash before verifying.</string>
+    <string name="receipt_verifying_blockchain">Verifying transaction on blockchain...</string>
+
+    <string name="receipt_verification_success_title">Verification successful</string>
+    <string name="receipt_verification_success_message">This transaction was found on the blockchain.</string>
+    <string name="receipt_matched_local_title">Matched Local Receipt</string>
+    <string name="receipt_matched_local_subtitle">This app receipt matches the verified blockchain transaction hash.</string>
+    <string name="receipt_local_match_title">Local Receipt Match</string>
+    <string name="receipt_local_match_subtitle">A local receipt with this hash exists in app storage, but blockchain verification did not succeed. Treat the on-chain result as the source of truth.</string>
+    <string name="receipt_latest_saved_title">Latest saved receipt</string>
+    <string name="receipt_latest_saved_message">Review your latest local receipt below. Use transaction verification above to confirm it on-chain.</string>
+    <string name="receipt_latest_local_title">Latest Local Receipt</string>
+    <string name="receipt_latest_local_subtitle">This is the latest receipt saved in the app. It is useful for review, but it is not the same as on-chain verification.</string>
+
+    <string name="receipt_verified_on_chain_title">Verified On-Chain Transaction</string>
+    <string name="receipt_verified_on_chain_subtitle">These values come from the blockchain verification result, not just local app storage.</string>
+    <string name="receipt_empty_title">No receipt available</string>
+    <string name="receipt_empty_message">Submit a vote first or verify a known transaction hash to check whether it exists on-chain.</string>
+    <string name="receipt_no_local_match_title">No local receipt match</string>
+    <string name="receipt_no_local_match_message">The blockchain transaction was verified successfully, but no matching receipt was found in the current local receipt list.</string>
+    <string name="receipt_verification_failed_title">On-chain verification failed</string>
+
+    <string name="receipt_label_election_id">Election ID</string>
+    <string name="receipt_label_election_title">Election Title</string>
+    <string name="receipt_label_wallet_address">Wallet Address</string>
+    <string name="receipt_label_candidate">Candidate</string>
+    <string name="receipt_label_timestamp">Timestamp</string>
+    <string name="receipt_label_transaction_hash">Transaction Hash</string>
+    <string name="receipt_label_block_number">Block Number</string>
+    <string name="receipt_label_status">Status</string>
+    <string name="receipt_label_from_address">From Address</string>
+    <string name="receipt_label_to_address">To Address</string>
+    <string name="receipt_label_gas_used">Gas Used</string>
+    <string name="receipt_label_verification_result">Verification Result</string>
+    <string name="receipt_status_success">Success</string>
+    <string name="receipt_status_failed">Failed</string>
+
+    <!-- Voting Screen -->
+    <string name="voting_title">Vote Now</string>
+    <string name="voting_subtitle">Complete your vote securely after QR check-in. This screen validates your voter session, election access, and final submission.</string>
+    <string name="voting_step_wallet_verified">1. Wallet Verified</string>
+    <string name="voting_step_check_in_required">2. Check-In Required</string>
+    <string name="voting_step_submit_vote">3. Submit Vote</string>
+
+    <string name="voting_wallet_identity_title">Wallet Identity</string>
+    <string name="voting_wallet_identity_subtitle">Your signed-in voter wallet is used for eligibility, check-in matching, and vote submission.</string>
+    <string name="voting_signed_in_wallet_label">Signed-In Voter Wallet</string>
+    <string name="voting_wallet_placeholder">0x...</string>
+    <string name="voting_active_session">Active voter session: %1$s</string>
+    <string name="voting_no_active_wallet_session">No active voter wallet session found.</string>
+
+    <string name="voting_select_election_title">Select Election</string>
+    <string name="voting_select_election_subtitle">Choose the election you want to participate in.</string>
+    <string name="voting_no_elections">No elections have been created yet.</string>
+    <string name="voting_election_id">Election ID: %1$s</string>
+    <string name="voting_election_review_subtitle">Election ready for review and candidate selection.</string>
+    <string name="voting_status_summary">Status: %1$s</string>
+
+    <string name="voting_candidates_title">Candidates</string>
+    <string name="voting_candidate_select_subtitle">Select this candidate for your final vote.</string>
+    <string name="voting_submit_vote_button">Submit Vote</string>
+    <string name="voting_submitting_vote_button">Submitting Vote...</string>
+    <string name="voting_back_button">Back</string>
+
+    <string name="voting_status_no_election_selected">No election selected</string>
+    <string name="voting_status_closed">Closed</string>
+    <string name="voting_status_active">Active</string>
+    <string name="voting_status_not_started">Not Started</string>
+
+    <string name="voting_access_select_election_first">Please select an election first.</string>
+    <string name="voting_access_no_active_session">No active voter session was found. Return to the voter access portal first.</string>
+    <string name="voting_access_ready">Eligible and checked-in. Ready to vote.</string>
+
+    <string name="voting_error_no_active_session">No active voter session found. Please return to Voter Access.</string>
+    <string name="voting_error_select_candidate">Please select a candidate.</string>
+    <string name="voting_error_blockchain_vote_failed">Blockchain vote failed.</string>
+    <string name="voting_success_vote_recorded">Congratulations. Your vote was recorded successfully.</string>
 </resources>
