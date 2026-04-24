@@ -300,4 +300,6 @@
     <string name="blockchain_records_timestamp">समय</string>
     <string name="blockchain_records_transaction_hash">Transaction Hash</string>
     <string name="blockchain_records_not_loaded">लोड भएको छैन</string>
+    <string name="admin_avatar_initials">प्र</string>
+    <string name="voter_avatar_initials">म</string>
 </resources>

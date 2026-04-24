@@ -1,4 +1,4 @@
-package com.example.evotingmobileapp.screens
+﻿package com.example.evotingmobileapp.screens
 
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -286,7 +286,7 @@ private fun VoterHeroSection() {
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "VT",
+                        text = stringResource(R.string.voter_avatar_initials),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimary

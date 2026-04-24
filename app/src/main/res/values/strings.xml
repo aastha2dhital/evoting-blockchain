@@ -300,4 +300,6 @@
     <string name="blockchain_records_timestamp">Timestamp</string>
     <string name="blockchain_records_transaction_hash">Transaction Hash</string>
     <string name="blockchain_records_not_loaded">Not loaded</string>
+    <string name="admin_avatar_initials">AD</string>
+    <string name="voter_avatar_initials">VT</string>
 </resources>

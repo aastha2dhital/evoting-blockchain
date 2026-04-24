@@ -1,4 +1,4 @@
-package com.example.evotingmobileapp.screens
+﻿package com.example.evotingmobileapp.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -238,7 +238,7 @@ private fun AdminHeroSection() {
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "AD",
+                        text = stringResource(R.string.admin_avatar_initials),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onPrimary
