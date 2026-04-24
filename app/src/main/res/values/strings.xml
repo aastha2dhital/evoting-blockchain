@@ -302,4 +302,8 @@
     <string name="blockchain_records_not_loaded">Not loaded</string>
     <string name="admin_avatar_initials">AD</string>
     <string name="voter_avatar_initials">VT</string>
+
+    <!-- Language Switcher -->
+    <string name="language_english_short">EN</string>
+    <string name="language_nepali_short">ने</string>
 </resources>
