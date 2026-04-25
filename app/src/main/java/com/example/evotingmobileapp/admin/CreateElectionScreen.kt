@@ -169,7 +169,7 @@ fun CreateElectionScreen(
                             errorMessage = ""
                         },
                         label = { Text(text = stringResource(R.string.create_election_label_candidates)) },
-                        placeholder = { Text(text = "Ram\nSita") },
+                        placeholder = { Text(text = "Candidate 1\nCandidate 2") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 4,
                         enabled = !isCreating,
@@ -191,7 +191,7 @@ fun CreateElectionScreen(
                             errorMessage = ""
                         },
                         label = { Text(text = stringResource(R.string.create_election_label_eligible_voters)) },
-                        placeholder = { Text(text = "Tap + Use Demo Voter") },
+                        placeholder = { Text(text = "Tap + Use Registered Voter") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 4,
                         enabled = !isCreating,
@@ -216,7 +216,7 @@ fun CreateElectionScreen(
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Text(
-                                text = "+ Use Demo Voter",
+                                text = "+ Use Registered Voter",
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -227,7 +227,7 @@ fun CreateElectionScreen(
                     }
 
                     InfoPanel(
-                        title = "Demo voter wallet",
+                        title = "Registered voter wallet",
                         message = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
                     )
                 }

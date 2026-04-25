@@ -62,8 +62,7 @@
     <string name="voter_note_eligibility">• मतदान पहुँच अझै पनि श्वेतसूची योग्यता, QR चेक-इन स्थिति, र निर्वाचन समय नियमहरूमा निर्भर गर्दछ।</string>
     <string name="voter_note_checked_in">• अन्तिम मतदान प्रवाहमा अगाडि बढ्न केवल चेक-इन गरिएका योग्य मतदाताहरूलाई मात्र अनुमति हुनुपर्छ।</string>
     <string name="voter_note_receipt">• सफल मतदान पेशीपछि पछि प्रमाणीकरण र लेखापरीक्षण समीक्षाका लागि रसिद र लेनदेन ह्यास उपलब्ध हुनुपर्छ।</string>
-    <string name="voter_demo_mode">निगरानीसहितको स्थानीय परीक्षणका लागि प्रोटोटाइप मतदाता वालेट मोड हाल सक्षम गरिएको छ।</string>
-
+    <string name="voter_demo_mode">निगरानीसहितको स्थानीय ब्लकचेन परीक्षणका लागि दर्ता गरिएको मतदाता वालेट मोड सक्षम गरिएको छ।</string>
     <!-- Create Election Screen -->
     <string name="create_election_title">निर्वाचन सिर्जना गर्नुहोस्</string>
     <string name="create_election_subtitle">निर्वाचन विवरण, उम्मेदवार सूची, समयतालिका, र योग्य मतदाता सूची सेट गर्नुहोस्।</string>

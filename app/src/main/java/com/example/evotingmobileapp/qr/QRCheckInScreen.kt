@@ -176,7 +176,7 @@ fun QRCheckInScreen(
                 FancyStepCard(
                     step = "02",
                     title = "Scan voter QR",
-                    subtitle = "Scan the voter wallet QR or use the demo wallet for testing."
+                    subtitle = "Scan the voter wallet QR or use the registered test wallet for local validation."
                 ) {
                     OutlinedTextField(
                         value = voterWalletAddress,
@@ -200,7 +200,7 @@ fun QRCheckInScreen(
                             onClick = {
                                 voterWalletAddress = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
                                 lastScannedValue = ""
-                                statusMessage = "Demo voter wallet added."
+                                statusMessage = "Registered voter wallet added."
                                 statusIsPositive = true
                             },
                             modifier = Modifier
@@ -210,7 +210,7 @@ fun QRCheckInScreen(
                             shape = RoundedCornerShape(18.dp)
                         ) {
                             Text(
-                                text = "Use Demo",
+                                text = "Use Registered Voter",
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
