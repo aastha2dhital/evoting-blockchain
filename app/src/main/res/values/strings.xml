@@ -12,7 +12,7 @@
     <!-- Login / Landing -->
     <string name="login_hero_badge">SECURE • AUDITABLE • BLOCKCHAIN-BACKED</string>
     <string name="login_title">Decentralized\nE-Voting System</string>
-    <string name="login_description">A premium prototype for controlled election access, QR-based voter check-in, transparent blockchain vote recording, and receipt verification.</string>
+    <string name="login_description">A premium mobile voting platform for controlled election access, QR-based voter check-in, transparent blockchain vote recording, and receipt verification.</string>
     <string name="login_stat_role_access">Role-separated access</string>
     <string name="login_stat_onchain_receipts">On-chain receipts</string>
     <string name="login_admin_badge">CONTROL PORTAL</string>
@@ -47,6 +47,7 @@
     <string name="login_bottom_admin">Admin</string>
     <string name="login_bottom_voter">Voter</string>
     <string name="login_bottom_profile">Profile</string>
+
     <!-- Admin Login -->
     <string name="admin_portal_title">Admin Control Portal</string>
     <string name="admin_portal_description">Protected access for election setup, voter check-in management, turnout visibility, and results control.</string>
@@ -54,16 +55,16 @@
     <string name="admin_chip_qr">QR check-in</string>
     <string name="admin_protected_badge">PROTECTED ACCESS</string>
     <string name="admin_access_code_title">Admin Access Code</string>
-    <string name="admin_access_code_description">Only authorized election administrators or polling officers should continue. This prototype uses a controlled access code before supervised admin wallet actions are enabled.</string>
+    <string name="admin_access_code_description">Only authorized election administrators or polling officers should continue. A controlled access code is required before administrative election actions are enabled.</string>
     <string name="admin_pin_label">Enter admin PIN</string>
-    <string name="admin_pin_supporting">Required to unlock the protected admin control portal for this prototype.</string>
+    <string name="admin_pin_supporting">Required to unlock the protected admin control portal.</string>
     <string name="admin_continue_dashboard">Continue to Admin Dashboard</string>
     <string name="admin_error_blank">Enter the admin access code to continue.</string>
     <string name="admin_error_incorrect">Incorrect admin access code. Please try again.</string>
     <string name="admin_notes_title">Admin Access Notes</string>
     <string name="admin_note_authorized">• Use this portal only for authorized election administration tasks.</string>
     <string name="admin_note_voter_separation">• Voter access remains separated through its own portal and check-in flow.</string>
-    <string name="admin_note_blockchain">• Blockchain-backed actions support transparency and auditability in this supervised prototype workflow.</string>
+    <string name="admin_note_blockchain">• Blockchain-backed actions support transparency and auditability across the election workflow.</string>
     <string name="admin_footer">In a production deployment, this step would be replaced by secure backend authentication, protected credential handling, and stronger role verification.</string>
 
     <!-- Voter Access -->
@@ -74,7 +75,7 @@
     <string name="voter_qr_badge">CHECK-IN QR</string>
     <string name="voter_qr_title">Voter QR for Polling Officer Check-In</string>
     <string name="voter_qr_description">Show this QR code to the polling officer during check-in. It contains the voter wallet address used for whitelist matching and supervised access to the voting flow.</string>
-    <string name="voter_fallback_note">For controlled single-device testing, manual wallet entry in the admin QR Check-In screen can still be used as a fallback.</string>
+    <string name="voter_fallback_note">For controlled single-device operation, manual wallet entry in the admin QR Check-In screen can still be used as a fallback.</string>
     <string name="voter_portal_badge">VOTER PORTAL</string>
     <string name="voter_continue_title">Continue to Voting Access</string>
     <string name="voter_continue_description">Continue to the voter portal to review eligible elections, cast a vote when permitted, and verify the receipt after blockchain recording is completed.</string>
@@ -127,6 +128,13 @@
     <string name="create_election_success_title">Election created successfully</string>
     <string name="create_election_success_message">The election has been created and prepared for eligible voters.</string>
     <string name="create_election_success_button">Done</string>
+    <string name="create_election_admin_setup_badge">Admin Setup</string>
+    <string name="create_election_metric_candidates">Candidates</string>
+    <string name="create_election_metric_voters">Voters</string>
+    <string name="create_election_candidate_count">%1$d added</string>
+    <string name="create_election_voter_count">%1$d voter</string>
+    <string name="create_election_deploy_title">Ready to create on blockchain?</string>
+    <string name="create_election_deploy_subtitle">This will publish the election details and eligible voter rules to the configured blockchain network.</string>
 
     <!-- QR Check-In Screen -->
     <string name="qr_check_in_title">QR Check-In</string>
@@ -365,12 +373,4 @@
     <!-- Language Switcher -->
     <string name="language_english_short">EN</string>
     <string name="language_nepali_short">ने</string>
-
-    <string name="create_election_admin_setup_badge">Admin Setup</string>
-    <string name="create_election_metric_candidates">Candidates</string>
-    <string name="create_election_metric_voters">Voters</string>
-    <string name="create_election_candidate_count">%1$d added</string>
-    <string name="create_election_voter_count">%1$d voter</string>
-    <string name="create_election_deploy_title">Ready to create on blockchain?</string>
-    <string name="create_election_deploy_subtitle">This will publish the election details and eligible voter rules to the configured blockchain network.</string>
 </resources>
