@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">EVotingMobileApp</string>
+    <string name="app_name">SecureVote Nepal</string>
 
     <!-- Common -->
     <string name="action_back_to_homepage">Back to Homepage</string>
