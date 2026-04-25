@@ -1,23 +1,31 @@
-<<<<<<< HEAD
+# Android Studio / IntelliJ
 .idea/
+*.iml
+
+# Gradle / Kotlin
 .gradle/
 .kotlin/
-local.properties
 build/
 app/build/
-*.iml
-.DS_Store
-Thumbs.db
-*.log
+
+# Local machine configuration
+local.properties
+
+# Android build outputs
 captures/
 .externalNativeBuild/
 .cxx/
-=======
-node_modules
-artifacts
-cache
+
+# Node / Hardhat / Solidity
+node_modules/
+artifacts/
+cache/
+typechain-types/
+coverage/
+dist/
 .env
-typechain-types
-coverage
-dist
->>>>>>> 5285e15d0fbd1e71fd42d629b7ccd18058831966
+
+# OS / logs
+.DS_Store
+Thumbs.db
+*.log
