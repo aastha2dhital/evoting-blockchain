@@ -1,9 +1,12 @@
 package com.example.evotingmobileapp.navigation
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -11,9 +14,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.admin.AdminViewModelFactory
 import com.example.evotingmobileapp.admin.CreateElectionScreen
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.blockchain.BlockchainRecordsScreen
+import com.example.evotingmobileapp.data.BlockchainElectionRepository
 import com.example.evotingmobileapp.qr.QRCheckInScreen
 import com.example.evotingmobileapp.receipt.ReceiptScreen
 import com.example.evotingmobileapp.screens.AdminLoginScreen
@@ -26,7 +31,8 @@ import com.example.evotingmobileapp.screens.VotingScreen
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    adminViewModel: AdminViewModel,
+    appContext: Context,
+    adminViewModelStoreOwner: ViewModelStoreOwner,
     authSessionViewModel: AuthSessionViewModel = viewModel()
 ) {
     NavHost(
@@ -59,6 +65,15 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
+                LaunchedEffect(Unit) {
+                    adminViewModel.refreshBlockchainData()
+                }
+
                 DashboardScreen(
                     navController = navController,
                     adminViewModel = adminViewModel,
@@ -72,6 +87,15 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
+                LaunchedEffect(Unit) {
+                    adminViewModel.refreshBlockchainData()
+                }
+
                 DashboardScreen(
                     navController = navController,
                     adminViewModel = adminViewModel,
@@ -85,6 +109,15 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
+                LaunchedEffect(Unit) {
+                    adminViewModel.refreshBlockchainData()
+                }
+
                 DashboardScreen(
                     navController = navController,
                     adminViewModel = adminViewModel,
@@ -98,6 +131,11 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
                 CreateElectionScreen(
                     navController = navController,
                     adminViewModel = adminViewModel
@@ -110,6 +148,15 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
+                LaunchedEffect(Unit) {
+                    adminViewModel.refreshBlockchainData()
+                }
+
                 QRCheckInScreen(
                     navController = navController,
                     adminViewModel = adminViewModel
@@ -122,6 +169,15 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
+                LaunchedEffect(Unit) {
+                    adminViewModel.refreshBlockchainData()
+                }
+
                 VotingScreen(
                     navController = navController,
                     adminViewModel = adminViewModel,
@@ -135,6 +191,11 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
                 ReceiptScreen(
                     navController = navController,
                     adminViewModel = adminViewModel
@@ -154,6 +215,11 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
                 ReceiptScreen(
                     navController = navController,
                     adminViewModel = adminViewModel,
@@ -168,6 +234,15 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
+                LaunchedEffect(Unit) {
+                    adminViewModel.refreshBlockchainData()
+                }
+
                 ResultsScreen(
                     navController = navController,
                     adminViewModel = adminViewModel
@@ -180,12 +255,36 @@ fun AppNavGraph(
                 navController = navController,
                 authSessionViewModel = authSessionViewModel
             ) {
+                val adminViewModel = rememberSharedAdminViewModel(
+                    appContext = appContext,
+                    adminViewModelStoreOwner = adminViewModelStoreOwner
+                )
+
+                LaunchedEffect(Unit) {
+                    adminViewModel.refreshBlockchainData()
+                }
+
                 BlockchainRecordsScreen(
                     adminViewModel = adminViewModel
                 )
             }
         }
     }
+}
+
+@Composable
+private fun rememberSharedAdminViewModel(
+    appContext: Context,
+    adminViewModelStoreOwner: ViewModelStoreOwner
+): AdminViewModel {
+    val repository = remember(appContext) {
+        BlockchainElectionRepository(appContext)
+    }
+
+    return viewModel(
+        viewModelStoreOwner = adminViewModelStoreOwner,
+        factory = AdminViewModelFactory(repository)
+    )
 }
 
 @Composable

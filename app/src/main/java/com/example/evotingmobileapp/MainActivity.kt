@@ -33,23 +33,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.evotingmobileapp.admin.AdminViewModel
-import com.example.evotingmobileapp.admin.AdminViewModelFactory
-import com.example.evotingmobileapp.data.BlockchainElectionRepository
 import com.example.evotingmobileapp.navigation.AppNavGraph
 import com.example.evotingmobileapp.ui.theme.EVotingMobileAppTheme
-import org.conscrypt.Conscrypt
-import java.security.Security
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.Theme_EVotingMobileApp)
-
-        Security.insertProviderAt(Conscrypt.newProvider(), 1)
 
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -69,16 +61,11 @@ class MainActivity : ComponentActivity() {
                 EVotingMobileAppTheme {
                     val navController = rememberNavController()
 
-                    val repository = BlockchainElectionRepository(applicationContext)
-
-                    val adminViewModel: AdminViewModel = viewModel(
-                        factory = AdminViewModelFactory(repository)
-                    )
-
                     Box(modifier = Modifier.fillMaxSize()) {
                         AppNavGraph(
                             navController = navController,
-                            adminViewModel = adminViewModel
+                            appContext = applicationContext,
+                            adminViewModelStoreOwner = this@MainActivity
                         )
 
                         LanguageSwitcher(

@@ -39,10 +39,6 @@ class AdminViewModel(
     private val _verificationError = MutableStateFlow<String?>(null)
     val verificationError: StateFlow<String?> = _verificationError.asStateFlow()
 
-    init {
-        refreshBlockchainData()
-    }
-
     fun refreshBlockchainData() {
         val blockchainRepository = repository as? BlockchainElectionRepository ?: return
 
