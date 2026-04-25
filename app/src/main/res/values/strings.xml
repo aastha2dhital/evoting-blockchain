@@ -62,8 +62,7 @@
     <string name="voter_note_eligibility">• Voting access still depends on whitelist eligibility, QR check-in status, and election timing rules.</string>
     <string name="voter_note_checked_in">• Only checked-in eligible voters should be able to continue through the final voting workflow.</string>
     <string name="voter_note_receipt">• Successful vote submission should produce a receipt and transaction hash for later verification and audit review.</string>
-    <string name="voter_demo_mode">Prototype voter wallet mode is currently enabled for supervised local testing.</string>
-
+    <string name="voter_demo_mode">Registered voter wallet mode is enabled for supervised local blockchain testing.</string>
     <!-- Create Election Screen -->
     <string name="create_election_title">Create Election</string>
     <string name="create_election_subtitle">Set up the election details, candidate list, schedule, and eligible voter whitelist.</string>
