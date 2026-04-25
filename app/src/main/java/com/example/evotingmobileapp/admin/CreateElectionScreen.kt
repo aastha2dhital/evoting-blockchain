@@ -180,7 +180,12 @@ fun CreateElectionScreen(
                         shape = RoundedCornerShape(18.dp)
                     )
 
-                    CountBadge(text = "$candidateCount added")
+                    CountBadge(
+                        text = stringResource(
+                            R.string.create_election_candidate_count,
+                            candidateCount
+                        )
+                    )
                 }
 
                 FancySectionCard(
@@ -229,7 +234,12 @@ fun CreateElectionScreen(
                             )
                         }
 
-                        CountBadge(text = "$voterCount voter")
+                        CountBadge(
+                            text = stringResource(
+                                R.string.create_election_voter_count,
+                                voterCount
+                            )
+                        )
                     }
 
                     InfoPanel(
@@ -416,7 +426,7 @@ private fun HeroCard(
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
             ) {
                 Text(
-                    text = "ADMIN SETUP",
+                    text = stringResource(R.string.create_election_admin_setup_badge),
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -442,13 +452,13 @@ private fun HeroCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 HeroMetric(
-                    label = "Candidates",
+                    label = stringResource(R.string.create_election_metric_candidates),
                     value = candidateCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
 
                 HeroMetric(
-                    label = "Voters",
+                    label = stringResource(R.string.create_election_metric_voters),
                     value = voterCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
@@ -635,14 +645,14 @@ private fun DeployCard(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "Ready to create on blockchain?",
+                text = stringResource(R.string.create_election_deploy_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 fontWeight = FontWeight.ExtraBold
             )
 
             Text(
-                text = "This will deploy the election data and whitelist rules to your local blockchain prototype.",
+                text = stringResource(R.string.create_election_deploy_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f)
             )

@@ -365,4 +365,12 @@
     <!-- Language Switcher -->
     <string name="language_english_short">EN</string>
     <string name="language_nepali_short">ने</string>
+
+    <string name="create_election_admin_setup_badge">Admin Setup</string>
+    <string name="create_election_metric_candidates">Candidates</string>
+    <string name="create_election_metric_voters">Voters</string>
+    <string name="create_election_candidate_count">%1$d added</string>
+    <string name="create_election_voter_count">%1$d voter</string>
+    <string name="create_election_deploy_title">Ready to create on blockchain?</string>
+    <string name="create_election_deploy_subtitle">This will deploy the election data and whitelist rules to your local blockchain prototype.</string>
 </resources>

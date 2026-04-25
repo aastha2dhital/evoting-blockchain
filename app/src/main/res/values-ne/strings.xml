@@ -365,4 +365,12 @@
     <!-- Language Switcher -->
     <string name="language_english_short">EN</string>
     <string name="language_nepali_short">ने</string>
+
+    <string name="create_election_admin_setup_badge">एडमिन सेटअप</string>
+    <string name="create_election_metric_candidates">उम्मेदवारहरू</string>
+    <string name="create_election_metric_voters">मतदाताहरू</string>
+    <string name="create_election_candidate_count">%1$d थपियो</string>
+    <string name="create_election_voter_count">%1$d मतदाता</string>
+    <string name="create_election_deploy_title">ब्लकचेनमा निर्वाचन सिर्जना गर्न तयार?</string>
+    <string name="create_election_deploy_subtitle">यसले निर्वाचन डाटा र योग्य मतदाता नियमहरू तपाईंको स्थानीय ब्लकचेन प्रोटोटाइपमा राख्छ।</string>
 </resources>
