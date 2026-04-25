@@ -83,11 +83,16 @@
     <string name="voter_note_eligibility">• मतदान पहुँच अझै पनि श्वेतसूची योग्यता, QR चेक-इन स्थिति, र निर्वाचन समय नियमहरूमा निर्भर गर्दछ।</string>
     <string name="voter_note_checked_in">• अन्तिम मतदान प्रवाहमा अगाडि बढ्न केवल चेक-इन गरिएका योग्य मतदाताहरूलाई मात्र अनुमति हुनुपर्छ।</string>
     <string name="voter_note_receipt">• सफल मतदान पेशीपछि पछि प्रमाणीकरण र लेखापरीक्षण समीक्षाका लागि रसिद र लेनदेन ह्यास उपलब्ध हुनुपर्छ।</string>
-    <string name="voter_demo_mode">निगरानीसहितको स्थानीय ब्लकचेन परीक्षणका लागि दर्ता गरिएको मतदाता वालेट मोड सक्षम गरिएको छ।</string>
+    <string name="voter_demo_mode">यस निर्वाचन सत्रका लागि दर्ता गरिएको मतदाता वालेट पहुँच सक्षम गरिएको छ।</string>
 
     <!-- Create Election Screen -->
     <string name="create_election_title">निर्वाचन सिर्जना गर्नुहोस्</string>
     <string name="create_election_subtitle">निर्वाचन विवरण, उम्मेदवार सूची, समयतालिका, र योग्य मतदाता सूची सेट गर्नुहोस्।</string>
+    <string name="create_election_admin_setup_badge">एडमिन सेटअप</string>
+    <string name="create_election_metric_candidates">उम्मेदवारहरू</string>
+    <string name="create_election_metric_voters">मतदाताहरू</string>
+    <string name="create_election_candidate_count">%1$d थपियो</string>
+    <string name="create_election_voter_count">%1$d मतदाता</string>
     <string name="create_election_section_identity_title">निर्वाचन पहिचान</string>
     <string name="create_election_section_identity_subtitle">मतदाताले केका लागि मतदान गर्दैछन् भन्ने स्पष्ट हुने गरी निर्वाचनको नाम राख्नुहोस्।</string>
     <string name="create_election_label_title">निर्वाचन शीर्षक</string>
@@ -115,6 +120,8 @@
     <string name="create_election_plus_three_hours">+३ घण्टा</string>
     <string name="create_election_date_format_title">मिति ढाँचा</string>
     <string name="create_election_date_format_message">dd/MM/yyyy hh:mm AM/PM प्रयोग गर्नुहोस्, उदाहरण: 24/04/2026 10:45 PM।</string>
+    <string name="create_election_deploy_title">ब्लकचेनमा निर्वाचन सिर्जना गर्न तयार?</string>
+    <string name="create_election_deploy_subtitle">यसले निर्वाचन विवरण र योग्य मतदाता नियमहरू कन्फिगर गरिएको ब्लकचेन नेटवर्कमा प्रकाशित गर्छ।</string>
     <string name="create_election_cancel_button">रद्द गर्नुहोस्</string>
     <string name="create_election_create_button">सिर्जना गर्नुहोस्</string>
     <string name="create_election_creating_button">सिर्जना हुँदैछ...</string>
@@ -163,21 +170,22 @@
     <string name="qr_check_in_error_enter_wallet">कृपया पहिले मतदाताको wallet address स्क्यान वा प्रविष्ट गर्नुहोस्।</string>
     <string name="qr_check_in_checking_blockchain">Blockchain मा मतदाता check-in हुँदैछ...</string>
     <string name="qr_check_in_error_blockchain_failed">Blockchain check-in असफल भयो।</string>
-    <string name="qr_check_in_no_elections_title">No elections available</string>
-    <string name="qr_check_in_use_registered_voter">Use Registered Voter</string>
-    <string name="qr_check_in_registered_voter_added">Registered voter wallet added.</string>
-    <string name="qr_check_in_clear_button">Clear</string>
-    <string name="qr_check_in_last_scanned_wallet_title">Last scanned wallet</string>
-    <string name="qr_check_in_polling_officer_badge">Polling officer</string>
-    <string name="qr_check_in_hero_message">Verify voter attendance before voting.</string>
-    <string name="qr_check_in_metric_elections">Elections</string>
-    <string name="qr_check_in_metric_wallet">Wallet</string>
-    <string name="qr_check_in_wallet_pending">Pending</string>
-    <string name="qr_check_in_wallet_ready">Ready</string>
-    <string name="qr_check_in_no_election_selected_yet">No election selected yet</string>
-    <string name="qr_check_in_selected_badge">Selected</string>
-    <string name="qr_check_in_summary_election_label">Election</string>
-    <string name="qr_check_in_summary_wallet_label">Wallet</string>
+    <string name="qr_check_in_no_elections_title">कुनै निर्वाचन उपलब्ध छैन</string>
+    <string name="qr_check_in_use_registered_voter">दर्ता गरिएको मतदाता प्रयोग गर्नुहोस्</string>
+    <string name="qr_check_in_registered_voter_added">दर्ता गरिएको मतदाता वालेट थपियो।</string>
+    <string name="qr_check_in_clear_button">खाली गर्नुहोस्</string>
+    <string name="qr_check_in_last_scanned_wallet_title">अन्तिम स्क्यान गरिएको वालेट</string>
+    <string name="qr_check_in_polling_officer_badge">मतदान अधिकृत</string>
+    <string name="qr_check_in_hero_message">मतदान अघि मतदाता उपस्थिति प्रमाणीकरण गर्नुहोस्।</string>
+    <string name="qr_check_in_metric_elections">निर्वाचनहरू</string>
+    <string name="qr_check_in_metric_wallet">वालेट</string>
+    <string name="qr_check_in_wallet_pending">प्रतीक्षामा</string>
+    <string name="qr_check_in_wallet_ready">तयार</string>
+    <string name="qr_check_in_no_election_selected_yet">अहिलेसम्म कुनै निर्वाचन छानिएको छैन</string>
+    <string name="qr_check_in_selected_badge">छानिएको</string>
+    <string name="qr_check_in_summary_election_label">निर्वाचन</string>
+    <string name="qr_check_in_summary_wallet_label">वालेट</string>
+
     <!-- Dashboard -->
     <string name="dashboard_admin_title">प्रशासक नियन्त्रण केन्द्र</string>
     <string name="dashboard_voter_title">मतदाता ड्यासबोर्ड</string>
@@ -365,12 +373,4 @@
     <!-- Language Switcher -->
     <string name="language_english_short">EN</string>
     <string name="language_nepali_short">ने</string>
-
-    <string name="create_election_admin_setup_badge">एडमिन सेटअप</string>
-    <string name="create_election_metric_candidates">उम्मेदवारहरू</string>
-    <string name="create_election_metric_voters">मतदाताहरू</string>
-    <string name="create_election_candidate_count">%1$d थपियो</string>
-    <string name="create_election_voter_count">%1$d मतदाता</string>
-    <string name="create_election_deploy_title">ब्लकचेनमा निर्वाचन सिर्जना गर्न तयार?</string>
-    <string name="create_election_deploy_subtitle">यसले निर्वाचन डाटा र योग्य मतदाता नियमहरू तपाईंको स्थानीय ब्लकचेन प्रोटोटाइपमा राख्छ।</string>
 </resources>
