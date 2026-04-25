@@ -1,6 +1,7 @@
 package com.example.evotingmobileapp.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,13 +14,14 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -48,19 +50,10 @@ fun LoginScreen(
         authSessionViewModel.disconnectWallet()
     }
 
-    val gradientBackground = Brush.verticalGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.background,
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
-            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.22f),
-            MaterialTheme.colorScheme.background
-        )
-    )
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(gradientBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -68,273 +61,485 @@ fun LoginScreen(
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 22.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            ElectionHeroSection()
+            HomeTopBar()
 
-            RoleEntryCard(
-                title = stringResource(R.string.login_admin_title),
-                badge = stringResource(R.string.login_admin_badge),
-                description = stringResource(R.string.login_admin_description),
-                buttonLabel = stringResource(R.string.action_go_to_admin_login),
-                accentBrush = Brush.horizontalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.95f),
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.90f)
-                    )
-                ),
-                onClick = {
-                    navController.navigate(AppRoutes.ADMIN_LOGIN)
-                }
+            SearchLikeBar()
+
+            Text(
+                text = "Vote Nepal",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onBackground
             )
 
-            RoleEntryCard(
-                title = stringResource(R.string.login_voter_title),
-                badge = stringResource(R.string.login_voter_badge),
-                description = stringResource(R.string.login_voter_description),
-                buttonLabel = stringResource(R.string.action_go_to_voter_access),
-                accentBrush = Brush.horizontalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.95f),
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.80f)
-                    )
-                ),
-                onClick = {
+            ElectionCountdownCard(
+                onVoteClick = {
                     navController.navigate(AppRoutes.VOTER_ACCESS)
                 }
             )
 
-            SecurityInfoCard()
-
-            Text(
-                text = stringResource(R.string.login_footer),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ElectionHeroSection() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 22.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Surface(
-                modifier = Modifier.size(92.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "EV",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
-
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Text(
-                    text = stringResource(R.string.login_hero_badge),
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Text(
-                text = stringResource(R.string.login_title),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center,
-                lineHeight = MaterialTheme.typography.headlineLarge.lineHeight
-            )
-
-            Text(
-                text = stringResource(R.string.login_description),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+            SectionTitle(title = "Choose your access")
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                HeroStatChip(
+                AccessTile(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.login_stat_role_access)
+                    title = "Admin",
+                    subtitle = "Manage election",
+                    icon = "AD",
+                    primary = true,
+                    onClick = {
+                        navController.navigate(AppRoutes.ADMIN_LOGIN)
+                    }
                 )
-                HeroStatChip(
+
+                AccessTile(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.login_stat_onchain_receipts)
+                    title = "Voter",
+                    subtitle = "Check in & vote",
+                    icon = "VT",
+                    primary = false,
+                    onClick = {
+                        navController.navigate(AppRoutes.VOTER_ACCESS)
+                    }
                 )
+            }
+
+            SectionTitle(title = "Things to know")
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                InfoTile(
+                    modifier = Modifier.weight(1f),
+                    title = "QR Check-in"
+                )
+                InfoTile(
+                    modifier = Modifier.weight(1f),
+                    title = "Vote Receipt"
+                )
+                InfoTile(
+                    modifier = Modifier.weight(1f),
+                    title = "Results"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(78.dp))
+        }
+
+        BottomHomeBar(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onAdminClick = {
+                navController.navigate(AppRoutes.ADMIN_LOGIN)
+            },
+            onVoterClick = {
+                navController.navigate(AppRoutes.VOTER_ACCESS)
+            }
+        )
+    }
+}
+
+@Composable
+private fun HomeTopBar() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircleIcon(text = "🌐")
+
+        Surface(
+            modifier = Modifier.size(44.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "🇳🇵",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            CircleIcon(text = "🔔")
+            CircleIcon(text = "?")
+        }
+    }
+}
+
+@Composable
+private fun CircleIcon(text: String) {
+    Surface(
+        modifier = Modifier.size(36.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.62f)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchLikeBar() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.36f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "⌕",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Text(
+                text = "Search election, party or candidate",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ElectionCountdownCard(
+    onVoteClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                )
+                .padding(20.dp)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Assembly Election",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+
+                Text(
+                    text = "Secure mobile voting with QR check-in",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
+                    textAlign = TextAlign.Center
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    CountdownBox(
+                        modifier = Modifier.weight(1f),
+                        number = "03",
+                        label = "days"
+                    )
+                    CountdownBox(
+                        modifier = Modifier.weight(1f),
+                        number = "02",
+                        label = "hours"
+                    )
+                    CountdownBox(
+                        modifier = Modifier.weight(1f),
+                        number = "38",
+                        label = "mins"
+                    )
+                    CountdownBox(
+                        modifier = Modifier.weight(1f),
+                        number = "12",
+                        label = "sec"
+                    )
+                }
+
+                Button(
+                    onClick = onVoteClick,
+                    modifier = Modifier
+                        .fillMaxWidth(0.72f)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Text(
+                        text = "Vote Now",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun HeroStatChip(
+private fun CountdownBox(
     modifier: Modifier = Modifier,
+    number: String,
     label: String
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.70f)
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)
     ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            textAlign = TextAlign.Center
-        )
+        Column(
+            modifier = Modifier.padding(vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = number,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
+            )
+        }
     }
 }
 
 @Composable
-private fun RoleEntryCard(
+private fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Black,
+        color = MaterialTheme.colorScheme.onBackground
+    )
+}
+
+@Composable
+private fun AccessTile(
+    modifier: Modifier = Modifier,
     title: String,
-    badge: String,
-    description: String,
-    buttonLabel: String,
-    accentBrush: Brush,
+    subtitle: String,
+    icon: String,
+    primary: Boolean,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        modifier = modifier.clickable { onClick() },
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(accentBrush)
-                    .padding(horizontal = 20.dp, vertical = 18.dp)
+            Surface(
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                color = if (primary) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.secondary
+                }
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(999.dp),
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.20f)
-                    ) {
-                        Text(
-                            text = badge,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-
+                Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold,
+                        text = icon,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
 
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
 
-                Button(
-                    onClick = onClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Text(
-                        text = buttonLabel,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
 
 @Composable
-private fun SecurityInfoCard() {
+private fun InfoTile(
+    modifier: Modifier = Modifier,
+    title: String
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        modifier = modifier.height(92.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-        )
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.70f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.70f),
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.48f)
+                        )
+                    )
+                )
+                .padding(10.dp),
+            contentAlignment = Alignment.Center
         ) {
             Text(
-                text = stringResource(R.string.login_notes_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = stringResource(R.string.login_note_admin),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                text = stringResource(R.string.login_note_voter),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                text = stringResource(R.string.login_note_audit),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onPrimary,
+                textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+private fun BottomHomeBar(
+    modifier: Modifier = Modifier,
+    onAdminClick: () -> Unit,
+    onVoterClick: () -> Unit
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 12.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 18.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomItem(
+                label = "Home",
+                icon = "⌂",
+                selected = true,
+                onClick = {}
+            )
+            BottomItem(
+                label = "Admin",
+                icon = "□",
+                selected = false,
+                onClick = onAdminClick
+            )
+            BottomItem(
+                label = "Voter",
+                icon = "▣",
+                selected = false,
+                onClick = onVoterClick
+            )
+            BottomItem(
+                label = "Profile",
+                icon = "●",
+                selected = false,
+                onClick = {}
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomItem(
+    label: String,
+    icon: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .clickable { onClick() }
+            .padding(horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(999.dp),
+            color = if (selected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        ) {
+            Text(
+                text = icon,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
+            color = if (selected) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
     }
 }

@@ -12,21 +12,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = VotingSky,
-    onPrimary = Color.White,
-    primaryContainer = VotingBlue,
-    onPrimaryContainer = TextPrimaryDark,
-    inversePrimary = AccentGold,
+    primary = Color(0xFFD8CCFF),
+    onPrimary = Color(0xFF2D1B6B),
+    primaryContainer = Color(0xFF4B3795),
+    onPrimaryContainer = Color(0xFFF0E9FF),
+    inversePrimary = LavenderPrimary,
 
-    secondary = TrustTeal,
-    onSecondary = Color.White,
-    secondaryContainer = TrustTealDark,
-    onSecondaryContainer = TextPrimaryDark,
+    secondary = Color(0xFFDCD2FF),
+    onSecondary = Color(0xFF2E254D),
+    secondaryContainer = Color(0xFF4C416F),
+    onSecondaryContainer = Color(0xFFF0EAFF),
 
-    tertiary = AccentGold,
-    onTertiary = Color.Black,
-    tertiaryContainer = AccentGoldDark,
-    onTertiaryContainer = Color.White,
+    tertiary = Color(0xFFF4C8F6),
+    onTertiary = Color(0xFF4A164E),
+    tertiaryContainer = Color(0xFF67336D),
+    onTertiaryContainer = Color(0xFFFFE9FD),
 
     background = DarkBackground,
     onBackground = TextPrimaryDark,
@@ -42,31 +42,31 @@ private val DarkColorScheme = darkColorScheme(
     errorContainer = Color(0xFF601410),
     onErrorContainer = Color(0xFFFFDAD6),
 
-    outline = Color(0xFF6F7D90),
-    outlineVariant = Color(0xFF314158),
+    outline = Color(0xFF9B91AA),
+    outlineVariant = Color(0xFF494154),
 
     scrim = Color.Black,
-    inverseSurface = Color(0xFFE7EDF7),
-    inverseOnSurface = Color(0xFF152033),
-    surfaceTint = VotingSky
+    inverseSurface = Color(0xFFF1ECF7),
+    inverseOnSurface = Color(0xFF252030),
+    surfaceTint = Color(0xFFD8CCFF)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = VotingBlue,
+    primary = LavenderPrimary,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD9E7FF),
-    onPrimaryContainer = VotingBlueDark,
-    inversePrimary = VotingSky,
+    primaryContainer = LavenderPrimaryLight,
+    onPrimaryContainer = Color(0xFF2D1B6B),
+    inversePrimary = Color(0xFFD8CCFF),
 
-    secondary = TrustTeal,
+    secondary = LavenderSecondary,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFD4F4F0),
-    onSecondaryContainer = TrustTealDark,
+    secondaryContainer = LavenderSecondaryLight,
+    onSecondaryContainer = Color(0xFF30264E),
 
-    tertiary = AccentGold,
-    onTertiary = Color.Black,
-    tertiaryContainer = Color(0xFFFFEDC7),
-    onTertiaryContainer = AccentGoldDark,
+    tertiary = LavenderTertiary,
+    onTertiary = Color.White,
+    tertiaryContainer = LavenderTertiaryLight,
+    onTertiaryContainer = Color(0xFF4A164E),
 
     background = SoftBackground,
     onBackground = TextPrimaryLight,
@@ -82,13 +82,13 @@ private val LightColorScheme = lightColorScheme(
     errorContainer = Color(0xFFFFDAD6),
     onErrorContainer = Color(0xFF410002),
 
-    outline = Color(0xFF758399),
-    outlineVariant = Color(0xFFC9D3E1),
+    outline = Color(0xFF8A8198),
+    outlineVariant = Color(0xFFD7D0E2),
 
     scrim = Color.Black,
-    inverseSurface = Color(0xFF1B2430),
-    inverseOnSurface = Color(0xFFF4F7FB),
-    surfaceTint = VotingBlue
+    inverseSurface = Color(0xFF302B3B),
+    inverseOnSurface = Color(0xFFF8F3FF),
+    surfaceTint = LavenderPrimary
 )
 
 @Composable
@@ -102,6 +102,7 @@ fun EVotingMobileAppTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

@@ -1,7 +1,9 @@
 package com.example.evotingmobileapp.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -20,7 +24,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -42,12 +45,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.data.VoteValidationResult
+import com.example.evotingmobileapp.model.Election
 import com.example.evotingmobileapp.navigation.AppRoutes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -138,22 +143,32 @@ fun VotingScreen(
         ).success
     }
 
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
+            MaterialTheme.colorScheme.background
+        )
+    )
+
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = modifier
                 .fillMaxSize()
+                .background(backgroundBrush)
                 .padding(innerPadding)
                 .statusBarsPadding()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-                .navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            VotingHeroCard()
+            VotingHeaderCard()
 
-            WalletIdentityCard(
+            WalletSummaryCard(
                 voterWalletAddress = voterWalletAddress,
                 hasVoterAccess = authUiState.canAccessVoter()
             )
@@ -226,7 +241,8 @@ fun VotingScreen(
                             if (finalResult.success) {
                                 snackBarHostState.showSnackbar(voteSuccessSnackbar)
 
-                                val transactionHash = finalResult.receipt?.transactionHash.orEmpty()
+                                val transactionHash =
+                                    finalResult.receipt?.transactionHash.orEmpty()
 
                                 if (transactionHash.isNotBlank()) {
                                     navController.navigate(
@@ -245,61 +261,71 @@ fun VotingScreen(
 
             TextButton(
                 onClick = { navController.popBackStack() },
-                enabled = !isBusy
+                enabled = !isBusy,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text(text = stringResource(R.string.voting_back_button))
+                Text(
+                    text = stringResource(R.string.voting_back_button),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
 }
 
 @Composable
-private fun VotingHeroCard() {
-    val gradient = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.secondary
-        )
-    )
-
+private fun VotingHeaderCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .background(brush = gradient)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = stringResource(R.string.voting_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.ExtraBold
-            )
+            Surface(
+                modifier = Modifier.size(54.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "✓",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
 
-            Text(
-                text = stringResource(R.string.voting_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
-            )
-
-            PillColumn(
-                items = listOf(
-                    stringResource(R.string.voting_step_wallet_verified),
-                    stringResource(R.string.voting_step_check_in_required),
-                    stringResource(R.string.voting_step_submit_vote)
+            Column(
+                modifier = Modifier.padding(start = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.voting_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-            )
+
+                Text(
+                    text = stringResource(R.string.voting_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun WalletIdentityCard(
+private fun WalletSummaryCard(
     voterWalletAddress: String,
     hasVoterAccess: Boolean
 ) {
@@ -308,36 +334,32 @@ private fun WalletIdentityCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SectionTitle(
                 title = stringResource(R.string.voting_wallet_identity_title),
-                subtitle = stringResource(R.string.voting_wallet_identity_subtitle)
-            )
-
-            OutlinedTextField(
-                value = voterWalletAddress,
-                onValueChange = {},
-                label = { Text(text = stringResource(R.string.voting_signed_in_wallet_label)) },
-                placeholder = { Text(text = stringResource(R.string.voting_wallet_placeholder)) },
-                singleLine = true,
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = false
-            )
-
-            StatusInfoBadge(
-                text = if (hasActiveWallet) {
+                subtitle = if (hasActiveWallet) {
                     stringResource(
                         R.string.voting_active_session,
                         shortenWalletAddress(voterWalletAddress)
                     )
                 } else {
                     stringResource(R.string.voting_no_active_wallet_session)
+                }
+            )
+
+            StatusBadge(
+                text = if (hasActiveWallet) {
+                    shortenWalletAddress(voterWalletAddress)
+                } else {
+                    stringResource(R.string.voting_wallet_placeholder)
                 },
                 positive = hasActiveWallet
             )
@@ -347,7 +369,7 @@ private fun WalletIdentityCard(
 
 @Composable
 private fun ElectionSelectionCard(
-    elections: List<com.example.evotingmobileapp.model.Election>,
+    elections: List<Election>,
     selectedElectionId: String,
     onElectionSelected: (String) -> Unit,
     isBusy: Boolean
@@ -355,11 +377,14 @@ private fun ElectionSelectionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SectionTitle(
                 title = stringResource(R.string.voting_select_election_title),
@@ -367,13 +392,13 @@ private fun ElectionSelectionCard(
             )
 
             if (elections.isEmpty()) {
-                StatusInfoBadge(
+                StatusBadge(
                     text = stringResource(R.string.voting_no_elections),
                     positive = false
                 )
             } else {
                 elections.forEach { election ->
-                    SelectionCard(
+                    ChoiceRow(
                         title = election.title,
                         subtitle = stringResource(R.string.voting_election_id, election.id),
                         selected = selectedElectionId == election.id,
@@ -403,25 +428,35 @@ private fun ElectionVotingCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             SectionTitle(
                 title = electionTitle,
                 subtitle = stringResource(R.string.voting_election_review_subtitle)
             )
 
-            PillColumn(
-                items = listOf(
-                    stringResource(R.string.voting_status_summary, electionStatus),
-                    stringResource(R.string.voting_election_id, electionId)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                SmallInfoPill(
+                    modifier = Modifier.weight(1f),
+                    text = electionStatus
                 )
-            )
+                SmallInfoPill(
+                    modifier = Modifier.weight(1f),
+                    text = stringResource(R.string.voting_election_id, electionId)
+                )
+            }
 
-            StatusInfoBadge(
+            StatusBadge(
                 text = votingAccessText,
                 positive = votingAccessSuccess
             )
@@ -431,11 +466,12 @@ private fun ElectionVotingCard(
             Text(
                 text = stringResource(R.string.voting_candidates_title),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             candidates.forEach { candidate ->
-                SelectionCard(
+                ChoiceRow(
                     title = candidate,
                     subtitle = stringResource(R.string.voting_candidate_select_subtitle),
                     selected = selectedCandidate == candidate,
@@ -444,16 +480,18 @@ private fun ElectionVotingCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Button(
                 onClick = onSubmitVote,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(52.dp),
                 enabled = !isBusy,
                 shape = RoundedCornerShape(18.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
             ) {
                 Text(
                     text = if (isSubmittingVote) {
@@ -461,7 +499,8 @@ private fun ElectionVotingCard(
                     } else {
                         stringResource(R.string.voting_submit_vote_button)
                     },
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -479,8 +518,10 @@ private fun SectionTitle(
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
+
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
@@ -490,7 +531,7 @@ private fun SectionTitle(
 }
 
 @Composable
-private fun SelectionCard(
+private fun ChoiceRow(
     title: String,
     subtitle: String,
     selected: Boolean,
@@ -498,9 +539,9 @@ private fun SelectionCard(
     enabled: Boolean
 ) {
     val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f)
     }
 
     val contentColor = if (selected) {
@@ -510,15 +551,21 @@ private fun SelectionCard(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onSelected() },
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 4.dp else 2.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = containerColor
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (selected) 3.dp else 1.dp
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
@@ -534,13 +581,14 @@ private fun SelectionCard(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = contentColor
                 )
+
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.82f)
+                    color = contentColor.copy(alpha = 0.78f)
                 )
             }
         }
@@ -548,14 +596,14 @@ private fun SelectionCard(
 }
 
 @Composable
-private fun StatusInfoBadge(
+private fun StatusBadge(
     text: String,
     positive: Boolean
 ) {
     val containerColor = if (positive) {
-        MaterialTheme.colorScheme.secondaryContainer
+        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.76f)
     } else {
-        MaterialTheme.colorScheme.tertiaryContainer
+        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.76f)
     }
 
     val contentColor = if (positive) {
@@ -565,43 +613,42 @@ private fun StatusInfoBadge(
     }
 
     Surface(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         color = containerColor
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = contentColor
+            color = contentColor,
+            textAlign = TextAlign.Start
         )
     }
 }
 
 @Composable
-private fun PillColumn(
-    items: List<String>
+private fun SmallInfoPill(
+    modifier: Modifier = Modifier,
+    text: String
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
     ) {
-        items.forEach { item ->
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
-            ) {
-                Text(
-                    text = item,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
 private fun shortenWalletAddress(address: String): String {
-    if (address.length <= 16) return address
+    if (address.length <= 18) return address
     return "${address.take(10)}...${address.takeLast(8)}"
 }

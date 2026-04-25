@@ -1,10 +1,12 @@
 ﻿package com.example.evotingmobileapp.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,11 +60,11 @@ fun AdminLoginScreen(
     val adminErrorBlank = stringResource(R.string.admin_error_blank)
     val adminErrorIncorrect = stringResource(R.string.admin_error_incorrect)
 
-    val gradientBackground = Brush.verticalGradient(
+    val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
             MaterialTheme.colorScheme.background,
-            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.32f),
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.18f),
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.20f),
             MaterialTheme.colorScheme.background
         )
     )
@@ -68,7 +72,7 @@ fun AdminLoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradientBackground)
+            .background(backgroundBrush)
     ) {
         Column(
             modifier = Modifier
@@ -76,264 +80,249 @@ fun AdminLoginScreen(
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 20.dp),
+                .padding(horizontal = 18.dp, vertical = 18.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AdminHeroSection()
+            PremiumAdminHeroSection()
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(30.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 9.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(22.dp),
-                    verticalArrangement = Arrangement.spacedBy(18.dp)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(999.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = stringResource(R.string.admin_protected_badge),
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
-                    }
+            PremiumAdminAccessCard(
+                adminPin = adminPin,
+                onAdminPinChange = {
+                    adminPin = it
+                    errorMessage = null
+                },
+                errorMessage = errorMessage,
+                onContinue = {
+                    when {
+                        adminPin.isBlank() -> {
+                            errorMessage = adminErrorBlank
+                        }
 
-                    Text(
-                        text = stringResource(R.string.admin_access_code_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold
-                    )
+                        adminPin != BuildConfig.ADMIN_ACCESS_PIN -> {
+                            errorMessage = adminErrorIncorrect
+                        }
 
-                    Text(
-                        text = stringResource(R.string.admin_access_code_description),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        else -> {
+                            authSessionViewModel.disconnectWallet()
+                            authSessionViewModel.connectWallet(BuildConfig.ADMIN_WALLET_ADDRESS)
+                            authSessionViewModel.selectAdminRole()
 
-                    OutlinedTextField(
-                        value = adminPin,
-                        onValueChange = { newValue ->
-                            adminPin = newValue
-                            errorMessage = null
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(R.string.admin_pin_label)) },
-                        supportingText = {
-                            Text(stringResource(R.string.admin_pin_supporting))
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.NumberPassword
-                        ),
-                        visualTransformation = PasswordVisualTransformation(),
-                        shape = RoundedCornerShape(20.dp)
-                    )
-
-                    errorMessage?.let { message ->
-                        Surface(
-                            shape = RoundedCornerShape(18.dp),
-                            color = MaterialTheme.colorScheme.errorContainer
-                        ) {
-                            Text(
-                                text = message,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                fontWeight = FontWeight.Medium
-                            )
+                            navController.navigate(AppRoutes.ADMIN_DASHBOARD) {
+                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
+                            }
                         }
                     }
-
-                    Button(
-                        onClick = {
-                            when {
-                                adminPin.isBlank() -> {
-                                    errorMessage = adminErrorBlank
-                                }
-
-                                adminPin != BuildConfig.ADMIN_ACCESS_PIN -> {
-                                    errorMessage = adminErrorIncorrect
-                                }
-
-                                else -> {
-                                    authSessionViewModel.disconnectWallet()
-                                    authSessionViewModel.connectWallet(BuildConfig.ADMIN_WALLET_ADDRESS)
-                                    authSessionViewModel.selectAdminRole()
-
-                                    navController.navigate(AppRoutes.ADMIN_DASHBOARD) {
-                                        popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                                    }
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.admin_continue_dashboard),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    OutlinedButton(
-                        onClick = { navController.popBackStack() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.action_back_to_homepage),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-
-            AccessGuidanceCard()
-
-            Text(
-                text = stringResource(R.string.admin_footer),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                },
+                onBack = { navController.popBackStack() }
             )
         }
     }
 }
 
 @Composable
-private fun AdminHeroSection() {
+private fun PremiumAdminHeroSection() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 14.dp,
+                shape = RoundedCornerShape(34.dp),
+                clip = false
+            ),
+        shape = RoundedCornerShape(34.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f)
+            containerColor = MaterialTheme.colorScheme.primary
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 22.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                )
+                .padding(horizontal = 22.dp, vertical = 26.dp)
         ) {
-            Surface(
-                modifier = Modifier.size(88.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = stringResource(R.string.admin_avatar_initials),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onPrimary
+                Surface(
+                    modifier = Modifier
+                        .size(94.dp)
+                        .border(
+                            width = 3.dp,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.35f),
+                            shape = CircleShape
+                        ),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "✓",
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+
+                Text(
+                    text = stringResource(R.string.admin_portal_title),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    textAlign = TextAlign.Center
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    HeroPill(
+                        modifier = Modifier.weight(1f),
+                        label = stringResource(R.string.admin_chip_setup)
+                    )
+                    HeroPill(
+                        modifier = Modifier.weight(1f),
+                        label = stringResource(R.string.admin_chip_qr)
                     )
                 }
             }
-
-            Text(
-                text = stringResource(R.string.admin_portal_title),
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = stringResource(R.string.admin_portal_description),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                AdminStatChip(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.admin_chip_setup)
-                )
-                AdminStatChip(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.admin_chip_qr)
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun AdminStatChip(
+private fun HeroPill(
     modifier: Modifier = Modifier,
     label: String
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.75f)
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimary,
             textAlign = TextAlign.Center
         )
     }
 }
 
 @Composable
-private fun AccessGuidanceCard() {
+private fun PremiumAdminAccessCard(
+    adminPin: String,
+    onAdminPinChange: (String) -> Unit,
+    errorMessage: String?,
+    onContinue: () -> Unit,
+    onBack: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = stringResource(R.string.admin_notes_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Text(
+                    text = stringResource(R.string.admin_protected_badge),
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
 
             Text(
-                text = stringResource(R.string.admin_note_authorized),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = stringResource(R.string.admin_access_code_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
-            Text(
-                text = stringResource(R.string.admin_note_voter_separation),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            OutlinedTextField(
+                value = adminPin,
+                onValueChange = onAdminPinChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.admin_pin_label)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.NumberPassword
+                ),
+                visualTransformation = PasswordVisualTransformation(),
+                shape = RoundedCornerShape(22.dp)
             )
 
-            Text(
-                text = stringResource(R.string.admin_note_blockchain),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            errorMessage?.let { message ->
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Text(
+                        text = message,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Button(
+                onClick = onContinue,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(58.dp),
+                shape = RoundedCornerShape(22.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    text = stringResource(R.string.admin_continue_dashboard),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black
+                )
+            }
+
+            OutlinedButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(22.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.action_back_to_homepage),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
