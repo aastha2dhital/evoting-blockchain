@@ -26,7 +26,27 @@
     <string name="login_note_voter">• Voters continue through a separate access path for QR check-in and voting.</string>
     <string name="login_note_audit">• Election actions are designed to support transparency, auditability, and controlled access.</string>
     <string name="login_footer">Direct dashboard shortcuts have been removed so each user must continue through the correct access path.</string>
-
+    <string name="login_brand_title">Vote Nepal</string>
+    <string name="login_search_placeholder">Search election, party or candidate</string>
+    <string name="login_access_section_title">Choose your access</string>
+    <string name="login_access_admin_title">Admin</string>
+    <string name="login_access_admin_subtitle">Manage election</string>
+    <string name="login_access_voter_title">Voter</string>
+    <string name="login_access_voter_subtitle">Check in &amp; vote</string>
+    <string name="login_info_section_title">Things to know</string>
+    <string name="login_info_qr_checkin">QR Check-in</string>
+    <string name="login_info_vote_receipt">Vote Receipt</string>
+    <string name="login_info_results">Results</string>
+    <string name="login_election_card_title">Assembly Election</string>
+    <string name="login_election_card_subtitle">Secure mobile voting with QR check-in</string>
+    <string name="login_countdown_days">days</string>
+    <string name="login_countdown_hours">hours</string>
+    <string name="login_countdown_minutes">mins</string>
+    <string name="login_countdown_seconds">sec</string>
+    <string name="login_bottom_home">Home</string>
+    <string name="login_bottom_admin">Admin</string>
+    <string name="login_bottom_voter">Voter</string>
+    <string name="login_bottom_profile">Profile</string>
     <!-- Admin Login -->
     <string name="admin_portal_title">Admin Control Portal</string>
     <string name="admin_portal_description">Protected access for election setup, voter check-in management, turnout visibility, and results control.</string>
@@ -63,19 +83,37 @@
     <string name="voter_note_checked_in">• Only checked-in eligible voters should be able to continue through the final voting workflow.</string>
     <string name="voter_note_receipt">• Successful vote submission should produce a receipt and transaction hash for later verification and audit review.</string>
     <string name="voter_demo_mode">Registered voter wallet mode is enabled for supervised local blockchain testing.</string>
+
     <!-- Create Election Screen -->
     <string name="create_election_title">Create Election</string>
     <string name="create_election_subtitle">Set up the election details, candidate list, schedule, and eligible voter whitelist.</string>
+    <string name="create_election_section_identity_title">Election identity</string>
+    <string name="create_election_section_identity_subtitle">Name the election clearly so voters know exactly what they are voting for.</string>
     <string name="create_election_label_title">Election title</string>
     <string name="create_election_placeholder_title">Student Council Election 2026</string>
+    <string name="create_election_placeholder_title_example">e.g. Student Council Election 2026</string>
+    <string name="create_election_section_candidates_title">Candidates</string>
+    <string name="create_election_section_candidates_subtitle">Add candidates one per line. The system requires at least two candidates.</string>
     <string name="create_election_label_candidates">Candidates</string>
     <string name="create_election_placeholder_candidates">Enter candidate names separated by commas or new lines\nExample:\nAlice\nBob\nCharlie</string>
+    <string name="create_election_placeholder_candidates_simple">Candidate 1\nCandidate 2</string>
+    <string name="create_election_section_whitelist_title">Eligible voter whitelist</string>
+    <string name="create_election_section_whitelist_subtitle">Only wallets added here can check in and vote in this election.</string>
     <string name="create_election_label_eligible_voters">Eligible voter wallet addresses / whitelist</string>
     <string name="create_election_placeholder_eligible_voters">Enter wallet addresses separated by commas or new lines\nExample:\n0x70997970c51812dc3a010c7d01b50e0d17dc79c8\n0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc</string>
+    <string name="create_election_placeholder_registered_voter">Tap + Use Registered Voter</string>
+    <string name="create_election_use_registered_voter">+ Use Registered Voter</string>
+    <string name="create_election_registered_voter_wallet">Registered voter wallet</string>
+    <string name="create_election_section_schedule_title">Election schedule</string>
+    <string name="create_election_section_schedule_subtitle">Set the opening and closing time. Results stay locked until the election is closed.</string>
     <string name="create_election_label_start_time">Start date &amp; time</string>
     <string name="create_election_label_end_time">End date &amp; time</string>
     <string name="create_election_placeholder_datetime">dd/MM/yyyy hh:mm a</string>
     <string name="create_election_helper_text">Use Ethereum wallet addresses for the whitelist.\nUse this date/time format: dd/MM/yyyy hh:mm a\nExample: 29/03/2026 08:30 PM</string>
+    <string name="create_election_start_now">Start now</string>
+    <string name="create_election_plus_three_hours">+3 hours</string>
+    <string name="create_election_date_format_title">Date format</string>
+    <string name="create_election_date_format_message">Use dd/MM/yyyy hh:mm AM/PM, for example 24/04/2026 10:45 PM.</string>
     <string name="create_election_cancel_button">Cancel</string>
     <string name="create_election_create_button">Create</string>
     <string name="create_election_creating_button">Creating...</string>
@@ -124,6 +162,21 @@
     <string name="qr_check_in_error_enter_wallet">Please scan or enter a voter wallet address first.</string>
     <string name="qr_check_in_checking_blockchain">Checking voter in on blockchain...</string>
     <string name="qr_check_in_error_blockchain_failed">Blockchain check-in failed.</string>
+    <string name="qr_check_in_no_elections_title">No elections available</string>
+    <string name="qr_check_in_use_registered_voter">Use Registered Voter</string>
+    <string name="qr_check_in_registered_voter_added">Registered voter wallet added.</string>
+    <string name="qr_check_in_clear_button">Clear</string>
+    <string name="qr_check_in_last_scanned_wallet_title">Last scanned wallet</string>
+    <string name="qr_check_in_polling_officer_badge">Polling officer</string>
+    <string name="qr_check_in_hero_message">Verify voter attendance before voting.</string>
+    <string name="qr_check_in_metric_elections">Elections</string>
+    <string name="qr_check_in_metric_wallet">Wallet</string>
+    <string name="qr_check_in_wallet_pending">Pending</string>
+    <string name="qr_check_in_wallet_ready">Ready</string>
+    <string name="qr_check_in_no_election_selected_yet">No election selected yet</string>
+    <string name="qr_check_in_selected_badge">Selected</string>
+    <string name="qr_check_in_summary_election_label">Election</string>
+    <string name="qr_check_in_summary_wallet_label">Wallet</string>
 
     <!-- Dashboard -->
     <string name="dashboard_admin_title">Admin Control Center</string>
@@ -301,6 +354,13 @@
     <string name="blockchain_records_not_loaded">Not loaded</string>
     <string name="admin_avatar_initials">AD</string>
     <string name="voter_avatar_initials">VT</string>
+    <string name="blockchain_records_records_metric">Records</string>
+    <string name="blockchain_records_audit_trail_subtitle">Latest verified voting records from this app session are shown first.</string>
+    <string name="blockchain_records_connection_subtitle">Current local contract status</string>
+    <string name="blockchain_records_connected">Connected</string>
+    <string name="blockchain_records_waiting_for_receipt">Waiting for vote receipt</string>
+    <string name="blockchain_records_transaction_short">Transaction %1$s</string>
+    <string name="blockchain_records_not_available">Not available</string>
 
     <!-- Language Switcher -->
     <string name="language_english_short">EN</string>

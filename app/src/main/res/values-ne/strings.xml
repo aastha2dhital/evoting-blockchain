@@ -26,6 +26,27 @@
     <string name="login_note_voter">• मतदाताहरू QR चेक-इन र मतदानका लागि छुट्टै पहुँच मार्गमार्फत अगाडि बढ्छन्।</string>
     <string name="login_note_audit">• निर्वाचन सम्बन्धी कार्यहरू पारदर्शिता, लेखापरीक्षणयोग्यता, र नियन्त्रित पहुँचलाई समर्थन गर्ने गरी डिजाइन गरिएका छन्।</string>
     <string name="login_footer">प्रत्यक्ष ड्यासबोर्ड सर्टकटहरू हटाइएका छन् ताकि प्रत्येक प्रयोगकर्ताले सही पहुँच मार्गमार्फत अगाडि बढ्नु आवश्यक होस्।</string>
+    <string name="login_brand_title">भोट नेपाल</string>
+    <string name="login_search_placeholder">निर्वाचन, पार्टी वा उम्मेदवार खोज्नुहोस्</string>
+    <string name="login_access_section_title">आफ्नो पहुँच छान्नुहोस्</string>
+    <string name="login_access_admin_title">प्रशासक</string>
+    <string name="login_access_admin_subtitle">निर्वाचन व्यवस्थापन</string>
+    <string name="login_access_voter_title">मतदाता</string>
+    <string name="login_access_voter_subtitle">चेक-इन र मतदान</string>
+    <string name="login_info_section_title">जान्नुपर्ने कुराहरू</string>
+    <string name="login_info_qr_checkin">QR चेक-इन</string>
+    <string name="login_info_vote_receipt">मतदान रसिद</string>
+    <string name="login_info_results">नतिजा</string>
+    <string name="login_election_card_title">सभा निर्वाचन</string>
+    <string name="login_election_card_subtitle">QR चेक-इनसहित सुरक्षित मोबाइल मतदान</string>
+    <string name="login_countdown_days">दिन</string>
+    <string name="login_countdown_hours">घण्टा</string>
+    <string name="login_countdown_minutes">मिनेट</string>
+    <string name="login_countdown_seconds">सेकेन्ड</string>
+    <string name="login_bottom_home">गृह</string>
+    <string name="login_bottom_admin">प्रशासक</string>
+    <string name="login_bottom_voter">मतदाता</string>
+    <string name="login_bottom_profile">प्रोफाइल</string>
 
     <!-- Admin Login -->
     <string name="admin_portal_title">प्रशासक नियन्त्रण पोर्टल</string>
@@ -63,19 +84,37 @@
     <string name="voter_note_checked_in">• अन्तिम मतदान प्रवाहमा अगाडि बढ्न केवल चेक-इन गरिएका योग्य मतदाताहरूलाई मात्र अनुमति हुनुपर्छ।</string>
     <string name="voter_note_receipt">• सफल मतदान पेशीपछि पछि प्रमाणीकरण र लेखापरीक्षण समीक्षाका लागि रसिद र लेनदेन ह्यास उपलब्ध हुनुपर्छ।</string>
     <string name="voter_demo_mode">निगरानीसहितको स्थानीय ब्लकचेन परीक्षणका लागि दर्ता गरिएको मतदाता वालेट मोड सक्षम गरिएको छ।</string>
+
     <!-- Create Election Screen -->
     <string name="create_election_title">निर्वाचन सिर्जना गर्नुहोस्</string>
     <string name="create_election_subtitle">निर्वाचन विवरण, उम्मेदवार सूची, समयतालिका, र योग्य मतदाता सूची सेट गर्नुहोस्।</string>
+    <string name="create_election_section_identity_title">निर्वाचन पहिचान</string>
+    <string name="create_election_section_identity_subtitle">मतदाताले केका लागि मतदान गर्दैछन् भन्ने स्पष्ट हुने गरी निर्वाचनको नाम राख्नुहोस्।</string>
     <string name="create_election_label_title">निर्वाचन शीर्षक</string>
     <string name="create_election_placeholder_title">विद्यार्थी परिषद निर्वाचन २०२६</string>
+    <string name="create_election_placeholder_title_example">जस्तै: विद्यार्थी परिषद निर्वाचन २०२६</string>
+    <string name="create_election_section_candidates_title">उम्मेदवारहरू</string>
+    <string name="create_election_section_candidates_subtitle">प्रत्येक लाइनमा एक उम्मेदवार राख्नुहोस्। प्रणालीमा कम्तीमा दुई उम्मेदवार आवश्यक हुन्छ।</string>
     <string name="create_election_label_candidates">उम्मेदवारहरू</string>
     <string name="create_election_placeholder_candidates">उम्मेदवारको नाम comma वा नयाँ लाइनमा राख्नुहोस्\nउदाहरण:\nAlice\nBob\nCharlie</string>
+    <string name="create_election_placeholder_candidates_simple">उम्मेदवार १\nउम्मेदवार २</string>
+    <string name="create_election_section_whitelist_title">योग्य मतदाता सूची</string>
+    <string name="create_election_section_whitelist_subtitle">यहाँ थपिएका वालेटहरूले मात्र यस निर्वाचनमा चेक-इन गरेर मतदान गर्न सक्छन्।</string>
     <string name="create_election_label_eligible_voters">योग्य मतदाताका wallet address / whitelist</string>
     <string name="create_election_placeholder_eligible_voters">Wallet address हरू comma वा नयाँ लाइनमा राख्नुहोस्\nउदाहरण:\n0x70997970c51812dc3a010c7d01b50e0d17dc79c8\n0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc</string>
+    <string name="create_election_placeholder_registered_voter">+ दर्ता गरिएको मतदाता प्रयोग गर्नुहोस्</string>
+    <string name="create_election_use_registered_voter">+ दर्ता गरिएको मतदाता</string>
+    <string name="create_election_registered_voter_wallet">दर्ता गरिएको मतदाता वालेट</string>
+    <string name="create_election_section_schedule_title">निर्वाचन समयतालिका</string>
+    <string name="create_election_section_schedule_subtitle">सुरु र अन्त्य समय सेट गर्नुहोस्। निर्वाचन बन्द नभएसम्म नतिजा लक रहन्छ।</string>
     <string name="create_election_label_start_time">सुरु मिति र समय</string>
     <string name="create_election_label_end_time">अन्त्य मिति र समय</string>
     <string name="create_election_placeholder_datetime">dd/MM/yyyy hh:mm a</string>
     <string name="create_election_helper_text">Whitelist का लागि Ethereum wallet address प्रयोग गर्नुहोस्।\nयो date/time format प्रयोग गर्नुहोस्: dd/MM/yyyy hh:mm a\nउदाहरण: 29/03/2026 08:30 PM</string>
+    <string name="create_election_start_now">अहिले सुरु गर्नुहोस्</string>
+    <string name="create_election_plus_three_hours">+३ घण्टा</string>
+    <string name="create_election_date_format_title">मिति ढाँचा</string>
+    <string name="create_election_date_format_message">dd/MM/yyyy hh:mm AM/PM प्रयोग गर्नुहोस्, उदाहरण: 24/04/2026 10:45 PM।</string>
     <string name="create_election_cancel_button">रद्द गर्नुहोस्</string>
     <string name="create_election_create_button">सिर्जना गर्नुहोस्</string>
     <string name="create_election_creating_button">सिर्जना हुँदैछ...</string>
@@ -124,7 +163,21 @@
     <string name="qr_check_in_error_enter_wallet">कृपया पहिले मतदाताको wallet address स्क्यान वा प्रविष्ट गर्नुहोस्।</string>
     <string name="qr_check_in_checking_blockchain">Blockchain मा मतदाता check-in हुँदैछ...</string>
     <string name="qr_check_in_error_blockchain_failed">Blockchain check-in असफल भयो।</string>
-
+    <string name="qr_check_in_no_elections_title">No elections available</string>
+    <string name="qr_check_in_use_registered_voter">Use Registered Voter</string>
+    <string name="qr_check_in_registered_voter_added">Registered voter wallet added.</string>
+    <string name="qr_check_in_clear_button">Clear</string>
+    <string name="qr_check_in_last_scanned_wallet_title">Last scanned wallet</string>
+    <string name="qr_check_in_polling_officer_badge">Polling officer</string>
+    <string name="qr_check_in_hero_message">Verify voter attendance before voting.</string>
+    <string name="qr_check_in_metric_elections">Elections</string>
+    <string name="qr_check_in_metric_wallet">Wallet</string>
+    <string name="qr_check_in_wallet_pending">Pending</string>
+    <string name="qr_check_in_wallet_ready">Ready</string>
+    <string name="qr_check_in_no_election_selected_yet">No election selected yet</string>
+    <string name="qr_check_in_selected_badge">Selected</string>
+    <string name="qr_check_in_summary_election_label">Election</string>
+    <string name="qr_check_in_summary_wallet_label">Wallet</string>
     <!-- Dashboard -->
     <string name="dashboard_admin_title">प्रशासक नियन्त्रण केन्द्र</string>
     <string name="dashboard_voter_title">मतदाता ड्यासबोर्ड</string>
@@ -301,6 +354,13 @@
     <string name="blockchain_records_not_loaded">लोड भएको छैन</string>
     <string name="admin_avatar_initials">प्र</string>
     <string name="voter_avatar_initials">म</string>
+    <string name="blockchain_records_records_metric">रेकर्डहरू</string>
+    <string name="blockchain_records_audit_trail_subtitle">यस app session का पछिल्ला verified voting records पहिले देखाइन्छन्।</string>
+    <string name="blockchain_records_connection_subtitle">हालको local contract status</string>
+    <string name="blockchain_records_connected">जडान भएको</string>
+    <string name="blockchain_records_waiting_for_receipt">vote receipt को प्रतीक्षामा</string>
+    <string name="blockchain_records_transaction_short">Transaction %1$s</string>
+    <string name="blockchain_records_not_available">उपलब्ध छैन</string>
 
     <!-- Language Switcher -->
     <string name="language_english_short">EN</string>

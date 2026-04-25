@@ -139,8 +139,8 @@ fun CreateElectionScreen(
 
                 FancySectionCard(
                     step = "01",
-                    title = "Election identity",
-                    subtitle = "Name the election clearly so voters know exactly what they are voting for."
+                    title = stringResource(R.string.create_election_section_identity_title),
+                    subtitle = stringResource(R.string.create_election_section_identity_subtitle)
                 ) {
                     OutlinedTextField(
                         value = title,
@@ -149,7 +149,9 @@ fun CreateElectionScreen(
                             errorMessage = ""
                         },
                         label = { Text(text = stringResource(R.string.create_election_label_title)) },
-                        placeholder = { Text(text = "e.g. Student Council Election 2026") },
+                        placeholder = {
+                            Text(text = stringResource(R.string.create_election_placeholder_title_example))
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !isCreating,
@@ -159,8 +161,8 @@ fun CreateElectionScreen(
 
                 FancySectionCard(
                     step = "02",
-                    title = "Candidates",
-                    subtitle = "Add candidates one per line. The system requires at least two candidates."
+                    title = stringResource(R.string.create_election_section_candidates_title),
+                    subtitle = stringResource(R.string.create_election_section_candidates_subtitle)
                 ) {
                     OutlinedTextField(
                         value = candidatesInput,
@@ -169,7 +171,9 @@ fun CreateElectionScreen(
                             errorMessage = ""
                         },
                         label = { Text(text = stringResource(R.string.create_election_label_candidates)) },
-                        placeholder = { Text(text = "Candidate 1\nCandidate 2") },
+                        placeholder = {
+                            Text(text = stringResource(R.string.create_election_placeholder_candidates_simple))
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 4,
                         enabled = !isCreating,
@@ -181,8 +185,8 @@ fun CreateElectionScreen(
 
                 FancySectionCard(
                     step = "03",
-                    title = "Eligible voter whitelist",
-                    subtitle = "Only wallets added here can check in and vote in this election."
+                    title = stringResource(R.string.create_election_section_whitelist_title),
+                    subtitle = stringResource(R.string.create_election_section_whitelist_subtitle)
                 ) {
                     OutlinedTextField(
                         value = eligibleVoterIdsInput,
@@ -191,7 +195,9 @@ fun CreateElectionScreen(
                             errorMessage = ""
                         },
                         label = { Text(text = stringResource(R.string.create_election_label_eligible_voters)) },
-                        placeholder = { Text(text = "Tap + Use Registered Voter") },
+                        placeholder = {
+                            Text(text = stringResource(R.string.create_election_placeholder_registered_voter))
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 4,
                         enabled = !isCreating,
@@ -216,7 +222,7 @@ fun CreateElectionScreen(
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Text(
-                                text = "+ Use Registered Voter",
+                                text = stringResource(R.string.create_election_use_registered_voter),
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -227,15 +233,15 @@ fun CreateElectionScreen(
                     }
 
                     InfoPanel(
-                        title = "Registered voter wallet",
+                        title = stringResource(R.string.create_election_registered_voter_wallet),
                         message = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
                     )
                 }
 
                 FancySectionCard(
                     step = "04",
-                    title = "Election schedule",
-                    subtitle = "Set the opening and closing time. Results stay locked until the election is closed."
+                    title = stringResource(R.string.create_election_section_schedule_title),
+                    subtitle = stringResource(R.string.create_election_section_schedule_subtitle)
                 ) {
                     OutlinedTextField(
                         value = startDateTimeInput,
@@ -280,7 +286,7 @@ fun CreateElectionScreen(
                             enabled = !isCreating,
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(text = "Start now")
+                            Text(text = stringResource(R.string.create_election_start_now))
                         }
 
                         OutlinedButton(
@@ -294,13 +300,13 @@ fun CreateElectionScreen(
                             enabled = !isCreating,
                             shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(text = "+3 hours")
+                            Text(text = stringResource(R.string.create_election_plus_three_hours))
                         }
                     }
 
                     InfoPanel(
-                        title = "Date format",
-                        message = "Use dd/MM/yyyy hh:mm AM/PM, for example 24/04/2026 10:45 PM."
+                        title = stringResource(R.string.create_election_date_format_title),
+                        message = stringResource(R.string.create_election_date_format_message)
                     )
                 }
 
@@ -419,14 +425,14 @@ private fun HeroCard(
             }
 
             Text(
-                text = "Create Election",
+                text = stringResource(R.string.create_election_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.ExtraBold
             )
 
             Text(
-                text = "Build a blockchain election with candidates, whitelist, schedule and secure voting rules.",
+                text = stringResource(R.string.create_election_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
             )

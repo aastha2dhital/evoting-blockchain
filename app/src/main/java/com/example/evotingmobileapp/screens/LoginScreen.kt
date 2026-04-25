@@ -69,7 +69,7 @@ fun LoginScreen(
             SearchLikeBar()
 
             Text(
-                text = "Vote Nepal",
+                text = stringResource(R.string.login_brand_title),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onBackground
@@ -81,7 +81,7 @@ fun LoginScreen(
                 }
             )
 
-            SectionTitle(title = "Choose your access")
+            SectionTitle(title = stringResource(R.string.login_access_section_title))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -89,9 +89,9 @@ fun LoginScreen(
             ) {
                 AccessTile(
                     modifier = Modifier.weight(1f),
-                    title = "Admin",
-                    subtitle = "Manage election",
-                    icon = "AD",
+                    title = stringResource(R.string.login_access_admin_title),
+                    subtitle = stringResource(R.string.login_access_admin_subtitle),
+                    icon = stringResource(R.string.admin_avatar_initials),
                     primary = true,
                     onClick = {
                         navController.navigate(AppRoutes.ADMIN_LOGIN)
@@ -100,9 +100,9 @@ fun LoginScreen(
 
                 AccessTile(
                     modifier = Modifier.weight(1f),
-                    title = "Voter",
-                    subtitle = "Check in & vote",
-                    icon = "VT",
+                    title = stringResource(R.string.login_access_voter_title),
+                    subtitle = stringResource(R.string.login_access_voter_subtitle),
+                    icon = stringResource(R.string.voter_avatar_initials),
                     primary = false,
                     onClick = {
                         navController.navigate(AppRoutes.VOTER_ACCESS)
@@ -110,7 +110,7 @@ fun LoginScreen(
                 )
             }
 
-            SectionTitle(title = "Things to know")
+            SectionTitle(title = stringResource(R.string.login_info_section_title))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -118,15 +118,15 @@ fun LoginScreen(
             ) {
                 InfoTile(
                     modifier = Modifier.weight(1f),
-                    title = "QR Check-in"
+                    title = stringResource(R.string.login_info_qr_checkin)
                 )
                 InfoTile(
                     modifier = Modifier.weight(1f),
-                    title = "Vote Receipt"
+                    title = stringResource(R.string.login_info_vote_receipt)
                 )
                 InfoTile(
                     modifier = Modifier.weight(1f),
-                    title = "Results"
+                    title = stringResource(R.string.login_info_results)
                 )
             }
 
@@ -213,7 +213,7 @@ private fun SearchLikeBar() {
             Spacer(modifier = Modifier.width(10.dp))
 
             Text(
-                text = "Search election, party or candidate",
+                text = stringResource(R.string.login_search_placeholder),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
             )
@@ -253,14 +253,14 @@ private fun ElectionCountdownCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Assembly Election",
+                    text = stringResource(R.string.login_election_card_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onPrimary
                 )
 
                 Text(
-                    text = "Secure mobile voting with QR check-in",
+                    text = stringResource(R.string.login_election_card_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
                     textAlign = TextAlign.Center
@@ -273,22 +273,22 @@ private fun ElectionCountdownCard(
                     CountdownBox(
                         modifier = Modifier.weight(1f),
                         number = "03",
-                        label = "days"
+                        label = stringResource(R.string.login_countdown_days)
                     )
                     CountdownBox(
                         modifier = Modifier.weight(1f),
                         number = "02",
-                        label = "hours"
+                        label = stringResource(R.string.login_countdown_hours)
                     )
                     CountdownBox(
                         modifier = Modifier.weight(1f),
                         number = "38",
-                        label = "mins"
+                        label = stringResource(R.string.login_countdown_minutes)
                     )
                     CountdownBox(
                         modifier = Modifier.weight(1f),
                         number = "12",
-                        label = "sec"
+                        label = stringResource(R.string.login_countdown_seconds)
                     )
                 }
 
@@ -304,7 +304,7 @@ private fun ElectionCountdownCard(
                     )
                 ) {
                     Text(
-                        text = "Vote Now",
+                        text = stringResource(R.string.dashboard_vote_now),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Black
                     )
@@ -473,25 +473,25 @@ private fun BottomHomeBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             BottomItem(
-                label = "Home",
+                label = stringResource(R.string.login_bottom_home),
                 icon = "⌂",
                 selected = true,
                 onClick = {}
             )
             BottomItem(
-                label = "Admin",
+                label = stringResource(R.string.login_bottom_admin),
                 icon = "□",
                 selected = false,
                 onClick = onAdminClick
             )
             BottomItem(
-                label = "Voter",
+                label = stringResource(R.string.login_bottom_voter),
                 icon = "▣",
                 selected = false,
                 onClick = onVoterClick
             )
             BottomItem(
-                label = "Profile",
+                label = stringResource(R.string.login_bottom_profile),
                 icon = "●",
                 selected = false,
                 onClick = {}

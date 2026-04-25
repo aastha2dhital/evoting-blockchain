@@ -99,6 +99,7 @@ fun QRCheckInScreen(
     val enterWalletFirstMessage = stringResource(R.string.qr_check_in_error_enter_wallet)
     val checkingBlockchainMessage = stringResource(R.string.qr_check_in_checking_blockchain)
     val blockchainFailedMessage = stringResource(R.string.qr_check_in_error_blockchain_failed)
+    val registeredVoterAddedMessage = stringResource(R.string.qr_check_in_registered_voter_added)
 
     val scannerOptions = remember {
         GmsBarcodeScannerOptions.Builder()
@@ -148,12 +149,12 @@ fun QRCheckInScreen(
 
                 FancyStepCard(
                     step = "01",
-                    title = "Choose election",
-                    subtitle = "Select the election before checking in a voter."
+                    title = stringResource(R.string.qr_check_in_select_election_title),
+                    subtitle = stringResource(R.string.qr_check_in_select_election_subtitle)
                 ) {
                     if (elections.isEmpty()) {
                         InfoPanel(
-                            title = "No elections available",
+                            title = stringResource(R.string.qr_check_in_no_elections_title),
                             message = stringResource(R.string.qr_check_in_no_elections),
                             positive = false
                         )
@@ -175,8 +176,8 @@ fun QRCheckInScreen(
 
                 FancyStepCard(
                     step = "02",
-                    title = "Scan voter QR",
-                    subtitle = "Scan the voter wallet QR or use the registered test wallet for local validation."
+                    title = stringResource(R.string.qr_check_in_scan_wallet_title),
+                    subtitle = stringResource(R.string.qr_check_in_scan_wallet_subtitle)
                 ) {
                     OutlinedTextField(
                         value = voterWalletAddress,
@@ -200,7 +201,7 @@ fun QRCheckInScreen(
                             onClick = {
                                 voterWalletAddress = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
                                 lastScannedValue = ""
-                                statusMessage = "Registered voter wallet added."
+                                statusMessage = registeredVoterAddedMessage
                                 statusIsPositive = true
                             },
                             modifier = Modifier
@@ -210,7 +211,7 @@ fun QRCheckInScreen(
                             shape = RoundedCornerShape(18.dp)
                         ) {
                             Text(
-                                text = "Use Registered Voter",
+                                text = stringResource(R.string.qr_check_in_use_registered_voter),
                                 fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -229,7 +230,7 @@ fun QRCheckInScreen(
                             enabled = !isCheckingIn,
                             shape = RoundedCornerShape(18.dp)
                         ) {
-                            Text(text = "Clear")
+                            Text(text = stringResource(R.string.qr_check_in_clear_button))
                         }
                     }
 
@@ -304,7 +305,7 @@ fun QRCheckInScreen(
 
                     if (lastScannedValue.isNotBlank()) {
                         InfoPanel(
-                            title = "Last scanned wallet",
+                            title = stringResource(R.string.qr_check_in_last_scanned_wallet_title),
                             message = shortenWalletAddress(lastScannedValue),
                             positive = true
                         )
@@ -415,7 +416,7 @@ private fun QRHeroCard(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "Polling officer",
+                    text = stringResource(R.string.qr_check_in_polling_officer_badge),
                     modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -431,7 +432,7 @@ private fun QRHeroCard(
             )
 
             Text(
-                text = "Verify voter attendance before voting.",
+                text = stringResource(R.string.qr_check_in_hero_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -441,20 +442,24 @@ private fun QRHeroCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 HeroMetric(
-                    label = "Elections",
+                    label = stringResource(R.string.qr_check_in_metric_elections),
                     value = electionCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
 
                 HeroMetric(
-                    label = "Wallet",
-                    value = if (walletAddress.isBlank()) "Pending" else "Ready",
+                    label = stringResource(R.string.qr_check_in_metric_wallet),
+                    value = if (walletAddress.isBlank()) {
+                        stringResource(R.string.qr_check_in_wallet_pending)
+                    } else {
+                        stringResource(R.string.qr_check_in_wallet_ready)
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
 
             InfoStrip(
-                text = selectedElectionTitle ?: "No election selected yet"
+                text = selectedElectionTitle ?: stringResource(R.string.qr_check_in_no_election_selected_yet)
             )
         }
     }
@@ -648,7 +653,7 @@ private fun ElectionChoiceCard(
                     color = MaterialTheme.colorScheme.primary
                 ) {
                     Text(
-                        text = "Selected",
+                        text = stringResource(R.string.qr_check_in_selected_badge),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -689,19 +694,19 @@ private fun CheckInActionCard(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "Complete check-in",
+                text = stringResource(R.string.qr_check_in_complete_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 fontWeight = FontWeight.SemiBold
             )
 
             SummaryTile(
-                label = "Election",
+                label = stringResource(R.string.qr_check_in_summary_election_label),
                 value = electionText
             )
 
             SummaryTile(
-                label = "Wallet",
+                label = stringResource(R.string.qr_check_in_summary_wallet_label),
                 value = walletText
             )
 
