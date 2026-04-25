@@ -47,6 +47,8 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_EVotingMobileApp)
+
         Security.insertProviderAt(Conscrypt.newProvider(), 1)
 
         super.onCreate(savedInstanceState)
