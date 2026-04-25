@@ -176,29 +176,7 @@ fun CreateElectionScreen(
                         shape = RoundedCornerShape(18.dp)
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                candidatesInput = "Ram\nSita"
-                                errorMessage = ""
-                            },
-                            modifier = Modifier.weight(1f),
-                            enabled = !isCreating,
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(
-                                text = "Use demo candidates",
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        CountBadge(text = "$candidateCount added")
-                    }
+                    CountBadge(text = "$candidateCount added")
                 }
 
                 FancySectionCard(

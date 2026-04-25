@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,8 +80,13 @@ fun QRCheckInScreen(
     var isCheckingIn by rememberSaveable { mutableStateOf(false) }
 
     val selectedElection = elections.find { it.id == selectedElectionId }
+
     val context = LocalContext.current
-    val activity = remember(context) { context.findActivity() }
+    val viewContext = LocalView.current.context
+    val activity = remember(context, viewContext) {
+        viewContext.findActivity() ?: context.findActivity()
+    }
+
     val coroutineScope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
 
@@ -108,7 +114,8 @@ fun QRCheckInScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Box(
             modifier = modifier
@@ -117,8 +124,8 @@ fun QRCheckInScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.24f),
                             MaterialTheme.colorScheme.background
                         )
                     )
@@ -130,8 +137,8 @@ fun QRCheckInScreen(
                     .statusBarsPadding()
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 QRHeroCard(
                     electionCount = elections.size,
@@ -141,7 +148,7 @@ fun QRCheckInScreen(
 
                 FancyStepCard(
                     step = "01",
-                    title = "Choose active election",
+                    title = "Choose election",
                     subtitle = "Select the election before checking in a voter."
                 ) {
                     if (elections.isEmpty()) {
@@ -157,7 +164,9 @@ fun QRCheckInScreen(
                                 selected = selectedElectionId == election.id,
                                 enabled = !isCheckingIn,
                                 onSelected = {
-                                    if (!isCheckingIn) selectedElectionId = election.id
+                                    if (!isCheckingIn) {
+                                        selectedElectionId = election.id
+                                    }
                                 }
                             )
                         }
@@ -166,8 +175,8 @@ fun QRCheckInScreen(
 
                 FancyStepCard(
                     step = "02",
-                    title = "Scan or enter voter wallet",
-                    subtitle = "Use the camera for QR check-in or use the demo wallet for phone testing."
+                    title = "Scan voter QR",
+                    subtitle = "Scan the voter wallet QR or use the demo wallet for testing."
                 ) {
                     OutlinedTextField(
                         value = voterWalletAddress,
@@ -196,13 +205,13 @@ fun QRCheckInScreen(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(54.dp),
+                                .height(52.dp),
                             enabled = !isCheckingIn,
                             shape = RoundedCornerShape(18.dp)
                         ) {
                             Text(
-                                text = "Use Demo Voter",
-                                fontWeight = FontWeight.Bold,
+                                text = "Use Demo",
+                                fontWeight = FontWeight.SemiBold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -216,7 +225,7 @@ fun QRCheckInScreen(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(54.dp),
+                                .height(52.dp),
                             enabled = !isCheckingIn,
                             shape = RoundedCornerShape(18.dp)
                         ) {
@@ -226,14 +235,23 @@ fun QRCheckInScreen(
 
                     Button(
                         onClick = {
-                            if (activity == null) {
+                            val safeActivity = activity
+
+                            if (safeActivity == null) {
                                 statusMessage = scannerNoActivityMessage
                                 statusIsPositive = false
-                                coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
+
+                                coroutineScope.launch {
+                                    snackBarHostState.showSnackbar(statusMessage)
+                                }
+
                                 return@Button
                             }
 
-                            val scanner = GmsBarcodeScanning.getClient(activity, scannerOptions)
+                            val scanner = GmsBarcodeScanning.getClient(
+                                safeActivity,
+                                scannerOptions
+                            )
 
                             scanner.startScan()
                                 .addOnSuccessListener { barcode: Barcode ->
@@ -256,6 +274,7 @@ fun QRCheckInScreen(
                                 .addOnCanceledListener {
                                     statusMessage = qrScanCanceledMessage
                                     statusIsPositive = false
+
                                     coroutineScope.launch {
                                         snackBarHostState.showSnackbar(statusMessage)
                                     }
@@ -263,6 +282,7 @@ fun QRCheckInScreen(
                                 .addOnFailureListener { exception: Exception ->
                                     statusMessage = exception.message ?: qrScanFailedMessage
                                     statusIsPositive = false
+
                                     coroutineScope.launch {
                                         snackBarHostState.showSnackbar(statusMessage)
                                     }
@@ -270,15 +290,15 @@ fun QRCheckInScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(58.dp),
+                            .height(54.dp),
                         enabled = !isCheckingIn,
-                        shape = RoundedCornerShape(20.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
+                        shape = RoundedCornerShape(18.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.qr_check_in_scan_qr_button),
                             style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
 
@@ -303,14 +323,22 @@ fun QRCheckInScreen(
                         if (selectedElection == null) {
                             statusMessage = selectElectionFirstMessage
                             statusIsPositive = false
-                            coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
+
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar(statusMessage)
+                            }
+
                             return@CheckInActionCard
                         }
 
                         if (trimmedWalletAddress.isBlank()) {
                             statusMessage = enterWalletFirstMessage
                             statusIsPositive = false
-                            coroutineScope.launch { snackBarHostState.showSnackbar(statusMessage) }
+
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar(statusMessage)
+                            }
+
                             return@CheckInActionCard
                         }
 
@@ -354,7 +382,7 @@ fun QRCheckInScreen(
                 ) {
                     Text(
                         text = stringResource(R.string.qr_check_in_back_button),
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Medium
                     )
                 }
 
@@ -372,54 +400,45 @@ private fun QRHeroCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(
-            modifier = Modifier
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                )
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Surface(
                 shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
-                    text = "POLLING OFFICER MODE",
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.ExtraBold
+                    text = "Polling officer",
+                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
             Text(
                 text = stringResource(R.string.qr_check_in_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.ExtraBold
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
             )
 
             Text(
-                text = "Verify voter attendance before voting. This keeps the flow secure: select election → scan wallet → mark checked-in.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
+                text = "Verify voter attendance before voting.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 HeroMetric(
                     label = "Elections",
@@ -429,7 +448,7 @@ private fun QRHeroCard(
 
                 HeroMetric(
                     label = "Wallet",
-                    value = if (walletAddress.isBlank()) "—" else "Ready",
+                    value = if (walletAddress.isBlank()) "Pending" else "Ready",
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -449,25 +468,25 @@ private fun HeroMetric(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.62f)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.ExtraBold
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.SemiBold
             )
 
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f),
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -477,15 +496,15 @@ private fun HeroMetric(
 private fun InfoStrip(text: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.13f)
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.78f)
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimary,
-            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
@@ -501,54 +520,55 @@ private fun FancyStepCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
                 Surface(
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
                     Text(
                         text = step,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 9.dp),
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
 
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Text(
                         text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.75f)
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)
             )
 
             content()
@@ -564,9 +584,9 @@ private fun ElectionChoiceCard(
     onSelected: () -> Unit
 ) {
     val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.84f)
     } else {
-        MaterialTheme.colorScheme.surfaceVariant
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.70f)
     }
 
     val contentColor = if (selected) {
@@ -579,15 +599,15 @@ private fun ElectionChoiceCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled) { onSelected() },
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 5.dp else 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 3.dp else 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
@@ -598,12 +618,12 @@ private fun ElectionChoiceCard(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = election.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = if (selected) {
                         MaterialTheme.colorScheme.onPrimaryContainer
                     } else {
@@ -629,10 +649,10 @@ private fun ElectionChoiceCard(
                 ) {
                     Text(
                         text = "Selected",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -658,27 +678,21 @@ private fun CheckInActionCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.70f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "Complete voter check-in",
+                text = "Complete check-in",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontWeight = FontWeight.ExtraBold
-            )
-
-            Text(
-                text = "Confirm the selected election and wallet before writing the check-in to blockchain.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f)
+                fontWeight = FontWeight.SemiBold
             )
 
             SummaryTile(
@@ -695,10 +709,10 @@ private fun CheckInActionCard(
                 onClick = onCheckIn,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(58.dp),
+                    .height(54.dp),
                 enabled = !isCheckingIn,
-                shape = RoundedCornerShape(20.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
+                shape = RoundedCornerShape(18.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
             ) {
                 Text(
                     text = if (isCheckingIn) {
@@ -707,7 +721,7 @@ private fun CheckInActionCard(
                         stringResource(R.string.qr_check_in_check_in_button)
                     },
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
@@ -728,25 +742,25 @@ private fun SummaryTile(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f)
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f)
     ) {
         Column(
-            modifier = Modifier.padding(15.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.SemiBold
             )
 
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Medium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -761,9 +775,9 @@ private fun InfoPanel(
     positive: Boolean
 ) {
     val containerColor = if (positive) {
-        MaterialTheme.colorScheme.secondaryContainer
+        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.70f)
     } else {
-        MaterialTheme.colorScheme.tertiaryContainer
+        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.70f)
     }
 
     val contentColor = if (positive) {
@@ -774,18 +788,18 @@ private fun InfoPanel(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         color = containerColor
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
                 color = contentColor,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.SemiBold
             )
 
             Text(
@@ -816,15 +830,15 @@ private fun StatusPanel(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         color = containerColor
     ) {
         Text(
             text = message,
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(14.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = contentColor,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Medium
         )
     }
 }
