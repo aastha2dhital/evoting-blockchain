@@ -39,6 +39,16 @@ Result:
 
 BUILD SUCCESSFUL
 
+## Android Unit Test
+
+Command used:
+
+.\gradlew :app:testDebugUnitTest
+
+Result:
+
+BUILD SUCCESSFUL
+
 ## Physical Phone Blockchain Test
 
 Device type:
