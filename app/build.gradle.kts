@@ -117,4 +117,6 @@ dependencies {
     implementation(platform("com.reown:android-bom:1.6.11"))
     implementation("com.reown:android-core")
     implementation("com.reown:appkit")
+
+    testImplementation("junit:junit:4.13.2")
 }
