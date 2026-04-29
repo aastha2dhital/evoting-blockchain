@@ -1,5 +1,5 @@
 {
   "contractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-  "network": "localhost",
-  "rpcUrl": "http://192.168.100.7:8545"
+  "network": "hardhat-local",
+  "rpcUrl": "http://10.0.2.2:8545"
 }

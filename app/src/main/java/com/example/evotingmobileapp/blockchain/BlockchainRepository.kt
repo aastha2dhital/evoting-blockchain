@@ -16,6 +16,7 @@ import org.web3j.abi.datatypes.Type
 import org.web3j.abi.datatypes.Utf8String
 import org.web3j.abi.datatypes.generated.Uint256
 import org.web3j.crypto.Credentials
+import org.web3j.crypto.Hash
 import org.web3j.crypto.RawTransaction
 import org.web3j.crypto.TransactionEncoder
 import org.web3j.crypto.WalletUtils
@@ -64,6 +65,7 @@ class BlockchainRepository {
         val MIN_GAS_PRICE_WEI: BigInteger = BigInteger("2000000000")
         const val RECEIPT_POLLING_INTERVAL_MS = 1000L
         const val RECEIPT_POLLING_ATTEMPTS = 40
+        val VOTE_CAST_EVENT_TOPIC: String = Hash.sha3String("VoteCast(uint256,uint256,address)")
     }
 
     private val okHttpClient = OkHttpClient.Builder()
@@ -318,6 +320,86 @@ class BlockchainRepository {
         }
     }
 
+    fun isEligibleVoterOnChain(
+        context: Context,
+        electionId: BigInteger,
+        voterWalletAddress: String
+    ): Result<Boolean> {
+        return readVoterBooleanFlagOnChain(
+            context = context,
+            electionId = electionId,
+            voterWalletAddress = voterWalletAddress,
+            functionName = "isEligibleVoter",
+            failureMessage = "Failed to read voter eligibility from blockchain."
+        )
+    }
+
+    fun isCheckedInOnChain(
+        context: Context,
+        electionId: BigInteger,
+        voterWalletAddress: String
+    ): Result<Boolean> {
+        return readVoterBooleanFlagOnChain(
+            context = context,
+            electionId = electionId,
+            voterWalletAddress = voterWalletAddress,
+            functionName = "isCheckedIn",
+            failureMessage = "Failed to read voter check-in status from blockchain."
+        )
+    }
+
+    fun hasVotedOnChain(
+        context: Context,
+        electionId: BigInteger,
+        voterWalletAddress: String
+    ): Result<Boolean> {
+        return readVoterBooleanFlagOnChain(
+            context = context,
+            electionId = electionId,
+            voterWalletAddress = voterWalletAddress,
+            functionName = "hasVoted",
+            failureMessage = "Failed to read voter voting status from blockchain."
+        )
+    }
+
+    private fun readVoterBooleanFlagOnChain(
+        context: Context,
+        electionId: BigInteger,
+        voterWalletAddress: String,
+        functionName: String,
+        failureMessage: String
+    ): Result<Boolean> {
+        return try {
+            require(electionId >= BigInteger.ZERO) {
+                "Election ID cannot be negative."
+            }
+
+            val normalizedAddress = normalizeAndValidateWalletAddress(voterWalletAddress)
+
+            val function = Function(
+                functionName,
+                listOf(
+                    Uint256(electionId),
+                    Address(normalizedAddress)
+                ),
+                listOf(object : TypeReference<Bool>() {})
+            )
+
+            val decodedValues = executeReadonlyFunction(
+                context = context,
+                function = function
+            ).getOrThrow()
+
+            if (decodedValues.isEmpty()) {
+                Result.failure(Exception(failureMessage))
+            } else {
+                Result.success(decodedValues[0].value as Boolean)
+            }
+        } catch (exception: Exception) {
+            Result.failure(exception)
+        }
+    }
+
     fun verifyTransactionReceiptOnChain(
         context: Context,
         transactionHash: String
@@ -358,6 +440,25 @@ class BlockchainRepository {
                 )
             }
 
+            val receiptToAddress = receipt.to.orEmpty()
+            if (!receiptToAddress.equals(contractConfig.contractAddress, ignoreCase = true)) {
+                return Result.failure(
+                    Exception("Transaction was found, but it was not sent to the configured voting contract.")
+                )
+            }
+
+            val hasVoteCastEvent = receipt.logs.any { log ->
+                log.topics.any { topic ->
+                    topic.equals(VOTE_CAST_EVENT_TOPIC, ignoreCase = true)
+                }
+            }
+
+            if (!hasVoteCastEvent) {
+                return Result.failure(
+                    Exception("Transaction was found on the voting contract, but it is not a vote receipt transaction.")
+                )
+            }
+
             Result.success(
                 OnChainTransactionVerification(
                     transactionHash = receipt.transactionHash,
@@ -389,6 +490,7 @@ class BlockchainRepository {
             }
 
             val normalizedAddress = normalizeAndValidateWalletAddress(voterWalletAddress)
+
             val voterSigningWallet = loadValidatedVoterSigningWallet(
                 context = context,
                 expectedWalletAddress = normalizedAddress
@@ -693,6 +795,7 @@ class BlockchainRepository {
                 RECEIPT_POLLING_INTERVAL_MS,
                 RECEIPT_POLLING_ATTEMPTS
             )
+
             Result.success(processor.waitForTransactionReceipt(txHash))
         } catch (exception: Exception) {
             Result.failure(
@@ -746,21 +849,27 @@ class BlockchainRepository {
         expectedWalletAddress: String
     ): Result<SigningWalletContext> {
         return try {
-            val voterWalletConfig = ContractAssets.loadVoterWalletConfig(context)
-            val voterCredentials = Credentials.create(voterWalletConfig.voterPrivateKey)
+            val normalizedExpectedAddress = expectedWalletAddress.trim()
+            val configuredWallets = ContractAssets.loadVoterWalletConfigs(context)
 
-            require(
-                voterCredentials.address.equals(expectedWalletAddress, ignoreCase = true)
-            ) {
-                "The signed-in voter wallet does not match voter-wallet.json."
+            val matchingWallet = configuredWallets.firstNotNullOfOrNull { walletConfig ->
+                val voterCredentials = Credentials.create(walletConfig.voterPrivateKey)
+
+                if (voterCredentials.address.equals(normalizedExpectedAddress, ignoreCase = true)) {
+                    SigningWalletContext(
+                        credentials = voterCredentials,
+                        privateKey = walletConfig.voterPrivateKey
+                    )
+                } else {
+                    null
+                }
             }
 
-            Result.success(
-                SigningWalletContext(
-                    credentials = voterCredentials,
-                    privateKey = voterWalletConfig.voterPrivateKey
-                )
-            )
+            require(matchingWallet != null) {
+                "No demo signing wallet is configured for this voter address. Select one of the registered demo voters or add its private key to voter-wallets.json."
+            }
+
+            Result.success(matchingWallet)
         } catch (exception: Exception) {
             Result.failure(exception)
         }

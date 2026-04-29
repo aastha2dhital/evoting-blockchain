@@ -3,10 +3,8 @@ package com.example.evotingmobileapp.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,6 +53,15 @@ import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+private data class WinnerSummary(
+    val winnerNames: List<String>,
+    val winningVotes: Int,
+    val totalVotes: Int
+) {
+    val hasVotes: Boolean = totalVotes > 0
+    val isTie: Boolean = winnerNames.size > 1
+}
 
 @Composable
 fun ResultsScreen(
@@ -231,6 +238,7 @@ private fun ElectionResultCard(
     val formatter = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     val totalVotes = election.voteCounts.values.sum()
     val isClosed = election.isClosed()
+    val winnerSummary = rememberWinnerSummary(election)
 
     val statusText = if (isClosed) {
         stringResource(R.string.results_status_closed)
@@ -293,6 +301,8 @@ private fun ElectionResultCard(
             } else {
                 FinalResultsPanel()
 
+                WinnerPanel(winnerSummary = winnerSummary)
+
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                 Text(
@@ -304,20 +314,32 @@ private fun ElectionResultCard(
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    election.candidates.forEach { candidate ->
-                        val voteCount = election.voteCounts[candidate] ?: 0
-                        val percentage = if (totalVotes > 0) {
-                            (voteCount.toFloat() / totalVotes.toFloat()) * 100f
-                        } else {
-                            0f
-                        }
-
-                        CandidateResultCard(
-                            candidate = candidate,
-                            voteCount = voteCount,
-                            percentage = percentage
+                    election.candidates
+                        .sortedWith(
+                            compareByDescending<String> { candidate ->
+                                election.voteCounts[candidate] ?: 0
+                            }.thenBy { candidate -> candidate.lowercase(Locale.getDefault()) }
                         )
-                    }
+                        .forEach { candidate ->
+                            val voteCount = election.voteCounts[candidate] ?: 0
+                            val percentage = if (totalVotes > 0) {
+                                (voteCount.toFloat() / totalVotes.toFloat()) * 100f
+                            } else {
+                                0f
+                            }
+
+                            val isWinner = winnerSummary.hasVotes &&
+                                    winnerSummary.winnerNames.any {
+                                        it.equals(candidate, ignoreCase = true)
+                                    }
+
+                            CandidateResultCard(
+                                candidate = candidate,
+                                voteCount = voteCount,
+                                percentage = percentage,
+                                isWinner = isWinner
+                            )
+                        }
                 }
             }
         }
@@ -485,10 +507,80 @@ private fun FinalResultsPanel() {
 }
 
 @Composable
+private fun WinnerPanel(
+    winnerSummary: WinnerSummary
+) {
+    val title = when {
+        !winnerSummary.hasVotes -> stringResource(R.string.results_winner_title)
+        winnerSummary.isTie -> stringResource(R.string.results_winners_title)
+        else -> stringResource(R.string.results_winner_title)
+    }
+
+    val message = when {
+        !winnerSummary.hasVotes -> stringResource(R.string.results_no_votes_message)
+
+        winnerSummary.isTie -> stringResource(
+            R.string.results_tie_message,
+            winnerSummary.winnerNames.joinToString(", "),
+            winnerSummary.winningVotes,
+            winnerSummary.totalVotes
+        )
+
+        else -> stringResource(
+            R.string.results_winner_message,
+            winnerSummary.winnerNames.first(),
+            winnerSummary.winningVotes,
+            winnerSummary.totalVotes
+        )
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (winnerSummary.hasVotes) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = if (winnerSummary.hasVotes) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (winnerSummary.hasVotes) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
 private fun CandidateResultCard(
     candidate: String,
     voteCount: Int,
-    percentage: Float
+    percentage: Float,
+    isWinner: Boolean
 ) {
     val progress by animateFloatAsState(
         targetValue = (percentage / 100f).coerceIn(0f, 1f),
@@ -501,9 +593,13 @@ private fun CandidateResultCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (isWinner) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isWinner) 4.dp else 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -514,14 +610,38 @@ private fun CandidateResultCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    text = candidate,
+                Column(
                     modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = candidate,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (isWinner) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+
+                    if (isWinner) {
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        ) {
+                            Text(
+                                text = stringResource(R.string.results_winner_badge),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
+                    }
+                }
 
                 Text(
                     text = stringResource(R.string.results_vote_count, voteCount),
@@ -652,4 +772,28 @@ private fun ResultsBackButton(
             fontWeight = FontWeight.Bold
         )
     }
+}
+
+private fun rememberWinnerSummary(election: Election): WinnerSummary {
+    val voteCounts = election.candidates.associateWith { candidate ->
+        election.voteCounts[candidate] ?: 0
+    }
+
+    val totalVotes = voteCounts.values.sum()
+    val winningVotes = voteCounts.values.maxOrNull() ?: 0
+
+    val winnerNames = if (totalVotes <= 0 || winningVotes <= 0) {
+        emptyList()
+    } else {
+        voteCounts
+            .filterValues { votes -> votes == winningVotes }
+            .keys
+            .toList()
+    }
+
+    return WinnerSummary(
+        winnerNames = winnerNames,
+        winningVotes = winningVotes,
+        totalVotes = totalVotes
+    )
 }

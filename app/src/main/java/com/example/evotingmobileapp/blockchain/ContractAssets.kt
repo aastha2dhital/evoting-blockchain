@@ -17,7 +17,8 @@ data class AdminWalletConfig(
 )
 
 data class VoterWalletConfig(
-    val voterPrivateKey: String
+    val voterPrivateKey: String,
+    val label: String = "Demo voter"
 )
 
 object ContractAssets {
@@ -71,6 +72,59 @@ object ContractAssets {
     }
 
     fun loadVoterWalletConfig(context: Context): VoterWalletConfig {
+        return loadVoterWalletConfigs(context).first()
+    }
+
+    fun loadVoterWalletConfigs(context: Context): List<VoterWalletConfig> {
+        val multiWalletJsonText = readOptionalAssetText(
+            context = context,
+            fileName = "voter-wallets.json"
+        )
+
+        if (multiWalletJsonText != null) {
+            val jsonObject = try {
+                JSONObject(multiWalletJsonText)
+            } catch (exception: JSONException) {
+                throw IllegalStateException(
+                    "voter-wallets.json is not a valid JSON object.",
+                    exception
+                )
+            }
+
+            val walletsArray = jsonObject.optJSONArray("wallets")
+                ?: throw IllegalStateException("wallets array is missing in voter-wallets.json.")
+
+            require(walletsArray.length() > 0) {
+                "At least one voter wallet must be defined in voter-wallets.json."
+            }
+
+            return buildList {
+                for (index in 0 until walletsArray.length()) {
+                    val walletObject = walletsArray.optJSONObject(index)
+                        ?: throw IllegalStateException(
+                            "Each wallet in voter-wallets.json must be a JSON object."
+                        )
+
+                    val label = walletObject.optString("label").ifBlank {
+                        "Demo voter ${index + 1}"
+                    }
+
+                    val rawKey = walletObject.optString("privateKey").trim()
+
+                    add(
+                        VoterWalletConfig(
+                            voterPrivateKey = normalizePrivateKey(
+                                rawKey = rawKey,
+                                fieldName = "privateKey",
+                                fileName = "voter-wallets.json"
+                            ),
+                            label = label
+                        )
+                    )
+                }
+            }
+        }
+
         val jsonObject = readJsonObjectAsset(
             context = context,
             fileName = "voter-wallet.json"
@@ -78,11 +132,13 @@ object ContractAssets {
 
         val rawKey = jsonObject.optString("voterPrivateKey").trim()
 
-        return VoterWalletConfig(
-            voterPrivateKey = normalizePrivateKey(
-                rawKey = rawKey,
-                fieldName = "voterPrivateKey",
-                fileName = "voter-wallet.json"
+        return listOf(
+            VoterWalletConfig(
+                voterPrivateKey = normalizePrivateKey(
+                    rawKey = rawKey,
+                    fieldName = "voterPrivateKey",
+                    fileName = "voter-wallet.json"
+                )
             )
         )
     }
@@ -98,6 +154,25 @@ object ContractAssets {
         } catch (exception: JSONException) {
             throw IllegalStateException(
                 "evoting-abi.json is not a valid JSON array.",
+                exception
+            )
+        }
+    }
+
+    private fun readOptionalAssetText(
+        context: Context,
+        fileName: String
+    ): String? {
+        return try {
+            context.assets
+                .open(fileName)
+                .bufferedReader()
+                .use { it.readText() }
+        } catch (exception: FileNotFoundException) {
+            null
+        } catch (exception: Exception) {
+            throw IllegalStateException(
+                "Failed to read $fileName.",
                 exception
             )
         }

@@ -2,6 +2,7 @@ package com.example.evotingmobileapp.auth
 
 import androidx.lifecycle.ViewModel
 import com.example.evotingmobileapp.BuildConfig
+import com.example.evotingmobileapp.blockchain.DemoWallets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -93,9 +94,9 @@ class AuthSessionViewModel : ViewModel() {
         )
     }
 
-    fun signInAsDemoVoter() {
+    fun signInAsDemoVoter(walletAddress: String = DemoWallets.defaultVoterAddress) {
         connectWallet(
-            walletAddress = BuildConfig.DEMO_VOTER_WALLET_ADDRESS,
+            walletAddress = walletAddress,
             preferredRole = UserRole.VOTER
         )
     }

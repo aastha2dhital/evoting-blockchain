@@ -26,10 +26,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -37,11 +42,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.BuildConfig
 import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
+import com.example.evotingmobileapp.blockchain.DemoVoterProfile
+import com.example.evotingmobileapp.blockchain.DemoWallets
 import com.example.evotingmobileapp.navigation.AppRoutes
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
@@ -53,7 +61,12 @@ fun VoterAccessScreen(
     navController: NavHostController,
     authSessionViewModel: AuthSessionViewModel
 ) {
-    val voterWalletAddress = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
+    var selectedVoterIndex by rememberSaveable { mutableIntStateOf(0) }
+
+    val demoVoters = DemoWallets.voters
+    val selectedVoter = demoVoters.getOrElse(selectedVoterIndex) { demoVoters.first() }
+    val voterWalletAddress = selectedVoter.address
+
     val qrBitmap = remember(voterWalletAddress) {
         generateWalletQrBitmap(voterWalletAddress)
     }
@@ -83,14 +96,21 @@ fun VoterAccessScreen(
         ) {
             VoterAccessHeader()
 
+            VoterSelectorCard(
+                voters = demoVoters,
+                selectedIndex = selectedVoterIndex,
+                onVoterSelected = { selectedVoterIndex = it }
+            )
+
             VoterQrPassCard(
                 qrBitmap = qrBitmap,
-                voterWalletAddress = voterWalletAddress
+                voter = selectedVoter
             )
 
             ContinueAsVoterCard(
+                voter = selectedVoter,
                 onContinue = {
-                    authSessionViewModel.signInAsDemoVoter()
+                    authSessionViewModel.signInAsDemoVoter(selectedVoter.address)
 
                     navController.navigate(AppRoutes.VOTER_DASHBOARD) {
                         popUpTo(AppRoutes.LOGIN) { inclusive = true }
@@ -154,7 +174,7 @@ private fun VoterAccessHeader() {
                 )
 
                 Text(
-                    text = "QR check-in pass",
+                    text = stringResource(R.string.voter_chip_qr),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -164,9 +184,100 @@ private fun VoterAccessHeader() {
 }
 
 @Composable
+private fun VoterSelectorCard(
+    voters: List<DemoVoterProfile>,
+    selectedIndex: Int,
+    onVoterSelected: (Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.voter_select_demo_voter_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = stringResource(R.string.voter_select_demo_voter_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            voters.forEachIndexed { index, voter ->
+                VoterChoiceRow(
+                    voter = voter,
+                    selected = index == selectedIndex,
+                    onClick = { onVoterSelected(index) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun VoterChoiceRow(
+    voter: DemoVoterProfile,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f)
+        }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(
+                selected = selected,
+                onClick = onClick
+            )
+
+            Spacer(modifier = Modifier.width(6.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = voter.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = shortenWalletAddress(voter.address),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun VoterQrPassCard(
     qrBitmap: Bitmap,
-    voterWalletAddress: String
+    voter: DemoVoterProfile
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -186,7 +297,7 @@ private fun VoterQrPassCard(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f)
             ) {
                 Text(
-                    text = stringResource(R.string.voter_qr_badge),
+                    text = "${stringResource(R.string.voter_qr_badge)} • ${voter.label}",
                     modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
@@ -199,6 +310,13 @@ private fun VoterQrPassCard(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = stringResource(R.string.voter_qr_description),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
@@ -218,7 +336,7 @@ private fun VoterQrPassCard(
                 }
             }
 
-            WalletAddressBox(voterWalletAddress = voterWalletAddress)
+            WalletAddressBox(voterWalletAddress = voter.address)
         }
     }
 }
@@ -254,6 +372,7 @@ private fun WalletAddressBox(
 
 @Composable
 private fun ContinueAsVoterCard(
+    voter: DemoVoterProfile,
     onContinue: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -274,6 +393,13 @@ private fun ContinueAsVoterCard(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = "${voter.label} • ${shortenWalletAddress(voter.address)}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
             )
 
             Button(

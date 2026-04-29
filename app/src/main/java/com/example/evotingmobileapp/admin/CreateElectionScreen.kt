@@ -43,8 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.evotingmobileapp.BuildConfig
 import com.example.evotingmobileapp.R
+import com.example.evotingmobileapp.blockchain.DemoWallets
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -218,7 +218,7 @@ fun CreateElectionScreen(
                             onClick = {
                                 eligibleVoterIdsInput = appendUniqueValue(
                                     input = eligibleVoterIdsInput,
-                                    value = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
+                                    value = DemoWallets.allVoterAddressesText
                                 )
                                 errorMessage = ""
                             },
@@ -227,7 +227,7 @@ fun CreateElectionScreen(
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Text(
-                                text = stringResource(R.string.create_election_use_registered_voter),
+                                text = stringResource(R.string.create_election_use_demo_voters),
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -243,8 +243,8 @@ fun CreateElectionScreen(
                     }
 
                     InfoPanel(
-                        title = stringResource(R.string.create_election_registered_voter_wallet),
-                        message = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
+                        title = stringResource(R.string.create_election_registered_voter_wallets),
+                        message = DemoWallets.allVoterAddressesText
                     )
                 }
 
@@ -699,16 +699,11 @@ private fun appendUniqueValue(
     value: String
 ): String {
     val existingValues = parseMultiValueInput(input)
-
-    return if (existingValues.any { it.equals(value, ignoreCase = true) }) {
-        input
-    } else {
-        if (input.isBlank()) {
-            value
-        } else {
-            input.trimEnd() + "\n" + value
-        }
+    val valuesToAdd = parseMultiValueInput(value).filterNot { newValue ->
+        existingValues.any { existingValue -> existingValue.equals(newValue, ignoreCase = true) }
     }
+
+    return (existingValues + valuesToAdd).joinToString("\n")
 }
 
 private fun parseMultiValueInput(input: String): List<String> {

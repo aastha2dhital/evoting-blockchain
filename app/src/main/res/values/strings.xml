@@ -84,6 +84,8 @@
     <string name="voter_note_checked_in">• Only checked-in eligible voters should be able to continue through the final voting workflow.</string>
     <string name="voter_note_receipt">• Successful vote submission should produce a receipt and transaction hash for later verification and audit review.</string>
     <string name="voter_demo_mode">Registered voter wallet access is enabled for this election session.</string>
+    <string name="voter_select_demo_voter_title">Choose Demo Voter</string>
+    <string name="voter_select_demo_voter_message">Select which registered demo voter is presenting the QR pass. Each voter has a separate wallet and can cast one vote.</string>
 
     <!-- Create Election Screen -->
     <string name="create_election_title">Create Election</string>
@@ -105,6 +107,8 @@
     <string name="create_election_placeholder_registered_voter">Tap + Use Registered Voter</string>
     <string name="create_election_use_registered_voter">+ Use Registered Voter</string>
     <string name="create_election_registered_voter_wallet">Registered voter wallet</string>
+    <string name="create_election_use_demo_voters">+ Add All Demo Voters</string>
+    <string name="create_election_registered_voter_wallets">Registered demo voter wallets</string>
     <string name="create_election_section_schedule_title">Election schedule</string>
     <string name="create_election_section_schedule_subtitle">Set the opening and closing time. Results stay locked until the election is closed.</string>
     <string name="create_election_label_start_time">Start date &amp; time</string>
@@ -171,6 +175,7 @@
     <string name="qr_check_in_checking_blockchain">Checking voter in on blockchain...</string>
     <string name="qr_check_in_error_blockchain_failed">Blockchain check-in failed.</string>
     <string name="qr_check_in_no_elections_title">No elections available</string>
+    <string name="qr_check_in_demo_voters_title">Quick-select demo voters</string>
     <string name="qr_check_in_use_registered_voter">Use Registered Voter</string>
     <string name="qr_check_in_registered_voter_added">Registered voter wallet added.</string>
     <string name="qr_check_in_clear_button">Clear</string>
@@ -334,6 +339,12 @@
     <string name="results_closing_button">Closing Election...</string>
     <string name="results_close_early_button">Close Election Early</string>
     <string name="results_final_available">Final results are now available for review.</string>
+    <string name="results_winner_title">Winner</string>
+    <string name="results_winners_title">Tie Result</string>
+    <string name="results_no_votes_message">No winner yet because no votes were cast before closure.</string>
+    <string name="results_tie_message">%1$s are tied with %2$d votes each out of %3$d total votes.</string>
+    <string name="results_winner_message">%1$s won with %2$d votes out of %3$d total votes.</string>
+    <string name="results_winner_badge">Winner</string>
     <string name="results_candidate_results_title">Candidate Results</string>
     <string name="results_vote_count">%1$d votes</string>
     <string name="results_vote_share">Vote Share: %1$s</string>

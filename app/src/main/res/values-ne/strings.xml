@@ -84,6 +84,8 @@
     <string name="voter_note_checked_in">• अन्तिम मतदान प्रवाहमा अगाडि बढ्न केवल चेक-इन गरिएका योग्य मतदाताहरूलाई मात्र अनुमति हुनुपर्छ।</string>
     <string name="voter_note_receipt">• सफल मतदान पेशीपछि पछि प्रमाणीकरण र लेखापरीक्षण समीक्षाका लागि रसिद र लेनदेन ह्यास उपलब्ध हुनुपर्छ।</string>
     <string name="voter_demo_mode">यस निर्वाचन सत्रका लागि दर्ता गरिएको मतदाता वालेट पहुँच सक्षम गरिएको छ।</string>
+    <string name="voter_select_demo_voter_title">डेमो मतदाता छान्नुहोस्</string>
+    <string name="voter_select_demo_voter_message">QR पास प्रस्तुत गर्ने दर्ता गरिएको डेमो मतदाता छान्नुहोस्। प्रत्येक मतदाताको छुट्टै वालेट हुन्छ र प्रत्येकले एक पटक मात्र मतदान गर्न सक्छ।</string>
 
     <!-- Create Election Screen -->
     <string name="create_election_title">निर्वाचन सिर्जना गर्नुहोस्</string>
@@ -110,6 +112,8 @@
     <string name="create_election_placeholder_registered_voter">+ दर्ता गरिएको मतदाता प्रयोग गर्नुहोस्</string>
     <string name="create_election_use_registered_voter">+ दर्ता गरिएको मतदाता</string>
     <string name="create_election_registered_voter_wallet">दर्ता गरिएको मतदाता वालेट</string>
+    <string name="create_election_use_demo_voters">+ सबै डेमो मतदाता थप्नुहोस्</string>
+    <string name="create_election_registered_voter_wallets">दर्ता गरिएका डेमो मतदाता वालेटहरू</string>
     <string name="create_election_section_schedule_title">निर्वाचन समयतालिका</string>
     <string name="create_election_section_schedule_subtitle">सुरु र अन्त्य समय सेट गर्नुहोस्। निर्वाचन बन्द नभएसम्म नतिजा लक रहन्छ।</string>
     <string name="create_election_label_start_time">सुरु मिति र समय</string>
@@ -171,6 +175,7 @@
     <string name="qr_check_in_checking_blockchain">Blockchain मा मतदाता check-in हुँदैछ...</string>
     <string name="qr_check_in_error_blockchain_failed">Blockchain check-in असफल भयो।</string>
     <string name="qr_check_in_no_elections_title">कुनै निर्वाचन उपलब्ध छैन</string>
+    <string name="qr_check_in_demo_voters_title">डेमो मतदाता छिटो छान्नुहोस्</string>
     <string name="qr_check_in_use_registered_voter">दर्ता गरिएको मतदाता प्रयोग गर्नुहोस्</string>
     <string name="qr_check_in_registered_voter_added">दर्ता गरिएको मतदाता वालेट थपियो।</string>
     <string name="qr_check_in_clear_button">खाली गर्नुहोस्</string>
@@ -334,6 +339,12 @@
     <string name="results_closing_button">निर्वाचन बन्द हुँदैछ...</string>
     <string name="results_close_early_button">निर्वाचन चाँडै बन्द गर्नुहोस्</string>
     <string name="results_final_available">अन्तिम नतिजा अब समीक्षाका लागि उपलब्ध छ।</string>
+    <string name="results_winner_title">विजेता</string>
+    <string name="results_winners_title">बराबरी नतिजा</string>
+    <string name="results_no_votes_message">निर्वाचन बन्द हुनुअघि कुनै मत नपरेकाले अहिलेसम्म विजेता छैन।</string>
+    <string name="results_tie_message">%1$s ले कुल %3$d मतमध्ये प्रत्येकले %2$d मत पाएर बराबरी गरे।</string>
+    <string name="results_winner_message">%1$s ले कुल %3$d मतमध्ये %2$d मत ल्याएर जित्नुभयो।</string>
+    <string name="results_winner_badge">विजेता</string>
     <string name="results_candidate_results_title">उम्मेदवार नतिजा</string>
     <string name="results_vote_count">%1$d मत</string>
     <string name="results_vote_share">मत हिस्सा: %1$s</string>

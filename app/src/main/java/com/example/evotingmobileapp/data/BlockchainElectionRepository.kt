@@ -25,7 +25,8 @@ class BlockchainElectionRepository(
 
     fun refreshFromBlockchain(): Result<Unit> {
         return try {
-            val chainElections = blockchainRepository.getAllElectionsOnChain(appContext)
+            val chainElections = blockchainRepository
+                .getAllElectionsOnChain(appContext)
                 .getOrThrow()
 
             val mergedElections = mergeChainAndCachedElections(chainElections)
@@ -67,15 +68,21 @@ class BlockchainElectionRepository(
             electionId = parsedElectionId,
             voterWalletAddress = normalizedWalletAddress
         ).fold(
-            onSuccess = { message ->
+            onSuccess = { txHash ->
                 applySuccessfulCheckIn(
                     electionId = cleanedElectionId,
                     normalizedWalletAddress = normalizedWalletAddress
                 )
-                Result.success(message)
+
+                Result.success("Check-in successful. Transaction: ${shortenHash(txHash)}")
             },
             onFailure = { exception ->
-                Result.failure(exception)
+                Result.failure(
+                    IllegalStateException(
+                        exception.message ?: "Blockchain check-in failed.",
+                        exception
+                    )
+                )
             }
         )
     }
@@ -104,10 +111,26 @@ class BlockchainElectionRepository(
             .filter { it.isNotBlank() }
             .distinct()
 
+        require(cleanedTitle.isNotBlank()) {
+            "Election title is required."
+        }
+
+        require(cleanedCandidates.size >= 2) {
+            "At least two candidates are required."
+        }
+
+        require(endTimeMillis > startTimeMillis) {
+            "Election end time must be after start time."
+        }
+
         val cleanedEligibleWalletAddresses = eligibleVoterIds
             .map { it.trim() }
             .filter { it.isNotBlank() }
-            .distinct()
+            .distinctBy { it.lowercase(Locale.ROOT) }
+
+        require(cleanedEligibleWalletAddresses.isNotEmpty()) {
+            "At least one eligible voter wallet is required."
+        }
 
         val normalizedEligibleWalletAddresses = cleanedEligibleWalletAddresses
             .map { normalizeWalletAddress(it) }
@@ -151,13 +174,16 @@ class BlockchainElectionRepository(
         return _elections.value.find { it.id == cleanedElectionId }
     }
 
-    override fun checkInVoter(electionId: String, voterId: String): String {
+    override fun checkInVoter(
+        electionId: String,
+        voterId: String
+    ): String {
         return checkInVoterOnChain(
             context = appContext,
             electionId = electionId,
             voterWalletAddress = voterId
         ).fold(
-            onSuccess = { "Check-in successful" },
+            onSuccess = { message -> message },
             onFailure = { exception ->
                 exception.message ?: "Blockchain check-in failed."
             }
@@ -168,59 +194,101 @@ class BlockchainElectionRepository(
         electionId: String,
         voterId: String
     ): VoteValidationResult {
+        val cleanedElectionId = electionId.trim()
         val normalizedWalletAddress = normalizeWalletAddress(voterId)
 
         if (normalizedWalletAddress.isBlank()) {
             return VoteValidationResult(
                 success = false,
-                message = "Voter ID required"
+                message = "No active voter wallet session found."
             )
         }
 
-        val election = getElectionById(electionId.trim())
+        val parsedElectionId = parseElectionId(cleanedElectionId)
             ?: return VoteValidationResult(
                 success = false,
-                message = "Election not found"
+                message = "Election ID must be a valid non-negative integer."
             )
 
-        if (!election.eligibleVoterIds.contains(normalizedWalletAddress)) {
+        refreshFromBlockchain()
+
+        val election = getElectionById(cleanedElectionId)
+            ?: return VoteValidationResult(
+                success = false,
+                message = "Election not found."
+            )
+
+        val isEligible = blockchainRepository.isEligibleVoterOnChain(
+            context = appContext,
+            electionId = parsedElectionId,
+            voterWalletAddress = normalizedWalletAddress
+        ).getOrElse { exception ->
             return VoteValidationResult(
                 success = false,
-                message = "Not eligible"
+                message = exception.message ?: "Failed to check voter eligibility on blockchain."
             )
         }
 
-        if (!election.checkedInVoterIds.contains(normalizedWalletAddress)) {
+        if (!isEligible) {
             return VoteValidationResult(
                 success = false,
-                message = "Not checked-in"
+                message = "This voter is not in the eligible voter whitelist."
+            )
+        }
+
+        val isCheckedIn = blockchainRepository.isCheckedInOnChain(
+            context = appContext,
+            electionId = parsedElectionId,
+            voterWalletAddress = normalizedWalletAddress
+        ).getOrElse { exception ->
+            return VoteValidationResult(
+                success = false,
+                message = exception.message ?: "Failed to check voter check-in status on blockchain."
+            )
+        }
+
+        if (!isCheckedIn) {
+            return VoteValidationResult(
+                success = false,
+                message = "This voter has not completed QR check-in yet."
             )
         }
 
         if (!election.hasStarted()) {
             return VoteValidationResult(
                 success = false,
-                message = "Election not started"
+                message = "Election has not started yet."
             )
         }
 
         if (election.isClosed()) {
             return VoteValidationResult(
                 success = false,
-                message = "Election closed"
+                message = "Election is closed."
             )
         }
 
-        if (election.votedVoterIds.contains(normalizedWalletAddress)) {
+        val hasVoted = blockchainRepository.hasVotedOnChain(
+            context = appContext,
+            electionId = parsedElectionId,
+            voterWalletAddress = normalizedWalletAddress
+        ).getOrElse { exception ->
             return VoteValidationResult(
                 success = false,
-                message = "Already voted"
+                message = exception.message ?: "Failed to check voter voting status on blockchain."
+            )
+        }
+
+        if (hasVoted) {
+            return VoteValidationResult(
+                success = false,
+                message = "This voter has already voted in this election."
             )
         }
 
         return VoteValidationResult(
             success = true,
-            message = "Eligible to vote"
+            message = "Eligible and checked-in. Ready to vote."
         )
     }
 
@@ -286,14 +354,15 @@ class BlockchainElectionRepository(
                     transactionHash = realTxHash
                 )
 
-                _voteReceipts.value = _voteReceipts.value + receipt
-                persistSnapshot()
+                _voteReceipts.value = (_voteReceipts.value + receipt)
+                    .distinctBy { it.transactionHash.lowercase(Locale.ROOT) }
 
+                persistSnapshot()
                 refreshFromBlockchain()
 
                 VoteValidationResult(
                     success = true,
-                    message = "Vote submitted successfully",
+                    message = "Vote submitted successfully.",
                     receipt = receipt
                 )
             },
@@ -410,8 +479,12 @@ class BlockchainElectionRepository(
         election: Election,
         candidateName: String
     ): BigInteger? {
-        val candidateIndex = election.candidates.indexOfFirst { it == candidateName }
+        val candidateIndex = election.candidates.indexOfFirst {
+            it.equals(candidateName, ignoreCase = false)
+        }
+
         if (candidateIndex == -1) return null
+
         return BigInteger.valueOf((candidateIndex + 1).toLong())
     }
 
@@ -421,6 +494,7 @@ class BlockchainElectionRepository(
         normalizedWalletAddress: String
     ): Election {
         val updatedVoteCounts = election.voteCounts.toMutableMap()
+
         updatedVoteCounts[cleanedCandidateName] =
             (updatedVoteCounts[cleanedCandidateName] ?: 0) + 1
 
@@ -466,5 +540,10 @@ class BlockchainElectionRepository(
 
     private fun normalizeWalletAddress(walletAddress: String): String {
         return walletAddress.trim().lowercase(Locale.ROOT)
+    }
+
+    private fun shortenHash(hash: String): String {
+        if (hash.length <= 18) return hash
+        return "${hash.take(10)}...${hash.takeLast(8)}"
     }
 }

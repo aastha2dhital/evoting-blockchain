@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -32,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -66,6 +68,7 @@ fun VotingScreen(
     modifier: Modifier = Modifier
 ) {
     val elections by adminViewModel.elections.collectAsState()
+    val votingAccessUiState by adminViewModel.votingAccessUiState.collectAsState()
     val authUiState by authSessionViewModel.uiState.collectAsState()
 
     val snackBarHostState = remember { SnackbarHostState() }
@@ -74,8 +77,9 @@ fun VotingScreen(
     var selectedElectionId by rememberSaveable { mutableStateOf("") }
     var selectedCandidate by rememberSaveable { mutableStateOf("") }
     var isSubmittingVote by rememberSaveable { mutableStateOf(false) }
+    var showVoteSuccessDialog by rememberSaveable { mutableStateOf(false) }
+    var successReceiptTransactionHash by rememberSaveable { mutableStateOf("") }
 
-    val isBusy = isSubmittingVote
     val selectedElection = elections.find { it.id == selectedElectionId }
     val voterWalletAddress = authUiState.walletAddress.trim()
 
@@ -90,6 +94,35 @@ fun VotingScreen(
     val selectCandidateSnackbar = stringResource(R.string.voting_error_select_candidate)
     val blockchainVoteFailedText = stringResource(R.string.voting_error_blockchain_vote_failed)
     val voteSuccessSnackbar = stringResource(R.string.voting_success_vote_recorded)
+
+    val votingAccessMatchesCurrentSelection =
+        selectedElection != null &&
+                votingAccessUiState.electionId == selectedElection.id &&
+                votingAccessUiState.voterId.equals(voterWalletAddress, ignoreCase = true)
+
+    val votingAccessText = when {
+        selectedElection == null -> selectElectionFirstText
+
+        !authUiState.canAccessVoter() || voterWalletAddress.isBlank() -> noActiveSessionText
+
+        votingAccessUiState.isLoading &&
+                votingAccessUiState.electionId == selectedElection.id -> votingAccessUiState.message
+            .ifBlank { "Checking voting access..." }
+
+        votingAccessMatchesCurrentSelection && votingAccessUiState.canVote -> readyToVoteText
+
+        votingAccessMatchesCurrentSelection -> votingAccessUiState.message
+            .ifBlank { "Voting access could not be confirmed." }
+
+        else -> "Checking voting access..."
+    }
+
+    val votingAccessSuccess =
+        votingAccessMatchesCurrentSelection &&
+                !votingAccessUiState.isLoading &&
+                votingAccessUiState.canVote
+
+    val isBusy = isSubmittingVote || votingAccessUiState.isLoading
 
     LaunchedEffect(elections, selectedElectionId) {
         if (selectedElectionId.isNotBlank() && selectedElection == null) {
@@ -106,6 +139,35 @@ fun VotingScreen(
         }
     }
 
+    LaunchedEffect(
+        selectedElectionId,
+        voterWalletAddress,
+        authUiState.canAccessVoter()
+    ) {
+        val election = selectedElection
+
+        if (election == null) {
+            adminViewModel.clearVotingAccessState()
+            return@LaunchedEffect
+        }
+
+        if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
+            adminViewModel.clearVotingAccessState()
+            return@LaunchedEffect
+        }
+
+        adminViewModel.refreshVotingAccess(
+            electionId = election.id,
+            voterId = voterWalletAddress
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            adminViewModel.clearVotingAccessState()
+        }
+    }
+
     fun getElectionStatusText(): String {
         val election = selectedElection ?: return noElectionSelectedText
         return when {
@@ -115,34 +177,6 @@ fun VotingScreen(
         }
     }
 
-    fun getVotingAccessText(): String {
-        val election = selectedElection ?: return selectElectionFirstText
-
-        if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
-            return noActiveSessionText
-        }
-
-        val result = adminViewModel.validateVoting(
-            electionId = election.id,
-            voterId = voterWalletAddress
-        )
-
-        return if (result.success) {
-            readyToVoteText
-        } else {
-            result.message
-        }
-    }
-
-    fun getVotingAccessSuccess(): Boolean {
-        val election = selectedElection ?: return false
-        if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) return false
-        return adminViewModel.validateVoting(
-            electionId = election.id,
-            voterId = voterWalletAddress
-        ).success
-    }
-
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.background,
@@ -150,6 +184,71 @@ fun VotingScreen(
             MaterialTheme.colorScheme.background
         )
     )
+
+    if (showVoteSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                // Keep the success confirmation visible until the voter chooses an action.
+            },
+            title = {
+                Text(
+                    text = "Vote Submitted Successfully",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = voteSuccessSnackbar,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    if (successReceiptTransactionHash.isNotBlank()) {
+                        Text(
+                            text = "Receipt: ${shortenWalletAddress(successReceiptTransactionHash)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Text(
+                        text = "You can now open the receipt screen to verify the transaction hash on-chain.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showVoteSuccessDialog = false
+
+                        if (successReceiptTransactionHash.isNotBlank()) {
+                            navController.navigate(
+                                AppRoutes.receiptRoute(successReceiptTransactionHash)
+                            )
+                        } else {
+                            navController.navigate(AppRoutes.RECEIPT)
+                        }
+                    }
+                ) {
+                    Text("View Receipt")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showVoteSuccessDialog = false
+                    }
+                ) {
+                    Text("Stay Here")
+                }
+            }
+        )
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
@@ -190,8 +289,8 @@ fun VotingScreen(
                     electionTitle = election.title,
                     electionId = election.id,
                     electionStatus = getElectionStatusText(),
-                    votingAccessText = getVotingAccessText(),
-                    votingAccessSuccess = getVotingAccessSuccess(),
+                    votingAccessText = votingAccessText,
+                    votingAccessSuccess = votingAccessSuccess,
                     candidates = election.candidates,
                     selectedCandidate = selectedCandidate,
                     onCandidateSelected = { candidate ->
@@ -201,10 +300,18 @@ fun VotingScreen(
                     },
                     isBusy = isBusy,
                     isSubmittingVote = isSubmittingVote,
+                    canSubmitVote = votingAccessSuccess && selectedCandidate.isNotBlank() && !isSubmittingVote,
                     onSubmitVote = {
                         if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
                             coroutineScope.launch {
                                 snackBarHostState.showSnackbar(noActiveSessionSnackbar)
+                            }
+                            return@ElectionVotingCard
+                        }
+
+                        if (!votingAccessSuccess) {
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar(votingAccessText)
                             }
                             return@ElectionVotingCard
                         }
@@ -239,18 +346,15 @@ fun VotingScreen(
                             }
 
                             if (finalResult.success) {
-                                snackBarHostState.showSnackbar(voteSuccessSnackbar)
-
-                                val transactionHash =
+                                successReceiptTransactionHash =
                                     finalResult.receipt?.transactionHash.orEmpty()
 
-                                if (transactionHash.isNotBlank()) {
-                                    navController.navigate(
-                                        AppRoutes.receiptRoute(transactionHash)
-                                    )
-                                } else {
-                                    navController.navigate(AppRoutes.RECEIPT)
-                                }
+                                showVoteSuccessDialog = true
+
+                                adminViewModel.refreshVotingAccess(
+                                    electionId = election.id,
+                                    voterId = voterWalletAddress
+                                )
                             } else {
                                 snackBarHostState.showSnackbar(finalResult.message)
                             }
@@ -423,6 +527,7 @@ private fun ElectionVotingCard(
     onCandidateSelected: (String) -> Unit,
     isBusy: Boolean,
     isSubmittingVote: Boolean,
+    canSubmitVote: Boolean,
     onSubmitVote: () -> Unit
 ) {
     Card(
@@ -487,7 +592,7 @@ private fun ElectionVotingCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                enabled = !isBusy,
+                enabled = canSubmitVote,
                 shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary

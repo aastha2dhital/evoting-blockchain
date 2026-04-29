@@ -1,8 +1,6 @@
 package com.example.evotingmobileapp.qr
 
-import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,19 +45,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.evotingmobileapp.BuildConfig
 import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
+import com.example.evotingmobileapp.blockchain.DemoVoterProfile
+import com.example.evotingmobileapp.blockchain.DemoWallets
 import com.example.evotingmobileapp.model.Election
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,30 +79,51 @@ fun QRCheckInScreen(
     val selectedElection = elections.find { it.id == selectedElectionId }
 
     val context = LocalContext.current
-    val viewContext = LocalView.current.context
-    val activity = remember(context, viewContext) {
-        viewContext.findActivity() ?: context.findActivity()
-    }
-
     val coroutineScope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    val scannerNoActivityMessage = stringResource(R.string.qr_check_in_scanner_no_activity)
     val qrNoReadableValueMessage = stringResource(R.string.qr_check_in_error_no_readable_value)
     val qrScanSuccessMessage = stringResource(R.string.qr_check_in_scan_success)
     val qrScanCanceledMessage = stringResource(R.string.qr_check_in_scan_canceled)
-    val qrScanFailedMessage = stringResource(R.string.qr_check_in_scan_failed)
     val selectElectionFirstMessage = stringResource(R.string.qr_check_in_error_select_election)
     val enterWalletFirstMessage = stringResource(R.string.qr_check_in_error_enter_wallet)
     val checkingBlockchainMessage = stringResource(R.string.qr_check_in_checking_blockchain)
     val blockchainFailedMessage = stringResource(R.string.qr_check_in_error_blockchain_failed)
     val registeredVoterAddedMessage = stringResource(R.string.qr_check_in_registered_voter_added)
 
-    val scannerOptions = remember {
-        GmsBarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .enableAutoZoom()
-            .build()
+    val scanLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract()
+    ) { result ->
+        val scannedValue = result.contents?.trim().orEmpty()
+
+        if (scannedValue.isBlank()) {
+            statusMessage = if (result.contents == null) {
+                qrScanCanceledMessage
+            } else {
+                qrNoReadableValueMessage
+            }
+            statusIsPositive = false
+        } else {
+            voterWalletAddress = scannedValue
+            lastScannedValue = scannedValue
+            statusMessage = qrScanSuccessMessage
+            statusIsPositive = true
+        }
+
+        coroutineScope.launch {
+            snackBarHostState.showSnackbar(statusMessage)
+        }
+    }
+
+    val scanOptions = remember {
+        ScanOptions().apply {
+            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+            setPrompt("Scan voter wallet QR code")
+            setCameraId(0)
+            setBeepEnabled(true)
+            setBarcodeImageEnabled(false)
+            setOrientationLocked(false)
+        }
     }
 
     LaunchedEffect(elections, selectedElectionId) {
@@ -199,7 +217,7 @@ fun QRCheckInScreen(
                     ) {
                         Button(
                             onClick = {
-                                voterWalletAddress = BuildConfig.DEMO_VOTER_WALLET_ADDRESS
+                                voterWalletAddress = DemoWallets.defaultVoterAddress
                                 lastScannedValue = ""
                                 statusMessage = registeredVoterAddedMessage
                                 statusIsPositive = true
@@ -234,60 +252,20 @@ fun QRCheckInScreen(
                         }
                     }
 
+                    DemoVoterQuickSelect(
+                        voters = DemoWallets.voters,
+                        enabled = !isCheckingIn,
+                        onSelected = { voter ->
+                            voterWalletAddress = voter.address
+                            lastScannedValue = ""
+                            statusMessage = "${voter.label} loaded for check-in."
+                            statusIsPositive = true
+                        }
+                    )
+
                     Button(
                         onClick = {
-                            val safeActivity = activity
-
-                            if (safeActivity == null) {
-                                statusMessage = scannerNoActivityMessage
-                                statusIsPositive = false
-
-                                coroutineScope.launch {
-                                    snackBarHostState.showSnackbar(statusMessage)
-                                }
-
-                                return@Button
-                            }
-
-                            val scanner = GmsBarcodeScanning.getClient(
-                                safeActivity,
-                                scannerOptions
-                            )
-
-                            scanner.startScan()
-                                .addOnSuccessListener { barcode: Barcode ->
-                                    val scannedValue = barcode.rawValue?.trim().orEmpty()
-
-                                    if (scannedValue.isBlank()) {
-                                        statusMessage = qrNoReadableValueMessage
-                                        statusIsPositive = false
-                                    } else {
-                                        voterWalletAddress = scannedValue
-                                        lastScannedValue = scannedValue
-                                        statusMessage = qrScanSuccessMessage
-                                        statusIsPositive = true
-                                    }
-
-                                    coroutineScope.launch {
-                                        snackBarHostState.showSnackbar(statusMessage)
-                                    }
-                                }
-                                .addOnCanceledListener {
-                                    statusMessage = qrScanCanceledMessage
-                                    statusIsPositive = false
-
-                                    coroutineScope.launch {
-                                        snackBarHostState.showSnackbar(statusMessage)
-                                    }
-                                }
-                                .addOnFailureListener { exception: Exception ->
-                                    statusMessage = exception.message ?: qrScanFailedMessage
-                                    statusIsPositive = false
-
-                                    coroutineScope.launch {
-                                        snackBarHostState.showSnackbar(statusMessage)
-                                    }
-                                }
+                            scanLauncher.launch(scanOptions)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -666,6 +644,43 @@ private fun ElectionChoiceCard(
 }
 
 @Composable
+private fun DemoVoterQuickSelect(
+    voters: List<DemoVoterProfile>,
+    enabled: Boolean,
+    onSelected: (DemoVoterProfile) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.qr_check_in_demo_voters_title),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        voters.forEach { voter ->
+            OutlinedButton(
+                onClick = { onSelected(voter) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                enabled = enabled,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = "${voter.label} • ${shortenWalletAddress(voter.address)}",
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun CheckInActionCard(
     selectedElectionTitle: String?,
     voterWalletAddress: String,
@@ -851,12 +866,4 @@ private fun StatusPanel(
 private fun shortenWalletAddress(address: String): String {
     if (address.length <= 16) return address
     return "${address.take(10)}...${address.takeLast(8)}"
-}
-
-private tailrec fun Context.findActivity(): Activity? {
-    return when (this) {
-        is Activity -> this
-        is ContextWrapper -> baseContext.findActivity()
-        else -> null
-    }
 }
