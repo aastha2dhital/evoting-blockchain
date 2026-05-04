@@ -2,8 +2,28 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { network } from "hardhat";
 
+const DEFAULT_EMULATOR_RPC_URL = "http://10.0.2.2:8545";
+
+function getAndroidRpcUrl(): string {
+  const rpcUrlFromEnv = process.env.ANDROID_RPC_URL?.trim();
+
+  if (!rpcUrlFromEnv) {
+    return DEFAULT_EMULATOR_RPC_URL;
+  }
+
+  if (!rpcUrlFromEnv.startsWith("http://") && !rpcUrlFromEnv.startsWith("https://")) {
+    throw new Error(
+      `Invalid ANDROID_RPC_URL: "${rpcUrlFromEnv}". It must start with http:// or https://`
+    );
+  }
+
+  return rpcUrlFromEnv;
+}
+
 async function main() {
   const { ethers } = await network.connect("localhost");
+
+  const androidRpcUrl = getAndroidRpcUrl();
 
   const evoting = await ethers.deployContract("EVoting");
   await evoting.waitForDeployment();
@@ -28,7 +48,7 @@ async function main() {
   const contractInfo = {
     contractAddress,
     network: "hardhat-local",
-    rpcUrl: "http://10.0.2.2:8545"
+    rpcUrl: androidRpcUrl
   };
 
   const demoVoterWallets = {
@@ -81,9 +101,15 @@ async function main() {
 
   console.log("EVoting deployed successfully.");
   console.log("Contract address:", contractAddress);
+  console.log("Android RPC URL:", androidRpcUrl);
+  console.log("");
   console.log("Android asset updated: app/src/main/assets/contract-info.json");
   console.log("Android asset updated: app/src/main/assets/evoting-abi.json");
   console.log("Android asset updated: app/src/main/assets/voter-wallets.json");
+  console.log("");
+  console.log("Use this setup:");
+  console.log("- Emulator RPC URL: http://10.0.2.2:8545");
+  console.log("- Real phone RPC URL: http://YOUR_LAPTOP_WIFI_IP:8545");
   console.log("");
   console.log("Demo voter addresses:");
   console.log("Voter 1: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8");
