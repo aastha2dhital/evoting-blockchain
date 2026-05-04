@@ -10,7 +10,7 @@
     <string name="label_wallet_address">Wallet Address</string>
 
     <!-- Login / Landing -->
-    <string name="login_hero_badge">SECURE â€¢ AUDITABLE â€¢ BLOCKCHAIN-BACKED</string>
+    <string name="login_hero_badge">SECURE • AUDITABLE • BLOCKCHAIN-BACKED</string>
     <string name="login_title">Decentralized\nE-Voting System</string>
     <string name="login_description">A premium mobile voting platform for controlled election access, QR-based voter check-in, transparent blockchain vote recording, and receipt verification.</string>
     <string name="login_stat_role_access">Role-separated access</string>
@@ -22,9 +22,9 @@
     <string name="login_voter_title">Voter</string>
     <string name="login_voter_description">Access the voter flow, present the wallet QR for polling check-in, cast a vote when eligible, and verify the receipt afterward.</string>
     <string name="login_notes_title">System Access Notes</string>
-    <string name="login_note_admin">â€¢ Admin users continue through a protected management portal.</string>
-    <string name="login_note_voter">â€¢ Voters continue through a separate access path for QR check-in and voting.</string>
-    <string name="login_note_audit">â€¢ Election actions are designed to support transparency, auditability, and controlled access.</string>
+    <string name="login_note_admin">• Admin users continue through a protected management portal.</string>
+    <string name="login_note_voter">• Voters continue through a separate access path for QR check-in and voting.</string>
+    <string name="login_note_audit">• Election actions are designed to support transparency, auditability, and controlled access.</string>
     <string name="login_footer">Direct dashboard shortcuts have been removed so each user must continue through the correct access path.</string>
     <string name="login_brand_title">SecureVote Nepal</string>
     <string name="login_search_placeholder">Search election, party or candidate</string>
@@ -62,10 +62,11 @@
     <string name="admin_error_blank">Enter the 6-digit OTP to continue.</string>
     <string name="admin_error_incorrect">Incorrect OTP. Please try again.</string>
     <string name="admin_notes_title">Admin Access Notes</string>
-    <string name="admin_note_authorized">â€¢ Use this portal only for authorized election administration tasks.</string>
-    <string name="admin_note_voter_separation">â€¢ Voter access remains separated through its own portal and check-in flow.</string>
-    <string name="admin_note_blockchain">â€¢ Blockchain-backed actions support transparency and auditability across the election workflow.</string>
+    <string name="admin_note_authorized">• Use this portal only for authorized election administration tasks.</string>
+    <string name="admin_note_voter_separation">• Voter access remains separated through its own portal and check-in flow.</string>
+    <string name="admin_note_blockchain">• Blockchain-backed actions support transparency and auditability across the election workflow.</string>
     <string name="admin_footer">In a production deployment, this step would be replaced by secure backend authentication, protected credential handling, and stronger role verification.</string>
+    <string name="admin_avatar_initials">AD</string>
 
     <!-- Voter Access -->
     <string name="voter_portal_title">Voter Access Portal</string>
@@ -80,16 +81,22 @@
     <string name="voter_continue_title">Continue to Voting Access</string>
     <string name="voter_continue_description">Continue to the voter portal to review eligible elections, cast a vote when permitted, and verify the receipt after blockchain recording is completed.</string>
     <string name="voter_notes_title">Voter Access Notes</string>
-    <string name="voter_note_eligibility">â€¢ Voting access still depends on whitelist eligibility, QR check-in status, and election timing rules.</string>
-    <string name="voter_note_checked_in">â€¢ Only checked-in eligible voters should be able to continue through the final voting workflow.</string>
-    <string name="voter_note_receipt">â€¢ Successful vote submission should produce a receipt and transaction hash for later verification and audit review.</string>
+    <string name="voter_note_eligibility">• Voting access still depends on whitelist eligibility, QR check-in status, and election timing rules.</string>
+    <string name="voter_note_checked_in">• Only checked-in eligible voters should be able to continue through the final voting workflow.</string>
+    <string name="voter_note_receipt">• Successful vote submission should produce a receipt and transaction hash for later verification and audit review.</string>
     <string name="voter_demo_mode">Registered voter wallet access is enabled for this election session.</string>
     <string name="voter_select_demo_voter_title">Choose Demo Voter</string>
     <string name="voter_select_demo_voter_message">Select which registered demo voter is presenting the QR pass. Each voter has a separate wallet and can cast one vote.</string>
+    <string name="voter_avatar_initials">VT</string>
 
     <!-- Create Election Screen -->
     <string name="create_election_title">Create Election</string>
     <string name="create_election_subtitle">Set up the election details, candidate list, schedule, and eligible voter whitelist.</string>
+    <string name="create_election_admin_setup_badge">Admin Setup</string>
+    <string name="create_election_metric_candidates">Candidates</string>
+    <string name="create_election_metric_voters">Voters</string>
+    <string name="create_election_candidate_count">%1$d added</string>
+    <string name="create_election_voter_count">%1$d voter</string>
     <string name="create_election_section_identity_title">Election identity</string>
     <string name="create_election_section_identity_subtitle">Name the election clearly so voters know exactly what they are voting for.</string>
     <string name="create_election_label_title">Election title</string>
@@ -119,6 +126,8 @@
     <string name="create_election_plus_three_hours">+3 hours</string>
     <string name="create_election_date_format_title">Date format</string>
     <string name="create_election_date_format_message">Use dd/MM/yyyy hh:mm AM/PM, for example 24/04/2026 10:45 PM.</string>
+    <string name="create_election_deploy_title">Ready to create on blockchain?</string>
+    <string name="create_election_deploy_subtitle">This will publish the election details and eligible voter rules to the configured blockchain network.</string>
     <string name="create_election_cancel_button">Cancel</string>
     <string name="create_election_create_button">Create</string>
     <string name="create_election_creating_button">Creating...</string>
@@ -132,13 +141,6 @@
     <string name="create_election_success_title">Election created successfully</string>
     <string name="create_election_success_message">The election has been created and prepared for eligible voters.</string>
     <string name="create_election_success_button">Done</string>
-    <string name="create_election_admin_setup_badge">Admin Setup</string>
-    <string name="create_election_metric_candidates">Candidates</string>
-    <string name="create_election_metric_voters">Voters</string>
-    <string name="create_election_candidate_count">%1$d added</string>
-    <string name="create_election_voter_count">%1$d voter</string>
-    <string name="create_election_deploy_title">Ready to create on blockchain?</string>
-    <string name="create_election_deploy_subtitle">This will publish the election details and eligible voter rules to the configured blockchain network.</string>
 
     <!-- QR Check-In Screen -->
     <string name="qr_check_in_title">QR Check-In</string>
@@ -148,6 +150,7 @@
     <string name="qr_check_in_step_complete_check_in">3. Complete Check-In</string>
     <string name="qr_check_in_select_election_title">Select Election</string>
     <string name="qr_check_in_select_election_subtitle">Choose the election for this voter check-in.</string>
+    <string name="qr_check_in_no_elections_title">No elections available</string>
     <string name="qr_check_in_no_elections">No elections available yet. Create an election first.</string>
     <string name="qr_check_in_election_id">Election ID: %1$s</string>
     <string name="qr_check_in_scan_wallet_title">Scan Voter QR</string>
@@ -155,11 +158,14 @@
     <string name="qr_check_in_wallet_label">Voter Wallet Address</string>
     <string name="qr_check_in_wallet_placeholder">Scan QR or type voter wallet address</string>
     <string name="qr_check_in_last_scanned">Last scanned value: %1$s</string>
+    <string name="qr_check_in_last_scanned_wallet_title">Last scanned wallet</string>
     <string name="qr_check_in_scan_qr_button">Scan QR Code</string>
     <string name="qr_check_in_complete_title">Complete Check-In</string>
     <string name="qr_check_in_complete_subtitle">Review the selected election and scanned voter wallet before final check-in.</string>
     <string name="qr_check_in_summary_election">Election: %1$s</string>
     <string name="qr_check_in_summary_wallet">Wallet: %1$s</string>
+    <string name="qr_check_in_summary_election_label">Election</string>
+    <string name="qr_check_in_summary_wallet_label">Wallet</string>
     <string name="qr_check_in_not_selected">Not selected</string>
     <string name="qr_check_in_not_entered">Not entered</string>
     <string name="qr_check_in_checking_button">Checking In...</string>
@@ -174,12 +180,10 @@
     <string name="qr_check_in_error_enter_wallet">Please scan or enter a voter wallet address first.</string>
     <string name="qr_check_in_checking_blockchain">Checking voter in on blockchain...</string>
     <string name="qr_check_in_error_blockchain_failed">Blockchain check-in failed.</string>
-    <string name="qr_check_in_no_elections_title">No elections available</string>
     <string name="qr_check_in_demo_voters_title">Quick-select demo voters</string>
     <string name="qr_check_in_use_registered_voter">Use Registered Voter</string>
     <string name="qr_check_in_registered_voter_added">Registered voter wallet added.</string>
     <string name="qr_check_in_clear_button">Clear</string>
-    <string name="qr_check_in_last_scanned_wallet_title">Last scanned wallet</string>
     <string name="qr_check_in_polling_officer_badge">Polling officer</string>
     <string name="qr_check_in_hero_message">Verify voter attendance before voting.</string>
     <string name="qr_check_in_metric_elections">Elections</string>
@@ -188,8 +192,6 @@
     <string name="qr_check_in_wallet_ready">Ready</string>
     <string name="qr_check_in_no_election_selected_yet">No election selected yet</string>
     <string name="qr_check_in_selected_badge">Selected</string>
-    <string name="qr_check_in_summary_election_label">Election</string>
-    <string name="qr_check_in_summary_wallet_label">Wallet</string>
 
     <!-- Dashboard -->
     <string name="dashboard_admin_title">Admin Control Center</string>
@@ -203,6 +205,7 @@
     <string name="dashboard_available_elections_subtitle">Review election timing and status before you proceed to vote.</string>
     <string name="dashboard_role_admin">Role: Admin</string>
     <string name="dashboard_role_voter">Role: Voter</string>
+    <string name="dashboard_elections">Elections</string>
     <string name="dashboard_elections_count">Elections: %1$d</string>
     <string name="dashboard_latest_election">Latest: %1$s</string>
     <string name="dashboard_no_elections">No elections yet</string>
@@ -211,7 +214,9 @@
     <string name="dashboard_voter_actions_subtitle">Proceed to cast your vote or verify your blockchain receipt.</string>
     <string name="dashboard_create_election">Create Election</string>
     <string name="dashboard_qr_checkin">QR Check-In</string>
+    <string name="dashboard_qr_check_in">QR Check-In</string>
     <string name="dashboard_view_results">View Results</string>
+    <string name="dashboard_results">Results</string>
     <string name="dashboard_blockchain_records">Blockchain Records</string>
     <string name="dashboard_logout">Logout</string>
     <string name="dashboard_vote_now">Vote Now</string>
@@ -317,6 +322,8 @@
     <string name="voting_error_select_candidate">Please select a candidate.</string>
     <string name="voting_error_blockchain_vote_failed">Blockchain vote failed.</string>
     <string name="voting_success_vote_recorded">Congratulations. Your vote was recorded successfully.</string>
+    <string name="voting_view_receipt_button">View Receipt</string>
+    <string name="voting_stay_on_page_button">Stay on Voting Page</string>
 
     <!-- Results Screen -->
     <string name="results_title">Election Results</string>
@@ -326,21 +333,28 @@
     <string name="results_pill_admin_close">Admin Close Control</string>
     <string name="results_empty_title">No elections created yet</string>
     <string name="results_empty_message">Create an election first to review turnout and final results here.</string>
+    <string name="results_no_elections">No elections available.</string>
+    <string name="results_select_election_title">Select Election</string>
     <string name="results_election_overview_subtitle">Election results overview and turnout status.</string>
     <string name="results_status_closed">Closed</string>
     <string name="results_status_open">Open</string>
+    <string name="results_status_active">Active</string>
+    <string name="results_status_scheduled">Scheduled</string>
     <string name="results_loading">Loading...</string>
     <string name="results_status_summary">Status: %1$s</string>
     <string name="results_turnout_summary">Turnout: %1$s</string>
+    <string name="results_total_votes">Total votes: %1$d</string>
     <string name="results_total_votes_summary">Total Votes: %1$d</string>
     <string name="results_start_label">Start</string>
     <string name="results_end_label">End</string>
     <string name="results_locked_until_close">Results are locked until this election closes.</string>
     <string name="results_closing_button">Closing Election...</string>
     <string name="results_close_early_button">Close Election Early</string>
+    <string name="results_close_election_button">Close Election</string>
     <string name="results_final_available">Final results are now available for review.</string>
     <string name="results_winner_title">Winner</string>
     <string name="results_winners_title">Tie Result</string>
+    <string name="results_no_votes">No votes yet.</string>
     <string name="results_no_votes_message">No winner yet because no votes were cast before closure.</string>
     <string name="results_tie_message">%1$s are tied with %2$d votes each out of %3$d total votes.</string>
     <string name="results_winner_message">%1$s won with %2$d votes out of %3$d total votes.</string>
@@ -371,8 +385,6 @@
     <string name="blockchain_records_timestamp">Timestamp</string>
     <string name="blockchain_records_transaction_hash">Transaction Hash</string>
     <string name="blockchain_records_not_loaded">Not loaded</string>
-    <string name="admin_avatar_initials">AD</string>
-    <string name="voter_avatar_initials">VT</string>
     <string name="blockchain_records_records_metric">Records</string>
     <string name="blockchain_records_audit_trail_subtitle">Latest verified voting records from this app session are shown first.</string>
     <string name="blockchain_records_connection_subtitle">Current local contract status</string>
@@ -381,8 +393,12 @@
     <string name="blockchain_records_transaction_short">Transaction %1$s</string>
     <string name="blockchain_records_not_available">Not available</string>
 
+    <!-- Observer View -->
+    <string name="observer_title">Observer View</string>
+    <string name="observer_subtitle">Read-only turnout and public result view.</string>
+    <string name="observer_no_admin_controls">Observer mode has no admin controls.</string>
+
     <!-- Language Switcher -->
     <string name="language_english_short">EN</string>
-    <string name="language_nepali_short">à¤¨à¥‡</string>
+    <string name="language_nepali_short">ने</string>
 </resources>
-
