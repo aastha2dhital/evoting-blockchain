@@ -55,6 +55,10 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import java.util.UUID
+
+private const val SECURE_CHECK_IN_PREFIX = "SecureVoteCheckIn"
+private const val CHECK_IN_QR_VALIDITY_MILLIS = 2 * 60 * 1000L
 
 @Composable
 fun VoterAccessScreen(
@@ -62,13 +66,18 @@ fun VoterAccessScreen(
     authSessionViewModel: AuthSessionViewModel
 ) {
     var selectedVoterIndex by rememberSaveable { mutableIntStateOf(0) }
+    var qrRefreshKey by rememberSaveable { mutableIntStateOf(0) }
 
     val demoVoters = DemoWallets.voters
     val selectedVoter = demoVoters.getOrElse(selectedVoterIndex) { demoVoters.first() }
     val voterWalletAddress = selectedVoter.address
 
-    val qrBitmap = remember(voterWalletAddress) {
-        generateWalletQrBitmap(voterWalletAddress)
+    val secureQrPass = remember(voterWalletAddress, qrRefreshKey) {
+        createSecureCheckInQrPass(walletAddress = voterWalletAddress)
+    }
+
+    val qrBitmap = remember(secureQrPass.content) {
+        generateWalletQrBitmap(secureQrPass.content)
     }
 
     val backgroundBrush = Brush.verticalGradient(
@@ -99,12 +108,19 @@ fun VoterAccessScreen(
             VoterSelectorCard(
                 voters = demoVoters,
                 selectedIndex = selectedVoterIndex,
-                onVoterSelected = { selectedVoterIndex = it }
+                onVoterSelected = {
+                    selectedVoterIndex = it
+                    qrRefreshKey += 1
+                }
             )
 
             VoterQrPassCard(
                 qrBitmap = qrBitmap,
-                voter = selectedVoter
+                voter = selectedVoter,
+                secureQrPass = secureQrPass,
+                onRefreshQr = {
+                    qrRefreshKey += 1
+                }
             )
 
             ContinueAsVoterCard(
@@ -277,7 +293,9 @@ private fun VoterChoiceRow(
 @Composable
 private fun VoterQrPassCard(
     qrBitmap: Bitmap,
-    voter: DemoVoterProfile
+    voter: DemoVoterProfile,
+    secureQrPass: SecureCheckInQrPass,
+    onRefreshQr: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -314,7 +332,7 @@ private fun VoterQrPassCard(
             )
 
             Text(
-                text = stringResource(R.string.voter_qr_description),
+                text = "This QR pass is time-limited and includes a one-time nonce for prototype anti-replay protection.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -337,6 +355,22 @@ private fun VoterQrPassCard(
             }
 
             WalletAddressBox(voterWalletAddress = voter.address)
+
+            SecureQrDetailsBox(secureQrPass = secureQrPass)
+
+            OutlinedButton(
+                onClick = onRefreshQr,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Text(
+                    text = "Refresh QR pass",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
@@ -365,6 +399,41 @@ private fun WalletAddressBox(
                 text = shortenWalletAddress(voterWalletAddress),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+}
+
+@Composable
+private fun SecureQrDetailsBox(
+    secureQrPass: SecureCheckInQrPass
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(
+                text = "Secure QR payload",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+
+            Text(
+                text = "Valid for 2 minutes from refresh.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+
+            Text(
+                text = "Nonce: ${secureQrPass.nonce.take(8)}...",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
     }
@@ -486,6 +555,40 @@ private fun DemoModeNote() {
             textAlign = TextAlign.Center
         )
     }
+}
+
+private data class SecureCheckInQrPass(
+    val content: String,
+    val walletAddress: String,
+    val issuedAtMillis: Long,
+    val expiresAtMillis: Long,
+    val nonce: String
+)
+
+private fun createSecureCheckInQrPass(walletAddress: String): SecureCheckInQrPass {
+    val issuedAtMillis = System.currentTimeMillis()
+    val expiresAtMillis = issuedAtMillis + CHECK_IN_QR_VALIDITY_MILLIS
+    val nonce = UUID.randomUUID().toString().replace("-", "")
+
+    val content = buildString {
+        append(SECURE_CHECK_IN_PREFIX)
+        append("|wallet=")
+        append(walletAddress)
+        append("|issuedAt=")
+        append(issuedAtMillis)
+        append("|expiresAt=")
+        append(expiresAtMillis)
+        append("|nonce=")
+        append(nonce)
+    }
+
+    return SecureCheckInQrPass(
+        content = content,
+        walletAddress = walletAddress,
+        issuedAtMillis = issuedAtMillis,
+        expiresAtMillis = expiresAtMillis,
+        nonce = nonce
+    )
 }
 
 private fun generateWalletQrBitmap(content: String, size: Int = 900): Bitmap {

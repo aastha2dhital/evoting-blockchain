@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,6 +62,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private const val SECURE_CHECK_IN_PREFIX = "SecureVoteCheckIn"
+private const val QR_CLOCK_SKEW_TOLERANCE_MILLIS = 5 * 60 * 1000L
+
 @Composable
 fun QRCheckInScreen(
     navController: NavHostController,
@@ -76,15 +80,13 @@ fun QRCheckInScreen(
     var lastScannedValue by rememberSaveable { mutableStateOf("") }
     var isCheckingIn by rememberSaveable { mutableStateOf(false) }
 
+    val usedQrNonces = remember { mutableStateListOf<String>() }
     val selectedElection = elections.find { it.id == selectedElectionId }
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    val qrNoReadableValueMessage = stringResource(R.string.qr_check_in_error_no_readable_value)
-    val qrScanSuccessMessage = stringResource(R.string.qr_check_in_scan_success)
-    val qrScanCanceledMessage = stringResource(R.string.qr_check_in_scan_canceled)
     val selectElectionFirstMessage = stringResource(R.string.qr_check_in_error_select_election)
     val enterWalletFirstMessage = stringResource(R.string.qr_check_in_error_enter_wallet)
     val checkingBlockchainMessage = stringResource(R.string.qr_check_in_checking_blockchain)
@@ -98,16 +100,36 @@ fun QRCheckInScreen(
 
         if (scannedValue.isBlank()) {
             statusMessage = if (result.contents == null) {
-                qrScanCanceledMessage
+                "QR scan was cancelled."
             } else {
-                qrNoReadableValueMessage
+                "No readable QR value was found."
             }
             statusIsPositive = false
+            lastScannedValue = ""
         } else {
-            voterWalletAddress = scannedValue
-            lastScannedValue = scannedValue
-            statusMessage = qrScanSuccessMessage
-            statusIsPositive = true
+            when (val parsedPayload = parseSecureCheckInPayload(scannedValue)) {
+                is SecureCheckInParseResult.Valid -> {
+                    if (usedQrNonces.contains(parsedPayload.payload.nonce)) {
+                        voterWalletAddress = ""
+                        lastScannedValue = scannedValue
+                        statusMessage = "Rejected: this QR code was already scanned in this admin session. Ask the voter to refresh their QR pass."
+                        statusIsPositive = false
+                    } else {
+                        usedQrNonces.add(parsedPayload.payload.nonce)
+                        voterWalletAddress = parsedPayload.payload.walletAddress
+                        lastScannedValue = scannedValue
+                        statusMessage = "Secure voter QR accepted. Wallet loaded for check-in."
+                        statusIsPositive = true
+                    }
+                }
+
+                is SecureCheckInParseResult.Invalid -> {
+                    voterWalletAddress = ""
+                    lastScannedValue = scannedValue
+                    statusMessage = parsedPayload.reason
+                    statusIsPositive = false
+                }
+            }
         }
 
         coroutineScope.launch {
@@ -118,7 +140,7 @@ fun QRCheckInScreen(
     val scanOptions = remember {
         ScanOptions().apply {
             setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-            setPrompt("Scan voter wallet QR code")
+            setPrompt("Scan time-limited voter check-in QR")
             setCameraId(0)
             setBeepEnabled(true)
             setBarcodeImageEnabled(false)
@@ -197,6 +219,12 @@ fun QRCheckInScreen(
                     title = stringResource(R.string.qr_check_in_scan_wallet_title),
                     subtitle = stringResource(R.string.qr_check_in_scan_wallet_subtitle)
                 ) {
+                    InfoPanel(
+                        title = "Time-limited QR protection",
+                        message = "Scan the QR pass from the Voter Access screen. It includes the wallet address, issue time, expiry time, and a one-time nonce. Reused QR nonces are blocked while this admin screen remains open.",
+                        positive = true
+                    )
+
                     OutlinedTextField(
                         value = voterWalletAddress,
                         onValueChange = {
@@ -283,11 +311,21 @@ fun QRCheckInScreen(
 
                     if (lastScannedValue.isNotBlank()) {
                         InfoPanel(
-                            title = stringResource(R.string.qr_check_in_last_scanned_wallet_title),
-                            message = shortenWalletAddress(lastScannedValue),
-                            positive = true
+                            title = "Last scanned QR",
+                            message = if (voterWalletAddress.isNotBlank()) {
+                                "Accepted wallet: ${shortenWalletAddress(voterWalletAddress)}"
+                            } else {
+                                "Rejected QR payload."
+                            },
+                            positive = voterWalletAddress.isNotBlank()
                         )
                     }
+
+                    InfoPanel(
+                        title = "Prototype security note",
+                        message = "This blocks expired and repeated QR payloads only inside the current app session. A production version should use server-signed or wallet-signed QR payloads with persistent replay protection.",
+                        positive = false
+                    )
                 }
 
                 CheckInActionCard(
@@ -297,9 +335,10 @@ fun QRCheckInScreen(
                     statusIsPositive = statusIsPositive,
                     isCheckingIn = isCheckingIn,
                     onCheckIn = {
+                        val electionForCheckIn = selectedElection
                         val trimmedWalletAddress = voterWalletAddress.trim()
 
-                        if (selectedElection == null) {
+                        if (electionForCheckIn == null) {
                             statusMessage = selectElectionFirstMessage
                             statusIsPositive = false
 
@@ -321,6 +360,17 @@ fun QRCheckInScreen(
                             return@CheckInActionCard
                         }
 
+                        if (!isValidEthereumAddress(trimmedWalletAddress)) {
+                            statusMessage = "Enter or scan a valid Ethereum wallet address."
+                            statusIsPositive = false
+
+                            coroutineScope.launch {
+                                snackBarHostState.showSnackbar(statusMessage)
+                            }
+
+                            return@CheckInActionCard
+                        }
+
                         isCheckingIn = true
                         statusMessage = checkingBlockchainMessage
                         statusIsPositive = false
@@ -331,7 +381,7 @@ fun QRCheckInScreen(
                             val result = withContext(Dispatchers.IO) {
                                 adminViewModel.checkInVoterOnChain(
                                     context = context,
-                                    electionId = selectedElection.id,
+                                    electionId = electionForCheckIn.id,
                                     voterWalletAddress = trimmedWalletAddress
                                 )
                             }
@@ -861,6 +911,98 @@ private fun StatusPanel(
             fontWeight = FontWeight.Medium
         )
     }
+}
+
+private data class SecureCheckInPayload(
+    val walletAddress: String,
+    val issuedAtMillis: Long,
+    val expiresAtMillis: Long,
+    val nonce: String
+)
+
+private sealed class SecureCheckInParseResult {
+    data class Valid(val payload: SecureCheckInPayload) : SecureCheckInParseResult()
+    data class Invalid(val reason: String) : SecureCheckInParseResult()
+}
+
+private fun parseSecureCheckInPayload(rawContent: String): SecureCheckInParseResult {
+    val parts = rawContent.trim().split("|")
+
+    if (parts.firstOrNull() != SECURE_CHECK_IN_PREFIX) {
+        return SecureCheckInParseResult.Invalid(
+            "Invalid QR format. Please scan the time-limited voter check-in QR from the Voter Access screen."
+        )
+    }
+
+    val fields = parts
+        .drop(1)
+        .mapNotNull { item ->
+            val key = item.substringBefore("=", missingDelimiterValue = "").trim()
+            val value = item.substringAfter("=", missingDelimiterValue = "").trim()
+
+            if (key.isBlank() || value.isBlank()) {
+                null
+            } else {
+                key to value
+            }
+        }
+        .toMap()
+
+    val walletAddress = fields["wallet"].orEmpty()
+    val issuedAtMillis = fields["issuedAt"]?.toLongOrNull()
+    val expiresAtMillis = fields["expiresAt"]?.toLongOrNull()
+    val nonce = fields["nonce"].orEmpty()
+
+    if (!isValidEthereumAddress(walletAddress)) {
+        return SecureCheckInParseResult.Invalid(
+            "Invalid QR wallet address. Ask the voter to refresh their QR pass."
+        )
+    }
+
+    if (issuedAtMillis == null || expiresAtMillis == null) {
+        return SecureCheckInParseResult.Invalid(
+            "Invalid QR timing data. Ask the voter to refresh their QR pass."
+        )
+    }
+
+    if (expiresAtMillis <= issuedAtMillis) {
+        return SecureCheckInParseResult.Invalid(
+            "Invalid QR expiry data. Ask the voter to refresh their QR pass."
+        )
+    }
+
+    if (nonce.length < 8) {
+        return SecureCheckInParseResult.Invalid(
+            "Invalid QR nonce. Ask the voter to refresh their QR pass."
+        )
+    }
+
+    val nowMillis = System.currentTimeMillis()
+
+    if (issuedAtMillis > nowMillis + QR_CLOCK_SKEW_TOLERANCE_MILLIS) {
+        return SecureCheckInParseResult.Invalid(
+            "Rejected: this QR appears to be from the future. Check device time and refresh the QR pass."
+        )
+    }
+
+    if (nowMillis > expiresAtMillis) {
+        return SecureCheckInParseResult.Invalid(
+            "Rejected: this QR code has expired. Ask the voter to refresh their QR pass."
+        )
+    }
+
+    return SecureCheckInParseResult.Valid(
+        SecureCheckInPayload(
+            walletAddress = walletAddress,
+            issuedAtMillis = issuedAtMillis,
+            expiresAtMillis = expiresAtMillis,
+            nonce = nonce
+        )
+    )
+}
+
+private fun isValidEthereumAddress(address: String): Boolean {
+    return Regex("^0x[a-fA-F0-9]{40}$").matches(address.trim())
 }
 
 private fun shortenWalletAddress(address: String): String {
