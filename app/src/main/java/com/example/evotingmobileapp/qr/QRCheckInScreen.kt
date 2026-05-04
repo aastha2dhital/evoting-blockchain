@@ -670,7 +670,7 @@ private fun DemoVoterQuickSelect(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "${voter.label} • ${shortenWalletAddress(voter.address)}",
+                    text = "${voter.label} \u2022 ${shortenWalletAddress(voter.address)}",
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
