@@ -95,7 +95,7 @@ fun LoginScreen(
             )
 
             SectionTitle(
-                title = "How Vote Nepal works",
+                title = "How SecureVote Nepal works",
                 subtitle = "A simple flow from voter check-in to verified final results."
             )
 
@@ -168,7 +168,7 @@ private fun TopBrandBar() {
 
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
-                        text = "Vote Nepal",
+                        text = "SecureVote Nepal",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -283,7 +283,7 @@ private fun MainHeroCard(
                         verticalArrangement = Arrangement.spacedBy(9.dp)
                     ) {
                         Text(
-                            text = "Vote Nepal",
+                            text = "SecureVote Nepal",
                             style = MaterialTheme.typography.displaySmall,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface,

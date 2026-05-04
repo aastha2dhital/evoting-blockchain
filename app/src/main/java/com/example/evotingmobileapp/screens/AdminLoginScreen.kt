@@ -1,4 +1,4 @@
-﻿package com.example.evotingmobileapp.screens
+package com.example.evotingmobileapp.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -184,7 +184,7 @@ private fun AdminTopBar() {
                 AdminCircleIcon(text = "NP")
 
                 Text(
-                    text = "Vote Nepal",
+                    text = "SecureVote Nepal",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface,

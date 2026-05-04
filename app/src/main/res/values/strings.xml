@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SecureVote Nepal</string>
+    <string name="app_name">SecureSecureVote Nepal</string>
 
     <!-- Common -->
     <string name="action_back_to_homepage">Back to Homepage</string>
@@ -26,7 +26,7 @@
     <string name="login_note_voter">• Voters continue through a separate access path for QR check-in and voting.</string>
     <string name="login_note_audit">• Election actions are designed to support transparency, auditability, and controlled access.</string>
     <string name="login_footer">Direct dashboard shortcuts have been removed so each user must continue through the correct access path.</string>
-    <string name="login_brand_title">Vote Nepal</string>
+    <string name="login_brand_title">SecureVote Nepal</string>
     <string name="login_search_placeholder">Search election, party or candidate</string>
     <string name="login_access_section_title">Choose your access</string>
     <string name="login_access_admin_title">Admin</string>
