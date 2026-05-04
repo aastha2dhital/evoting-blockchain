@@ -1,48 +1,136 @@
-﻿\# EVotingMobileApp Demo Run Guide
+﻿# EVotingMobileApp Demo Run Guide
 
 
 
-\## Branch
+## Branch
 
 
 
-fix/core-voter-flow-stability
+feature/admin-otp-ui-polish
 
 
 
-\## Purpose
+## Purpose
 
 
 
-This guide explains how to run the EVotingMobileApp demo using a local Hardhat blockchain and a physical Android phone.
+This file explains how to run my EVotingMobileApp demo.
 
 
 
-\## Before Starting
+This project uses an Android app and a local Hardhat blockchain. It is made for my university Final Year Project, so it is for testing and demonstration only. It is not a real production voting system.
 
 
 
-Make sure:
+## Before Starting
 
 
 
-\- Laptop and phone are connected to the same Wi-Fi network.
-
-\- Hardhat node is running.
-
-\- Android Studio is installed.
-
-\- Phone has USB debugging enabled.
-
-\- The app is rebuilt and reinstalled after updating contract-info.json.
+Before running the app, make sure:
 
 
 
-\## Step 1: Check Laptop IP Address
+\- Android Studio is installed
+
+\- Hardhat can run on the laptop
+
+\- the Android app builds successfully
+
+\- the phone and laptop are on the same Wi-Fi if testing on a real phone
+
+\- USB debugging is enabled if using a real phone
+
+\- the app is rebuilt after changing contract-info.json
+
+
+
+## Step 1: Start Hardhat Node
+
+
+
+Open PowerShell in the project folder:
+
+
+
+cd D:\\AndroidStudioProjects\\EVotingMobileApp
 
 
 
 Run:
+
+
+
+npx hardhat node --hostname 0.0.0.0
+
+
+
+Keep this window open while testing the app.
+
+
+
+For emulator testing, this can also work:
+
+
+
+npx hardhat node
+
+
+
+## Step 2: Deploy the Smart Contract
+
+
+
+Open another PowerShell window in the project folder:
+
+
+
+cd D:\\AndroidStudioProjects\\EVotingMobileApp
+
+
+
+Run:
+
+
+
+npx hardhat run scripts/deploy.ts
+
+
+
+This updates the contract files used by the Android app, mainly:
+
+
+
+\- app/src/main/assets/contract-info.json
+
+\- app/src/main/assets/evoting-abi.json
+
+
+
+## Step 3: Check RPC URL
+
+
+
+Open this file:
+
+
+
+app/src/main/assets/contract-info.json
+
+
+
+For Android emulator testing, the RPC URL should normally be:
+
+
+
+http://10.0.2.2:8545
+
+
+
+For real phone testing, use the laptop Wi-Fi IP address.
+
+
+
+To find the laptop IP address, run:
 
 
 
@@ -58,85 +146,11 @@ Example:
 
 
 
-This IP is used by the phone to connect to the laptop blockchain node.
+Then the RPC URL should look like:
 
 
 
-\## Step 2: Start Hardhat Node
-
-
-
-Open a new PowerShell window and run:
-
-
-
-cd D:\\AndroidStudioProjects\\EVotingMobileApp
-
-
-
-npx hardhat node --hostname 0.0.0.0
-
-
-
-Keep this PowerShell window open during the full demo.
-
-
-
-\## Step 3: Deploy Smart Contract
-
-
-
-In another PowerShell window, run:
-
-
-
-cd D:\\AndroidStudioProjects\\EVotingMobileApp
-
-
-
-npx hardhat run scripts/deploy.ts
-
-
-
-This updates:
-
-
-
-\- app/src/main/assets/contract-info.json
-
-\- app/src/main/assets/evoting-abi.json
-
-
-
-\## Step 4: Update RPC URL for Physical Phone
-
-
-
-Open:
-
-
-
-app/src/main/assets/contract-info.json
-
-
-
-For physical phone testing, rpcUrl must use the laptop Wi-Fi IP.
-
-
-
-Example:
-
-
-
-{
-
-&#x20; "contractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-
-&#x20; "network": "localhost",
-
-&#x20; "rpcUrl": "http://192.168.100.7:8545"
-
-}
+http://192.168.100.7:8545
 
 
 
@@ -144,19 +158,21 @@ Important:
 
 
 
-\- 127.0.0.1 does not work on a physical phone.
+\- 127.0.0.1 does not work on a real phone
 
-\- 10.0.2.2 is for emulator testing.
+\- 10.0.2.2 is mainly for emulator testing
 
-\- Physical phone testing needs the laptop Wi-Fi IP address.
+\- a real phone needs the laptop Wi-Fi IP address
 
-
-
-\## Step 5: Confirm Blockchain Connection
+\- rebuild and reinstall the app after changing contract-info.json
 
 
 
-Run:
+## Step 4: Check Blockchain Connection
+
+
+
+For real phone testing, check if port 8545 is working:
 
 
 
@@ -164,7 +180,7 @@ Test-NetConnection 192.168.100.7 -Port 8545
 
 
 
-Expected:
+Expected result:
 
 
 
@@ -172,7 +188,7 @@ TcpTestSucceeded : True
 
 
 
-Then run:
+You can also check the Hardhat chain ID:
 
 
 
@@ -188,39 +204,11 @@ Expected result:
 
 
 
-This means Hardhat chain ID 31337 is running.
+This means the local Hardhat blockchain is running.
 
 
 
-\## Step 6: Confirm Contract Exists
-
-
-
-Replace the contract address if a new one was deployed.
-
-
-
-Run:
-
-
-
-Invoke-RestMethod -Uri "http://192.168.100.7:8545" -Method Post -ContentType "application/json" -Body '{"jsonrpc":"2.0","method":"eth\_getCode","params":\["0x5FbDB2315678afecb367f032d93F642f64180aa3","latest"],"id":1}'
-
-
-
-Expected:
-
-
-
-A long result starting with 0x6080604052
-
-
-
-If the result is only 0x, the contract is not deployed at that address.
-
-
-
-\## Step 7: Build Android App
+## Step 5: Build the Android App
 
 
 
@@ -232,7 +220,7 @@ Run:
 
 
 
-Expected:
+Expected result:
 
 
 
@@ -240,7 +228,7 @@ BUILD SUCCESSFUL
 
 
 
-Or use Android Studio:
+You can also build it from Android Studio using:
 
 
 
@@ -248,71 +236,139 @@ Build > Make Project
 
 
 
-\## Step 8: Run App on Physical Phone
+## Step 6: Run the App
 
 
 
-Install and run the app from Android Studio.
+Run the app from Android Studio on the emulator or phone.
 
 
 
-Important:
+If contract-info.json was changed, rebuild and reinstall the app before testing again.
 
 
 
-After changing contract-info.json, rebuild and reinstall the app so the phone uses the latest blockchain configuration.
+## Demo Flow
 
 
 
-\## Step 9: Demo Flow
+The demo flow is:
 
 
 
-Use this flow:
+1\. Admin logs in using the demo OTP.
+
+2\. Admin creates an election.
+
+3\. Admin opens QR check-in.
+
+4\. Admin selects the election.
+
+5\. Voter opens the Voter Access screen.
+
+6\. Voter selects a demo voter.
+
+7\. Voter shows the QR pass.
+
+8\. Admin scans the QR pass.
+
+9\. Admin checks in the voter.
+
+10\. Voter goes to the voter dashboard.
+
+11\. Voter selects the election.
+
+12\. Voter chooses a candidate.
+
+13\. Voter submits the vote.
+
+14\. The app shows the transaction hash.
+
+15\. The transaction hash can be verified.
+
+16\. Admin closes the election.
+
+17\. Results become visible.
+
+18\. The winner and vote count are shown.
+
+19\. Observer View can show turnout and results without admin controls.
 
 
 
-1. Admin completes demo OTP verification.
-
-2\. Create election.
-
-3\. Open QR check-in.
-
-4\. Select created election.
-
-5\. Check in voter.
-
-6\. Go to voter flow.
-
-7\. Select same election.
-
-8\. Choose candidate.
-
-9\. Submit vote.
-
-10\. Confirm receipt/hash is shown.
-
-11\. Verify receipt/hash.
-
-12\. Return to admin/results.
-
-13\. Close election early.
-
-14\. Confirm results become visible.
-
-15\. Confirm vote count is correct.
+## Expected Working Flow
 
 
 
-\## Expected Working Flow
+Admin OTP -> Create election -> QR check-in -> Vote -> Receipt/hash -> Verify -> Close election -> Results -> Observer View
 
 
 
-Create election -> QR check-in -> Vote -> Receipt/hash -> Verify -> Close election -> Results
+## QR Check-In Notes
 
 
 
-\## Troubleshooting
+The QR check-in is now improved.
+
+
+
+Before, the QR mainly used a wallet address. Now the QR contains:
+
+
+
+\- wallet address
+
+\- issue time
+
+\- expiry time
+
+\- random nonce
+
+
+
+The QR format is:
+
+
+
+SecureVoteCheckIn|wallet=<address>|issuedAt=<millis>|expiresAt=<millis>|nonce=<random>
+
+
+
+The admin scanner checks if:
+
+
+
+\- the QR format is correct
+
+\- the wallet address is valid
+
+\- the QR has expired
+
+\- the QR was already scanned in the current admin screen session
+
+
+
+This is better for the prototype, but it is still not production-level security. A real system would need signed QR tokens, backend checking, and stronger replay protection.
+
+
+
+## Demo Wallet Notes
+
+
+
+The app uses demo wallet files for local Hardhat testing.
+
+
+
+These wallets are only for the university demo. They should not be used on a real blockchain.
+
+
+
+In a real app, private keys should not be stored inside the Android app. A real version should use WalletConnect, Reown, MetaMask, or another secure wallet method.
+
+
+
+## Troubleshooting
 
 
 
@@ -320,60 +376,72 @@ If the phone cannot connect:
 
 
 
-\- Confirm phone and laptop are on the same Wi-Fi.
+\- check that the phone and laptop are on the same Wi-Fi
 
-\- Confirm Hardhat node is still running.
+\- check that the Hardhat node is still running
 
-\- Confirm rpcUrl uses laptop IP, not 127.0.0.1.
+\- check that rpcUrl uses the laptop IP address
 
-\- Confirm port 8545 is reachable.
+\- check that port 8545 is reachable
 
-\- Rebuild and reinstall the app after editing contract-info.json.
-
-
-
-If contract address fails:
+\- rebuild and reinstall the app after editing contract-info.json
 
 
 
-\- Redeploy using npx hardhat run scripts/deploy.ts.
-
-\- Copy the new contract address into contract-info.json.
-
-\- Check eth\_getCode again.
-
-\- Rebuild and reinstall the app.
+If the contract does not work:
 
 
 
-If laptop IP changes:
+\- deploy the contract again
+
+\- check the new contract address
+
+\- rebuild and reinstall the app
 
 
 
-\- Run ipconfig again.
-
-\- Update rpcUrl in contract-info.json.
-
-\- Rebuild and reinstall the app.
+If the laptop IP changes:
 
 
 
-\## Prototype Notes
+\- run ipconfig again
+
+\- update contract-info.json
+
+\- rebuild and reinstall the app
 
 
 
-This project uses a local Hardhat blockchain for university demo and testing.
+If the QR code is rejected:
 
 
 
-Bundled wallet files are for local prototype testing only.
+\- the QR may have expired
+
+\- the QR may have already been scanned
+
+\- the QR payload may be wrong
+
+\- refresh the QR pass from the Voter Access screen
 
 
 
-The QR check-in flow is a prototype check-in mechanism and not a national identity system.
+## Prototype Notes
 
 
 
-Advanced privacy features such as zero-knowledge proofs are outside this version scope.
+This app is a working prototype for my Final Year Project.
+
+
+
+It uses a local Hardhat blockchain and demo wallet files.
+
+
+
+The QR check-in has a time limit and nonce check, but it is still only a prototype feature.
+
+
+
+More advanced features like zero-knowledge proofs, full privacy protection, real wallet authentication, and real identity verification are outside the current project scope.
 
 
