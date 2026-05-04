@@ -24,6 +24,7 @@ import com.example.evotingmobileapp.receipt.ReceiptScreen
 import com.example.evotingmobileapp.screens.AdminLoginScreen
 import com.example.evotingmobileapp.screens.DashboardScreen
 import com.example.evotingmobileapp.screens.LoginScreen
+import com.example.evotingmobileapp.screens.ObserverTurnoutScreen
 import com.example.evotingmobileapp.screens.ResultsScreen
 import com.example.evotingmobileapp.screens.VoterAccessScreen
 import com.example.evotingmobileapp.screens.VotingScreen
@@ -124,6 +125,22 @@ fun AppNavGraph(
                     authSessionViewModel = authSessionViewModel
                 )
             }
+        }
+
+        composable(AppRoutes.OBSERVER_TURNOUT) {
+            val adminViewModel = rememberSharedAdminViewModel(
+                appContext = appContext,
+                adminViewModelStoreOwner = adminViewModelStoreOwner
+            )
+
+            LaunchedEffect(Unit) {
+                adminViewModel.refreshBlockchainData()
+            }
+
+            ObserverTurnoutScreen(
+                navController = navController,
+                adminViewModel = adminViewModel
+            )
         }
 
         composable(AppRoutes.CREATE_ELECTION) {
