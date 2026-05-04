@@ -11,6 +11,7 @@ object AppRoutes {
     const val DASHBOARD = "dashboard"
     const val ADMIN_DASHBOARD = "admin_dashboard"
     const val VOTER_DASHBOARD = "voter_dashboard"
+    const val OBSERVER_TURNOUT = "observer_turnout"
 
     const val CREATE_ELECTION = "create_election"
     const val QR_CHECK_IN = "qr_check_in"

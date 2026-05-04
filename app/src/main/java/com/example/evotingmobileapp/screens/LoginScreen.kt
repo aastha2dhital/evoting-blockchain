@@ -81,7 +81,8 @@ fun LoginScreen(
 
             MainHeroCard(
                 onAdminClick = { navController.navigate(AppRoutes.ADMIN_LOGIN) },
-                onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) }
+                onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) },
+                onObserverClick = { navController.navigate(AppRoutes.OBSERVER_TURNOUT) }
             )
 
             SectionTitle(
@@ -91,7 +92,8 @@ fun LoginScreen(
 
             RoleAccessGrid(
                 onAdminClick = { navController.navigate(AppRoutes.ADMIN_LOGIN) },
-                onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) }
+                onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) },
+                onObserverClick = { navController.navigate(AppRoutes.OBSERVER_TURNOUT) }
             )
 
             SectionTitle(
@@ -105,7 +107,8 @@ fun LoginScreen(
         BottomHomeBar(
             modifier = Modifier.align(Alignment.BottomCenter),
             onAdminClick = { navController.navigate(AppRoutes.ADMIN_LOGIN) },
-            onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) }
+            onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) },
+            onObserverClick = { navController.navigate(AppRoutes.OBSERVER_TURNOUT) }
         )
     }
 }
@@ -221,7 +224,8 @@ private fun BrandMark(text: String) {
 @Composable
 private fun MainHeroCard(
     onAdminClick: () -> Unit,
-    onVoterClick: () -> Unit
+    onVoterClick: () -> Unit,
+    onObserverClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -291,7 +295,7 @@ private fun MainHeroCard(
                         )
 
                         Text(
-                            text = "A modern election platform for secure check-in, trusted voting, and clear results.",
+                            text = "A modern election platform for secure check-in, trusted voting, observer turnout, and clear blockchain-backed results.",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -316,14 +320,14 @@ private fun MainHeroCard(
 
                 HeroMetricRow()
 
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Button(
                         onClick = onVoterClick,
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(18.dp),
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
@@ -336,23 +340,47 @@ private fun MainHeroCard(
                         )
                     }
 
-                    OutlinedButton(
-                        onClick = onAdminClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp),
-                        shape = RoundedCornerShape(18.dp),
-                        border = BorderStroke(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = "Continue as Admin",
-                            fontWeight = FontWeight.ExtraBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        OutlinedButton(
+                            onClick = onAdminClick,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
+                            )
+                        ) {
+                            Text(
+                                text = "Admin OTP",
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = onObserverClick,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.46f)
+                            )
+                        ) {
+                            Text(
+                                text = "Observer View",
+                                fontWeight = FontWeight.ExtraBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }
@@ -403,8 +431,8 @@ private fun HeroMetricRow() {
 
         HeroMetricCard(
             modifier = Modifier.weight(1f),
-            label = "Result",
-            value = "Clear"
+            label = "Observe",
+            value = "Turnout"
         )
     }
 }
@@ -476,30 +504,46 @@ private fun SectionTitle(
 @Composable
 private fun RoleAccessGrid(
     onAdminClick: () -> Unit,
-    onVoterClick: () -> Unit
+    onVoterClick: () -> Unit,
+    onObserverClick: () -> Unit
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        RoleAccessCard(
-            modifier = Modifier.weight(1f),
-            title = "Admin Portal",
-            subtitle = "Create elections, check in voters, and review results.",
-            initials = "AD",
-            badge = "Election Control",
-            usePrimary = true,
-            onClick = onAdminClick
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            RoleAccessCard(
+                modifier = Modifier.weight(1f),
+                title = "Admin Portal",
+                subtitle = "Use OTP verification to create elections, check in voters, and review admin controls.",
+                initials = "AD",
+                badge = "Election Control",
+                usePrimary = true,
+                onClick = onAdminClick
+            )
+
+            RoleAccessCard(
+                modifier = Modifier.weight(1f),
+                title = "Voter Portal",
+                subtitle = "Choose your voter profile, complete check-in, and cast your vote securely.",
+                initials = "VT",
+                badge = "Secure Voting",
+                usePrimary = false,
+                onClick = onVoterClick
+            )
+        }
 
         RoleAccessCard(
-            modifier = Modifier.weight(1f),
-            title = "Voter Portal",
-            subtitle = "Choose your voter profile and cast your vote securely.",
-            initials = "VT",
-            badge = "Secure Voting",
+            modifier = Modifier.fillMaxWidth(),
+            title = "Observer View",
+            subtitle = "Read-only turnout and results visibility without election creation, voting, check-in, or admin controls.",
+            initials = "OB",
+            badge = "Public Turnout",
             usePrimary = false,
-            onClick = onVoterClick
+            onClick = onObserverClick
         )
     }
 }
@@ -614,13 +658,19 @@ private fun FeatureStack() {
         FeatureRow(
             icon = "VOTE",
             title = "Trusted Vote",
-            description = "Cast one secure vote and receive a transaction receipt."
+            description = "Cast one secure vote and receive a transaction receipt with QR sharing."
+        )
+
+        FeatureRow(
+            icon = "OBS",
+            title = "Observer Turnout",
+            description = "Allow observers to view turnout and closed-election results without admin access."
         )
 
         FeatureRow(
             icon = "WIN",
             title = "Clear Results",
-            description = "View the winner, total votes, and vote share clearly."
+            description = "View the winner, total votes, and vote share clearly after election closure."
         )
     }
 }
@@ -702,7 +752,8 @@ private fun FeatureRow(
 private fun BottomHomeBar(
     modifier: Modifier = Modifier,
     onAdminClick: () -> Unit,
-    onVoterClick: () -> Unit
+    onVoterClick: () -> Unit,
+    onObserverClick: () -> Unit
 ) {
     Box(
         modifier = modifier
@@ -733,7 +784,7 @@ private fun BottomHomeBar(
                             )
                         )
                     )
-                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -759,6 +810,14 @@ private fun BottomHomeBar(
                     icon = "V",
                     selected = false,
                     onClick = onVoterClick
+                )
+
+                BottomItem(
+                    modifier = Modifier.weight(1f),
+                    label = "Observer",
+                    icon = "O",
+                    selected = false,
+                    onClick = onObserverClick
                 )
             }
         }
@@ -790,7 +849,7 @@ private fun BottomItem(
         ) {
             Text(
                 text = icon,
-                modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
+                modifier = Modifier.padding(horizontal = 13.dp, vertical = 5.dp),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (selected) {
