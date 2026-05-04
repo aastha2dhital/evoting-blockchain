@@ -277,7 +277,7 @@ fun VotingScreen(
                     },
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("View Receipt")
+                    Text(text = stringResource(R.string.voting_view_receipt_button))
                 }
             },
             dismissButton = {
@@ -286,7 +286,7 @@ fun VotingScreen(
                         showVoteSuccessDialog = false
                     }
                 ) {
-                    Text("Stay on Voting Page")
+                    Text(text = stringResource(R.string.voting_stay_on_page_button))
                 }
             }
         )

@@ -557,7 +557,7 @@ private fun AdminAccessCard(
                 value = enteredOtp,
                 onValueChange = onOtpChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Enter 6-digit OTP") },
+                label = { Text(text = stringResource(R.string.admin_pin_label)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.NumberPassword
