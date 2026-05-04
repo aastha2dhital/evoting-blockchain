@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -23,8 +24,28 @@ android {
         )
         buildConfigField(
             "String",
+            "ADMIN_EMAIL",
+            "\"daastha23@tbc.edu.np\""
+        )
+        buildConfigField(
+            "String",
+            "EMAILJS_SERVICE_ID",
+            "\"service_tavbpyc\""
+        )
+        buildConfigField(
+            "String",
+            "EMAILJS_TEMPLATE_ID",
+            "\"template_isfu3et\""
+        )
+        buildConfigField(
+            "String",
+            "EMAILJS_PUBLIC_KEY",
+            "\"yrK0DifMeu1LLQgO0\""
+        )
+        buildConfigField(
+            "String",
             "DEMO_VOTER_WALLET_ADDRESS",
-            "\"0x70997970c51812dc3a010c7d01b50e0d17dc79c8\""
+            "\"0x70997970c51812dc3A010C7d01b50e0d17dc79C8\""
         )
         buildConfigField(
             "boolean",
@@ -84,6 +105,10 @@ android {
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
+
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
+    implementation("com.google.firebase:firebase-auth")
+
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")

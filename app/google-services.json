@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "820636277816",
+    "project_id": "vote-nepal-3cd5c",
+    "storage_bucket": "vote-nepal-3cd5c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:820636277816:android:76e3e43aca184118bc1acd",
+        "android_client_info": {
+          "package_name": "com.example.evotingmobileapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoh04JoaSBS5bPhdixSMc6TSsXaapLJQA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

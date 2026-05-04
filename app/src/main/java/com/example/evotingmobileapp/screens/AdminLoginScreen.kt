@@ -1,12 +1,13 @@
 package com.example.evotingmobileapp.screens
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,41 +30,72 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.BuildConfig
-import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
-import kotlin.random.Random
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import org.json.JSONObject
+import java.io.IOException
+import java.security.SecureRandom
+
+private const val OTP_VALIDITY_MILLIS = 5 * 60 * 1000L
+private const val OTP_RESEND_COOLDOWN_MILLIS = 30 * 1000L
 
 @Composable
 fun AdminLoginScreen(
     navController: NavHostController,
     authSessionViewModel: AuthSessionViewModel
 ) {
-    var enteredOtp by rememberSaveable { mutableStateOf("") }
-    var generatedOtp by rememberSaveable { mutableStateOf<String?>(null) }
-    var otpExpiresAtMillis by rememberSaveable { mutableStateOf(0L) }
-    var otpStatusMessage by rememberSaveable { mutableStateOf<String?>(null) }
-    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    val firebaseAuth = remember { FirebaseAuth.getInstance() }
+    val httpClient = remember { OkHttpClient() }
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
+    val secureRandom = remember { SecureRandom() }
 
-    val otpValidityMillis = 2 * 60 * 1000L
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var otpCode by rememberSaveable { mutableStateOf("") }
+    var generatedOtp by rememberSaveable { mutableStateOf<String?>(null) }
+    var otpExpiresAt by rememberSaveable { mutableLongStateOf(0L) }
+    var lastOtpSentAt by rememberSaveable { mutableLongStateOf(0L) }
+    var otpAttempts by rememberSaveable { mutableIntStateOf(0) }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var isBusy by rememberSaveable { mutableStateOf(false) }
+    var otpSent by rememberSaveable { mutableStateOf(false) }
+    var statusMessage by rememberSaveable {
+        mutableStateOf("Sign in with the authorised polling officer account. A secure 6-digit OTP will be sent to the admin email before dashboard access.")
+    }
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun completeAdminLogin() {
         authSessionViewModel.disconnectWallet()
@@ -75,6 +107,208 @@ fun AdminLoginScreen(
         }
     }
 
+    fun isAuthorisedAdminEmail(value: String): Boolean {
+        return value.trim().equals(BuildConfig.ADMIN_EMAIL, ignoreCase = true)
+    }
+
+    fun createOtp(): String {
+        return secureRandom.nextInt(900_000).plus(100_000).toString()
+    }
+
+    fun sendOtpEmail(code: String) {
+        val payload = JSONObject()
+            .put("service_id", BuildConfig.EMAILJS_SERVICE_ID)
+            .put("template_id", BuildConfig.EMAILJS_TEMPLATE_ID)
+            .put("user_id", BuildConfig.EMAILJS_PUBLIC_KEY)
+            .put(
+                "template_params",
+                JSONObject()
+                    .put("otp_code", code)
+                    .put("to_email", BuildConfig.ADMIN_EMAIL)
+                    .put("admin_email", BuildConfig.ADMIN_EMAIL)
+                    .put("app_name", "SecureVote Nepal")
+            )
+
+        val requestBody = payload
+            .toString()
+            .toRequestBody("application/json".toMediaType())
+
+        val request = Request.Builder()
+            .url("https://api.emailjs.com/api/v1.0/email/send")
+            .post(requestBody)
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        isBusy = true
+        errorMessage = null
+        statusMessage = "Sending a secure 6-digit OTP to the registered admin email..."
+
+        httpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                mainHandler.post {
+                    isBusy = false
+                    generatedOtp = null
+                    otpSent = false
+                    statusMessage = "Could not send the admin OTP email."
+                    errorMessage = e.localizedMessage
+                        ?: "Network error while sending OTP. Check internet connection and try again."
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseText = response.body?.string().orEmpty()
+                val successful = response.isSuccessful
+                response.close()
+
+                mainHandler.post {
+                    isBusy = false
+
+                    if (successful) {
+                        generatedOtp = code
+                        otpExpiresAt = System.currentTimeMillis() + OTP_VALIDITY_MILLIS
+                        lastOtpSentAt = System.currentTimeMillis()
+                        otpAttempts = 0
+                        otpSent = true
+                        otpCode = ""
+                        statusMessage = "OTP sent to the registered admin email. Enter the 6-digit code to open the admin dashboard."
+                        errorMessage = null
+                    } else {
+                        generatedOtp = null
+                        otpSent = false
+                        statusMessage = "EmailJS could not send the OTP email."
+                        errorMessage = if (responseText.isNotBlank()) {
+                            "EmailJS error: $responseText"
+                        } else {
+                            "EmailJS request failed. Check service ID, template ID, public key, and template settings."
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    fun requestOtpAfterFirebaseLogin(forceResend: Boolean = false) {
+        val cleanEmail = email.trim()
+
+        when {
+            cleanEmail.isBlank() -> {
+                errorMessage = "Enter the authorised admin email address."
+                return
+            }
+
+            password.isBlank() -> {
+                errorMessage = "Enter the admin password."
+                return
+            }
+
+            !isAuthorisedAdminEmail(cleanEmail) -> {
+                errorMessage = "This email is not authorised for admin access."
+                statusMessage = "Only the registered polling officer account can access this portal."
+                return
+            }
+        }
+
+        val now = System.currentTimeMillis()
+        if (forceResend && now - lastOtpSentAt < OTP_RESEND_COOLDOWN_MILLIS) {
+            errorMessage = "Please wait a few seconds before requesting another OTP."
+            return
+        }
+
+        isBusy = true
+        errorMessage = null
+        statusMessage = "Verifying admin email and password with Firebase..."
+
+        firebaseAuth.signInWithEmailAndPassword(cleanEmail, password)
+            .addOnCompleteListener { task ->
+                isBusy = false
+
+                if (!task.isSuccessful) {
+                    generatedOtp = null
+                    otpSent = false
+
+                    errorMessage = when (val exception = task.exception) {
+                        is FirebaseAuthInvalidUserException ->
+                            "No admin account was found for this email. Check the Firebase user account."
+
+                        is FirebaseAuthInvalidCredentialsException ->
+                            "Invalid admin email or password. Please check your credentials."
+
+                        else ->
+                            exception?.localizedMessage
+                                ?: "Admin sign-in failed. Please check your email and password."
+                    }
+
+                    statusMessage = "Firebase admin authentication could not be completed."
+                    return@addOnCompleteListener
+                }
+
+                val signedInEmail = firebaseAuth.currentUser?.email.orEmpty()
+
+                if (!isAuthorisedAdminEmail(signedInEmail)) {
+                    firebaseAuth.signOut()
+                    generatedOtp = null
+                    otpSent = false
+                    statusMessage = "Only the registered polling officer account can access this portal."
+                    errorMessage = "This Firebase account is not authorised for admin access."
+                    return@addOnCompleteListener
+                }
+
+                sendOtpEmail(createOtp())
+            }
+    }
+
+    fun verifyOtpAndOpenDashboard() {
+        val expectedOtp = generatedOtp
+        val cleanOtp = otpCode.trim()
+        val now = System.currentTimeMillis()
+
+        when {
+            expectedOtp.isNullOrBlank() || !otpSent -> {
+                errorMessage = "Request an OTP before verifying."
+            }
+
+            now > otpExpiresAt -> {
+                generatedOtp = null
+                otpSent = false
+                otpCode = ""
+                statusMessage = "The admin OTP has expired."
+                errorMessage = "Please request a new OTP and try again."
+            }
+
+            cleanOtp.length != 6 -> {
+                errorMessage = "Enter the 6-digit OTP sent to the admin email."
+            }
+
+            otpAttempts >= 4 -> {
+                generatedOtp = null
+                otpSent = false
+                otpCode = ""
+                statusMessage = "Too many incorrect OTP attempts."
+                errorMessage = "Please request a new OTP."
+            }
+
+            cleanOtp == expectedOtp -> {
+                statusMessage = "Admin OTP verified successfully."
+                errorMessage = null
+                generatedOtp = null
+                otpSent = false
+                completeAdminLogin()
+            }
+
+            else -> {
+                otpAttempts += 1
+                errorMessage = "Incorrect OTP. Please check the email and try again."
+                statusMessage = "OTP verification failed."
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            isBusy = false
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -83,8 +317,8 @@ fun AdminLoginScreen(
                     colors = listOf(
                         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
                         MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.18f),
-                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.14f)
+                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.16f),
+                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.10f)
                     )
                 )
             )
@@ -103,60 +337,36 @@ fun AdminLoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AdminTopBar()
-
             AdminHeroCard()
 
-            AdminAccessCard(
-                enteredOtp = enteredOtp,
-                onOtpChange = { value ->
-                    enteredOtp = value.filter { it.isDigit() }.take(6)
-                    errorMessage = null
-                },
-                generatedOtp = generatedOtp,
-                otpStatusMessage = otpStatusMessage,
+            AdminEmailOtpCard(
+                authorisedEmail = BuildConfig.ADMIN_EMAIL,
+                email = email,
+                password = password,
+                otpCode = otpCode,
+                passwordVisible = passwordVisible,
+                statusMessage = statusMessage,
                 errorMessage = errorMessage,
-                onSendOtp = {
-                    val newOtp = Random.nextInt(100000, 999999).toString()
-                    generatedOtp = newOtp
-                    otpExpiresAtMillis = System.currentTimeMillis() + otpValidityMillis
-                    enteredOtp = ""
+                isBusy = isBusy,
+                otpSent = otpSent,
+                onEmailChange = { value ->
+                    email = value.trim()
                     errorMessage = null
-                    otpStatusMessage =
-                        "Demo OTP generated: $newOtp. It expires in 2 minutes. In production, this would be sent by SMS or email."
                 },
-                onVerifyOtp = {
-                    val activeOtp = generatedOtp
-
-                    when {
-                        activeOtp == null -> {
-                            errorMessage = "Please generate an OTP first."
-                        }
-
-                        enteredOtp.isBlank() -> {
-                            errorMessage = "Enter the 6-digit OTP to continue."
-                        }
-
-                        enteredOtp.length != 6 -> {
-                            errorMessage = "OTP must be 6 digits."
-                        }
-
-                        System.currentTimeMillis() > otpExpiresAtMillis -> {
-                            generatedOtp = null
-                            otpStatusMessage = null
-                            errorMessage = "OTP expired. Please generate a new OTP."
-                        }
-
-                        enteredOtp != activeOtp -> {
-                            errorMessage = "Incorrect OTP. Please try again."
-                        }
-
-                        else -> {
-                            generatedOtp = null
-                            otpStatusMessage = null
-                            completeAdminLogin()
-                        }
-                    }
+                onPasswordChange = { value ->
+                    password = value
+                    errorMessage = null
                 },
+                onOtpChange = { value ->
+                    otpCode = value.filter { it.isDigit() }.take(6)
+                    errorMessage = null
+                },
+                onTogglePasswordVisibility = {
+                    passwordVisible = !passwordVisible
+                },
+                onRequestOtp = { requestOtpAfterFirebaseLogin(forceResend = false) },
+                onResendOtp = { requestOtpAfterFirebaseLogin(forceResend = true) },
+                onVerifyOtp = { verifyOtpAndOpenDashboard() },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -179,7 +389,7 @@ private fun AdminDecorativeBackground() {
             modifier = Modifier
                 .size(156.dp)
                 .align(Alignment.TopStart)
-                .offset(x = (-58).dp, y = 280.dp),
+                .offset(x = (-58).dp, y = 282.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f)
         ) {}
@@ -209,7 +419,7 @@ private fun AdminTopBar() {
             shadowElevation = 5.dp,
             border = BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.32f)
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.30f)
             )
         ) {
             Row(
@@ -230,9 +440,21 @@ private fun AdminTopBar() {
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            AdminCircleIcon(text = "AD")
-            AdminCircleIcon(text = "OTP")
+        Surface(
+            shape = RoundedCornerShape(999.dp),
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+            border = BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+            )
+        ) {
+            Text(
+                text = "EMAIL OTP",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
@@ -251,7 +473,7 @@ private fun AdminCircleIcon(text: String) {
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
@@ -280,9 +502,9 @@ private fun AdminHeroCard() {
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.96f),
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.92f),
                             Color.White,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.62f)
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.52f)
                         )
                     )
                 )
@@ -312,7 +534,7 @@ private fun AdminHeroCard() {
                             )
                         ) {
                             Text(
-                                text = "OTP ADMIN ACCESS",
+                                text = "SECURE POLLING OFFICER ACCESS",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Black,
@@ -321,14 +543,14 @@ private fun AdminHeroCard() {
                         }
 
                         Text(
-                            text = "Admin Portal",
+                            text = "Admin Control Portal",
                             style = MaterialTheme.typography.headlineLarge,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Text(
-                            text = "Use a temporary one-time password to unlock election setup, QR check-in, closing controls, and verified blockchain results.",
+                            text = "Authorised polling officers can create elections, manage QR check-ins, monitor turnout, and close results securely.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 4,
@@ -344,7 +566,7 @@ private fun AdminHeroCard() {
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = "OTP",
+                                text = "AD",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White
@@ -359,20 +581,20 @@ private fun AdminHeroCard() {
                 ) {
                     AdminHeroChip(
                         modifier = Modifier.weight(1f),
-                        title = "Election",
-                        value = "Setup"
+                        title = "Firebase",
+                        value = "Login"
                     )
 
                     AdminHeroChip(
                         modifier = Modifier.weight(1f),
-                        title = "QR",
-                        value = "Check-in"
+                        title = "Email",
+                        value = "OTP"
                     )
 
                     AdminHeroChip(
                         modifier = Modifier.weight(1f),
-                        title = "Results",
-                        value = "Close"
+                        title = "Blockchain",
+                        value = "Control"
                     )
                 }
             }
@@ -446,13 +668,22 @@ private fun AdminHeroChip(
 }
 
 @Composable
-private fun AdminAccessCard(
-    enteredOtp: String,
-    onOtpChange: (String) -> Unit,
-    generatedOtp: String?,
-    otpStatusMessage: String?,
+private fun AdminEmailOtpCard(
+    authorisedEmail: String,
+    email: String,
+    password: String,
+    otpCode: String,
+    passwordVisible: Boolean,
+    statusMessage: String,
     errorMessage: String?,
-    onSendOtp: () -> Unit,
+    isBusy: Boolean,
+    otpSent: Boolean,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onOtpChange: (String) -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onRequestOtp: () -> Unit,
+    onResendOtp: () -> Unit,
     onVerifyOtp: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -473,9 +704,9 @@ private fun AdminAccessCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.36f),
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
                             Color.White,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.18f)
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.16f)
                         )
                     )
                 )
@@ -491,7 +722,7 @@ private fun AdminAccessCard(
                 )
             ) {
                 Text(
-                    text = "OTP PROTECTED ACCESS",
+                    text = "FIREBASE + EMAIL OTP VERIFICATION",
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Black,
@@ -499,131 +730,311 @@ private fun AdminAccessCard(
                 )
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Text(
-                    text = "Admin OTP Verification",
+                    text = "Verify Admin Identity",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
-                    text = "Generate a temporary one-time password before opening protected admin tools.",
+                    text = "First verify the registered polling officer account with Firebase, then enter the OTP sent to the admin email.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Button(
-                onClick = onSendOtp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = Color.White
-                )
-            ) {
-                Text(
-                    text = if (generatedOtp == null) "Generate OTP" else "Regenerate OTP",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black
-                )
-            }
+            AdminStepRow(otpSent = otpSent)
 
-            otpStatusMessage?.let { message ->
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.82f),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)
-                    )
-                ) {
-                    Text(
-                        text = message,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            OutlinedTextField(
-                value = enteredOtp,
-                onValueChange = onOtpChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(R.string.admin_pin_label)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.NumberPassword
-                ),
-                visualTransformation = PasswordVisualTransformation(),
-                shape = RoundedCornerShape(22.dp)
+            StatusPanel(
+                text = statusMessage,
+                isError = false
             )
 
             errorMessage?.let { message ->
-                Surface(
+                StatusPanel(
+                    text = message,
+                    isError = true
+                )
+            }
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = onEmailChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Admin email") },
+                placeholder = { Text(text = authorisedEmail) },
+                singleLine = true,
+                enabled = !isBusy && !otpSent,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                ),
+                shape = RoundedCornerShape(22.dp)
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = onPasswordChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "Password") },
+                singleLine = true,
+                enabled = !isBusy && !otpSent,
+                visualTransformation = if (passwordVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
+                trailingIcon = {
+                    TextButton(
+                        onClick = onTogglePasswordVisibility,
+                        enabled = !isBusy
+                    ) {
+                        Text(
+                            text = if (passwordVisible) "HIDE" else "SHOW",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password
+                ),
+                shape = RoundedCornerShape(22.dp)
+            )
+
+            if (otpSent) {
+                OutlinedTextField(
+                    value = otpCode,
+                    onValueChange = onOtpChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = "Enter 6-digit email OTP") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.NumberPassword
+                    ),
+                    shape = RoundedCornerShape(22.dp)
+                )
+
+                Button(
+                    onClick = onVerifyOtp,
+                    enabled = !isBusy,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                     shape = RoundedCornerShape(20.dp),
-                    color = MaterialTheme.colorScheme.errorContainer,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Text(
+                        text = "Verify OTP & Open Admin Dashboard",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = onResendOtp,
+                    enabled = !isBusy,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(18.dp),
                     border = BorderStroke(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.18f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)
                     )
                 ) {
                     Text(
-                        text = message,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        fontWeight = FontWeight.Bold
+                        text = "Resend OTP",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            Button(
-                onClick = onVerifyOtp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                Text(
-                    text = "Verify OTP & Continue",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black
-                )
+            } else {
+                Button(
+                    onClick = onRequestOtp,
+                    enabled = !isBusy,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Text(
+                        text = if (isBusy) {
+                            "Verifying..."
+                        } else {
+                            "Sign In & Send Email OTP"
+                        },
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black
+                    )
+                }
             }
 
             OutlinedButton(
                 onClick = onBack,
+                enabled = !isBusy,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(20.dp),
+                    .height(52.dp),
+                shape = RoundedCornerShape(18.dp),
                 border = BorderStroke(
                     width = 1.dp,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.30f)
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.38f)
                 )
             ) {
                 Text(
-                    text = stringResource(R.string.action_back_to_homepage),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "Back to Home",
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AdminStepRow(otpSent: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AdminStepChip(
+            modifier = Modifier.weight(1f),
+            label = "1",
+            title = "Firebase",
+            value = "Credentials",
+            active = true
+        )
+
+        AdminStepChip(
+            modifier = Modifier.weight(1f),
+            label = "2",
+            title = "Email",
+            value = "OTP",
+            active = otpSent
+        )
+    }
+}
+
+@Composable
+private fun AdminStepChip(
+    modifier: Modifier = Modifier,
+    label: String,
+    title: String,
+    value: String,
+    active: Boolean
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = if (active) {
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+        } else {
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.78f)
+        },
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (active) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
+            } else {
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
+            }
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(28.dp),
+                shape = CircleShape,
+                color = if (active) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Black,
+                        color = if (active) {
+                            Color.White
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusPanel(
+    text: String,
+    isError: Boolean
+) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = if (isError) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f)
+        },
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (isError) {
+                MaterialTheme.colorScheme.error.copy(alpha = 0.22f)
+            } else {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+            }
+        )
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isError) {
+                MaterialTheme.colorScheme.onErrorContainer
+            } else {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            },
+            fontWeight = FontWeight.Bold
+        )
     }
 }
