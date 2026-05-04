@@ -2,6 +2,7 @@ package com.example.evotingmobileapp.receipt
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -38,8 +41,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.R
@@ -122,10 +127,21 @@ fun ReceiptScreen(
                 !verificationError.isNullOrBlank() &&
                 inputError == null
 
-    Scaffold { innerPadding ->
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f),
+            MaterialTheme.colorScheme.background
+        )
+    )
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundBrush)
                 .padding(innerPadding)
                 .statusBarsPadding()
                 .navigationBarsPadding()
@@ -259,7 +275,10 @@ fun ReceiptScreen(
                     shape = RoundedCornerShape(18.dp),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Text(text = stringResource(R.string.receipt_done_button))
+                    Text(
+                        text = stringResource(R.string.receipt_done_button),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
@@ -287,8 +306,21 @@ private fun ReceiptHeroCard() {
                     )
                 )
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+            ) {
+                Text(
+                    text = "Blockchain Audit Receipt",
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+
             Text(
                 text = stringResource(R.string.receipt_title),
                 style = MaterialTheme.typography.headlineMedium,
@@ -357,6 +389,10 @@ private fun VerificationInputCard(
                 enabled = !verificationInProgress
             )
 
+            if (transactionHashInput.trim().isNotBlank()) {
+                HashPreviewPanel(hash = transactionHashInput.trim())
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -396,6 +432,36 @@ private fun VerificationInputCard(
 }
 
 @Composable
+private fun HashPreviewPanel(hash: String) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.50f)
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(
+                text = "Hash ready for verification",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = shortenHash(hash),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontFamily = FontFamily.Monospace,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
 private fun VerificationLoadingState(
     transactionHash: String
 ) {
@@ -408,8 +474,8 @@ private fun VerificationLoadingState(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CircularProgressIndicator()
@@ -426,9 +492,17 @@ private fun VerificationLoadingState(
                     text = shortenHash(transactionHash),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = FontFamily.Monospace
                 )
             }
+
+            Text(
+                text = "Checking the transaction receipt directly from the blockchain network.",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -454,24 +528,46 @@ private fun StatusBanner(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor)
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
+            Surface(
+                modifier = Modifier.size(42.dp),
+                shape = CircleShape,
+                color = contentColor.copy(alpha = 0.16f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (positive) "✓" else "!",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = contentColor
+                    )
+                }
+            }
 
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = contentColor
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = contentColor
+                )
+
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor
+                )
+            }
         }
     }
 }
@@ -490,16 +586,29 @@ private fun OnChainVerificationCard(
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SectionTitle(
                 title = stringResource(R.string.receipt_verified_on_chain_title),
                 subtitle = stringResource(R.string.receipt_verified_on_chain_subtitle)
             )
 
+            AuditSummaryPanel(
+                status = if (verification.status == "0x1") {
+                    stringResource(R.string.receipt_status_success)
+                } else {
+                    stringResource(R.string.receipt_status_failed)
+                },
+                blockNumber = verification.blockNumber.toString(),
+                gasUsed = verification.gasUsed.toString()
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
             ReceiptRow(
                 label = stringResource(R.string.receipt_label_transaction_hash),
-                value = verification.transactionHash
+                value = verification.transactionHash,
+                mono = true
             )
 
             ReceiptRow(
@@ -518,17 +627,101 @@ private fun OnChainVerificationCard(
 
             ReceiptRow(
                 label = stringResource(R.string.receipt_label_from_address),
-                value = verification.fromAddress
+                value = verification.fromAddress,
+                mono = true
             )
 
             ReceiptRow(
                 label = stringResource(R.string.receipt_label_to_address),
-                value = verification.toAddress ?: "-"
+                value = verification.toAddress ?: "-",
+                mono = true
             )
 
             ReceiptRow(
                 label = stringResource(R.string.receipt_label_gas_used),
                 value = verification.gasUsed.toString()
+            )
+        }
+    }
+}
+
+@Composable
+private fun AuditSummaryPanel(
+    status: String,
+    blockNumber: String,
+    gasUsed: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "On-chain confirmation",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                MiniAuditTile(
+                    modifier = Modifier.weight(1f),
+                    label = "Status",
+                    value = status
+                )
+
+                MiniAuditTile(
+                    modifier = Modifier.weight(1f),
+                    label = "Block",
+                    value = blockNumber
+                )
+            }
+
+            MiniAuditTile(
+                modifier = Modifier.fillMaxWidth(),
+                label = "Gas used",
+                value = gasUsed
+            )
+        }
+    }
+}
+
+@Composable
+private fun MiniAuditTile(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -550,12 +743,16 @@ private fun ReceiptDetailsCard(
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             SectionTitle(
                 title = title,
                 subtitle = supportingText
             )
+
+            LocalReceiptSummaryPanel(receipt = receipt)
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             ReceiptRow(
                 label = stringResource(R.string.receipt_label_election_id),
@@ -569,7 +766,8 @@ private fun ReceiptDetailsCard(
 
             ReceiptRow(
                 label = stringResource(R.string.receipt_label_wallet_address),
-                value = receipt.voterId
+                value = receipt.voterId,
+                mono = true
             )
 
             ReceiptRow(
@@ -584,7 +782,52 @@ private fun ReceiptDetailsCard(
 
             ReceiptRow(
                 label = stringResource(R.string.receipt_label_transaction_hash),
-                value = receipt.transactionHash
+                value = receipt.transactionHash,
+                mono = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun LocalReceiptSummaryPanel(
+    receipt: VoteReceipt
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.82f)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Vote receipt summary",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = "Election: ${receipt.electionTitle}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Text(
+                text = "Selected candidate: ${receipt.candidateName}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Text(
+                text = "Receipt hash: ${shortenHash(receipt.transactionHash)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.84f),
+                fontFamily = FontFamily.Monospace
             )
         }
     }
@@ -601,14 +844,29 @@ private fun EmptyReceiptState() {
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(22.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Surface(
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "#",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
+
             Text(
                 text = stringResource(R.string.receipt_empty_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center
             )
 
@@ -629,7 +887,8 @@ private fun NoLocalReceiptMatchCard() {
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
-        )
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -638,7 +897,7 @@ private fun NoLocalReceiptMatchCard() {
             Text(
                 text = stringResource(R.string.receipt_no_local_match_title),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
 
@@ -673,7 +932,8 @@ private fun SectionTitle(
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
@@ -687,22 +947,35 @@ private fun SectionTitle(
 @Composable
 private fun ReceiptRow(
     label: String,
-    value: String
+    value: String,
+    mono: Boolean = false
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.78f)
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
-        )
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
+            )
 
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge
-        )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default,
+                maxLines = if (mono) 3 else 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
