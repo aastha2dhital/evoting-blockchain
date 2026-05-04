@@ -83,26 +83,85 @@ fun CreateElectionScreen(
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = {
-                showSuccessDialog = false
-                navController.popBackStack()
+                // Keep the success dialog visible until the admin confirms.
             },
             title = {
                 Text(
-                    text = stringResource(R.string.create_election_success_title),
-                    fontWeight = FontWeight.ExtraBold
+                    text = "Election Created Successfully",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             },
             text = {
-                Text(text = stringResource(R.string.create_election_success_message))
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+                    ) {
+                        Text(
+                            text = "✓ The election has been deployed to the blockchain.",
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Text(
+                        text = stringResource(R.string.create_election_success_message),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DialogSummaryRow(
+                                label = "Candidates",
+                                value = candidateCount.toString()
+                            )
+
+                            DialogSummaryRow(
+                                label = "Eligible voters",
+                                value = voterCount.toString()
+                            )
+
+                            DialogSummaryRow(
+                                label = "Election status",
+                                value = "Ready for QR check-in and voting"
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Next step: polling officers can check in eligible voters before they submit votes.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         showSuccessDialog = false
                         navController.popBackStack()
-                    }
+                    },
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(text = stringResource(R.string.create_election_success_button))
+                    Text(
+                        text = stringResource(R.string.create_election_success_button),
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         )
@@ -156,6 +215,11 @@ fun CreateElectionScreen(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !isCreating,
                         shape = RoundedCornerShape(18.dp)
+                    )
+
+                    InfoPanel(
+                        title = "Election identity",
+                        message = "Use a clear title that will be understandable to voters and polling officers."
                     )
                 }
 
@@ -319,6 +383,14 @@ fun CreateElectionScreen(
                         message = stringResource(R.string.create_election_date_format_message)
                     )
                 }
+
+                ReviewCard(
+                    title = title,
+                    candidateCount = candidateCount,
+                    voterCount = voterCount,
+                    startDateTimeInput = startDateTimeInput,
+                    endDateTimeInput = endDateTimeInput
+                )
 
                 if (errorMessage.isNotBlank()) {
                     ErrorPanel(message = errorMessage)
@@ -560,6 +632,133 @@ private fun FancySectionCard(
 
             content()
         }
+    }
+}
+
+@Composable
+private fun ReviewCard(
+    title: String,
+    candidateCount: Int,
+    voterCount: Int,
+    startDateTimeInput: String,
+    endDateTimeInput: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "Final review before blockchain deployment",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Text(
+                text = "Check the election details before creating it. Once submitted, the election setup is sent to the smart contract.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.75f)
+            )
+
+            ReviewRow(
+                label = "Election title",
+                value = title.ifBlank { "Not entered yet" }
+            )
+
+            ReviewRow(
+                label = "Candidates",
+                value = "$candidateCount added"
+            )
+
+            ReviewRow(
+                label = "Eligible voters",
+                value = "$voterCount whitelisted"
+            )
+
+            ReviewRow(
+                label = "Start time",
+                value = startDateTimeInput
+            )
+
+            ReviewRow(
+                label = "End time",
+                value = endDateTimeInput
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewRow(
+    label: String,
+    value: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Text(
+                text = label,
+                modifier = Modifier.weight(0.9f),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = value,
+                modifier = Modifier.weight(1.1f),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun DialogSummaryRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.ExtraBold
+        )
+
+        Text(
+            text = value,
+            modifier = Modifier.weight(1.2f),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
