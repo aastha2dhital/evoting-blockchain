@@ -50,17 +50,30 @@ import com.example.evotingmobileapp.BuildConfig
 import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
+import kotlin.random.Random
 
 @Composable
 fun AdminLoginScreen(
     navController: NavHostController,
     authSessionViewModel: AuthSessionViewModel
 ) {
-    var adminPin by rememberSaveable { mutableStateOf("") }
+    var enteredOtp by rememberSaveable { mutableStateOf("") }
+    var generatedOtp by rememberSaveable { mutableStateOf<String?>(null) }
+    var otpExpiresAtMillis by rememberSaveable { mutableStateOf(0L) }
+    var otpStatusMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
-    val adminErrorBlank = stringResource(R.string.admin_error_blank)
-    val adminErrorIncorrect = stringResource(R.string.admin_error_incorrect)
+    val otpValidityMillis = 2 * 60 * 1000L
+
+    fun completeAdminLogin() {
+        authSessionViewModel.disconnectWallet()
+        authSessionViewModel.connectWallet(BuildConfig.ADMIN_WALLET_ADDRESS)
+        authSessionViewModel.selectAdminRole()
+
+        navController.navigate(AppRoutes.ADMIN_DASHBOARD) {
+            popUpTo(AppRoutes.LOGIN) { inclusive = true }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -94,30 +107,53 @@ fun AdminLoginScreen(
             AdminHeroCard()
 
             AdminAccessCard(
-                adminPin = adminPin,
-                onAdminPinChange = {
-                    adminPin = it
+                enteredOtp = enteredOtp,
+                onOtpChange = { value ->
+                    enteredOtp = value.filter { it.isDigit() }.take(6)
                     errorMessage = null
                 },
+                generatedOtp = generatedOtp,
+                otpStatusMessage = otpStatusMessage,
                 errorMessage = errorMessage,
-                onContinue = {
+                onSendOtp = {
+                    val newOtp = Random.nextInt(100000, 999999).toString()
+                    generatedOtp = newOtp
+                    otpExpiresAtMillis = System.currentTimeMillis() + otpValidityMillis
+                    enteredOtp = ""
+                    errorMessage = null
+                    otpStatusMessage =
+                        "Demo OTP generated: $newOtp. It expires in 2 minutes. In production, this would be sent by SMS or email."
+                },
+                onVerifyOtp = {
+                    val activeOtp = generatedOtp
+
                     when {
-                        adminPin.isBlank() -> {
-                            errorMessage = adminErrorBlank
+                        activeOtp == null -> {
+                            errorMessage = "Please generate an OTP first."
                         }
 
-                        adminPin != BuildConfig.ADMIN_ACCESS_PIN -> {
-                            errorMessage = adminErrorIncorrect
+                        enteredOtp.isBlank() -> {
+                            errorMessage = "Enter the 6-digit OTP to continue."
+                        }
+
+                        enteredOtp.length != 6 -> {
+                            errorMessage = "OTP must be 6 digits."
+                        }
+
+                        System.currentTimeMillis() > otpExpiresAtMillis -> {
+                            generatedOtp = null
+                            otpStatusMessage = null
+                            errorMessage = "OTP expired. Please generate a new OTP."
+                        }
+
+                        enteredOtp != activeOtp -> {
+                            errorMessage = "Incorrect OTP. Please try again."
                         }
 
                         else -> {
-                            authSessionViewModel.disconnectWallet()
-                            authSessionViewModel.connectWallet(BuildConfig.ADMIN_WALLET_ADDRESS)
-                            authSessionViewModel.selectAdminRole()
-
-                            navController.navigate(AppRoutes.ADMIN_DASHBOARD) {
-                                popUpTo(AppRoutes.LOGIN) { inclusive = true }
-                            }
+                            generatedOtp = null
+                            otpStatusMessage = null
+                            completeAdminLogin()
                         }
                     }
                 },
@@ -196,7 +232,7 @@ private fun AdminTopBar() {
 
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             AdminCircleIcon(text = "AD")
-            AdminCircleIcon(text = "?")
+            AdminCircleIcon(text = "OTP")
         }
     }
 }
@@ -276,7 +312,7 @@ private fun AdminHeroCard() {
                             )
                         ) {
                             Text(
-                                text = "ADMIN ACCESS",
+                                text = "OTP ADMIN ACCESS",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Black,
@@ -292,10 +328,10 @@ private fun AdminHeroCard() {
                         )
 
                         Text(
-                            text = "Create elections, manage QR check-in, close voting, and review verified blockchain results.",
+                            text = "Use a temporary one-time password to unlock election setup, QR check-in, closing controls, and verified blockchain results.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 3,
+                            maxLines = 4,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -308,7 +344,7 @@ private fun AdminHeroCard() {
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = "AD",
+                                text = "OTP",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black,
                                 color = Color.White
@@ -411,10 +447,13 @@ private fun AdminHeroChip(
 
 @Composable
 private fun AdminAccessCard(
-    adminPin: String,
-    onAdminPinChange: (String) -> Unit,
+    enteredOtp: String,
+    onOtpChange: (String) -> Unit,
+    generatedOtp: String?,
+    otpStatusMessage: String?,
     errorMessage: String?,
-    onContinue: () -> Unit,
+    onSendOtp: () -> Unit,
+    onVerifyOtp: () -> Unit,
     onBack: () -> Unit
 ) {
     Card(
@@ -452,7 +491,7 @@ private fun AdminAccessCard(
                 )
             ) {
                 Text(
-                    text = "PROTECTED ACCESS",
+                    text = "OTP PROTECTED ACCESS",
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Black,
@@ -464,24 +503,61 @@ private fun AdminAccessCard(
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Text(
-                    text = "Enter admin PIN",
+                    text = "Admin OTP Verification",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
-                    text = "Only authorised election officials can access admin tools.",
+                    text = "Generate a temporary one-time password before opening protected admin tools.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
+            Button(
+                onClick = onSendOtp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = if (generatedOtp == null) "Generate OTP" else "Regenerate OTP",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black
+                )
+            }
+
+            otpStatusMessage?.let { message ->
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.82f),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)
+                    )
+                ) {
+                    Text(
+                        text = message,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
             OutlinedTextField(
-                value = adminPin,
-                onValueChange = onAdminPinChange,
+                value = enteredOtp,
+                onValueChange = onOtpChange,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.admin_pin_label)) },
+                label = { Text("Enter 6-digit OTP") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.NumberPassword
@@ -512,7 +588,7 @@ private fun AdminAccessCard(
             Spacer(modifier = Modifier.height(2.dp))
 
             Button(
-                onClick = onContinue,
+                onClick = onVerifyOtp,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -524,7 +600,7 @@ private fun AdminAccessCard(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.admin_continue_dashboard),
+                    text = "Verify OTP & Continue",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black
                 )
