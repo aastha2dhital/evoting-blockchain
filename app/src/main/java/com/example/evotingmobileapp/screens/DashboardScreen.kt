@@ -1,16 +1,24 @@
 package com.example.evotingmobileapp.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -30,8 +38,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -62,7 +73,9 @@ fun DashboardScreen(
     authSessionViewModel: AuthSessionViewModel
 ) {
     val elections by adminViewModel.elections.collectAsState()
+    val authUiState by authSessionViewModel.uiState.collectAsState()
     val latestElection = elections.lastOrNull()
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -89,95 +102,253 @@ fun DashboardScreen(
         }
     }
 
-    Scaffold { innerPadding ->
-        Column(
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f),
+                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.24f)
+                        )
+                    )
+                )
         ) {
-            DashboardHeroCard(
-                title = title,
-                subtitle = subtitle,
-                electionsCount = elections.size,
-                latestElectionTitle = latestElection?.title,
-                dashboardMode = dashboardMode
-            )
+            DashboardBackground()
 
-            when (dashboardMode) {
-                DashboardMode.ADMIN -> {
-                    AdminDashboardActions(
-                        navController = navController,
-                        onLogout = onLogout
-                    )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                DashboardTopBar(
+                    dashboardMode = dashboardMode,
+                    walletAddress = authUiState.walletAddress
+                )
 
-                    if (latestElection == null) {
-                        EmptyElectionState(
-                            onCreateElectionClick = {
-                                navController.navigate(AppRoutes.CREATE_ELECTION)
-                            }
+                DashboardHeroCard(
+                    title = title,
+                    subtitle = subtitle,
+                    electionsCount = elections.size,
+                    latestElectionTitle = latestElection?.title,
+                    dashboardMode = dashboardMode
+                )
+
+                when (dashboardMode) {
+                    DashboardMode.ADMIN -> {
+                        AdminDashboardActions(
+                            navController = navController,
+                            onLogout = onLogout
                         )
-                    } else {
-                        ElectionOverviewCard(
-                            sectionTitle = stringResource(R.string.dashboard_latest_overview_title),
-                            election = latestElection,
-                            emphasize = true
-                        )
+
+                        if (latestElection == null) {
+                            EmptyElectionState(
+                                onCreateElectionClick = {
+                                    navController.navigate(AppRoutes.CREATE_ELECTION)
+                                }
+                            )
+                        } else {
+                            SectionHeading(
+                                title = stringResource(R.string.dashboard_latest_overview_title),
+                                subtitle = "Current election status, turnout, and blockchain-linked progress."
+                            )
+
+                            ElectionOverviewCard(
+                                sectionTitle = latestElection.title,
+                                election = latestElection,
+                                emphasize = true
+                            )
+                        }
+
+                        if (elections.isNotEmpty()) {
+                            SectionHeading(
+                                title = stringResource(R.string.dashboard_all_elections_title),
+                                subtitle = stringResource(R.string.dashboard_all_elections_subtitle)
+                            )
+
+                            elections
+                                .asReversed()
+                                .forEach { election ->
+                                    ElectionOverviewCard(
+                                        sectionTitle = election.title,
+                                        election = election,
+                                        emphasize = false
+                                    )
+                                }
+                        }
                     }
 
-                    if (elections.isNotEmpty()) {
-                        SectionHeading(
-                            title = stringResource(R.string.dashboard_all_elections_title),
-                            subtitle = stringResource(R.string.dashboard_all_elections_subtitle)
+                    DashboardMode.VOTER -> {
+                        VoterDashboardActions(
+                            navController = navController,
+                            onLogout = onLogout
                         )
 
-                        elections
-                            .asReversed()
-                            .forEach { election ->
-                                ElectionOverviewCard(
-                                    sectionTitle = election.title,
-                                    election = election,
-                                    emphasize = false
-                                )
-                            }
+                        if (latestElection == null) {
+                            VoterEmptyState()
+                        } else {
+                            SectionHeading(
+                                title = stringResource(R.string.dashboard_available_elections_title),
+                                subtitle = stringResource(R.string.dashboard_available_elections_subtitle)
+                            )
+
+                            VoterElectionCard(
+                                election = latestElection,
+                                emphasize = true
+                            )
+                        }
+
+                        if (elections.isNotEmpty()) {
+                            elections
+                                .asReversed()
+                                .forEach { election ->
+                                    VoterElectionCard(
+                                        election = election,
+                                        emphasize = false
+                                    )
+                                }
+                        }
                     }
                 }
 
-                DashboardMode.VOTER -> {
-                    VoterDashboardActions(
-                        navController = navController,
-                        onLogout = onLogout
-                    )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
 
-                    if (latestElection == null) {
-                        VoterEmptyState()
-                    } else {
-                        VoterElectionCard(
-                            election = latestElection,
-                            emphasize = true
+@Composable
+private fun DashboardBackground() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier
+                .size(220.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 80.dp, y = 30.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.09f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(160.dp)
+                .align(Alignment.TopStart)
+                .offset(x = (-64).dp, y = 250.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.09f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(180.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 70.dp, y = (-110).dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+        ) {}
+    }
+}
+
+@Composable
+private fun DashboardTopBar(
+    dashboardMode: DashboardMode,
+    walletAddress: String
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+        tonalElevation = 5.dp,
+        shadowElevation = 8.dp,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(42.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    shadowElevation = 5.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = when (dashboardMode) {
+                                DashboardMode.ADMIN -> stringResource(R.string.admin_avatar_initials)
+                                DashboardMode.VOTER -> stringResource(R.string.voter_avatar_initials)
+                            },
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
-                    }
-
-                    if (elections.isNotEmpty()) {
-                        SectionHeading(
-                            title = stringResource(R.string.dashboard_available_elections_title),
-                            subtitle = stringResource(R.string.dashboard_available_elections_subtitle)
-                        )
-
-                        elections
-                            .asReversed()
-                            .forEach { election ->
-                                VoterElectionCard(
-                                    election = election,
-                                    emphasize = false
-                                )
-                            }
                     }
                 }
+
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text = when (dashboardMode) {
+                            DashboardMode.ADMIN -> stringResource(R.string.login_admin_title)
+                            DashboardMode.VOTER -> stringResource(R.string.login_voter_title)
+                        },
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = if (walletAddress.isBlank()) {
+                            "Secure session"
+                        } else {
+                            shortenDashboardText(walletAddress)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = when (dashboardMode) {
+                    DashboardMode.ADMIN -> MaterialTheme.colorScheme.primaryContainer
+                    DashboardMode.VOTER -> MaterialTheme.colorScheme.secondaryContainer
+                }
+            ) {
+                Text(
+                    text = when (dashboardMode) {
+                        DashboardMode.ADMIN -> "Admin"
+                        DashboardMode.VOTER -> "Voter"
+                    },
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = when (dashboardMode) {
+                        DashboardMode.ADMIN -> MaterialTheme.colorScheme.onPrimaryContainer
+                        DashboardMode.VOTER -> MaterialTheme.colorScheme.onSecondaryContainer
+                    },
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
         }
     }
@@ -194,54 +365,78 @@ private fun DashboardHeroCard(
     val gradient = Brush.linearGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.secondary
+            MaterialTheme.colorScheme.secondary,
+            MaterialTheme.colorScheme.tertiary
         )
     )
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(34.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+        )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .background(brush = gradient)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(24.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.ExtraBold
-            )
-
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
-            )
+            HeroDecorationLayer()
 
             Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+                ) {
+                    Text(
+                        text = when (dashboardMode) {
+                            DashboardMode.ADMIN -> "CONTROL CENTER"
+                            DashboardMode.VOTER -> "VOTER CONTROL"
+                        },
+                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.ExtraBold
+                )
+
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    HeroPill(
-                        label = if (dashboardMode == DashboardMode.ADMIN) {
-                            stringResource(R.string.dashboard_role_admin)
-                        } else {
-                            stringResource(R.string.dashboard_role_voter)
-                        },
-                        modifier = Modifier.weight(1f)
+                    HeroMetricBox(
+                        modifier = Modifier.weight(1f),
+                        value = electionsCount.toString(),
+                        label = "Elections"
                     )
 
-                    HeroPill(
-                        label = stringResource(R.string.dashboard_elections_count, electionsCount),
-                        modifier = Modifier.weight(1f)
+                    HeroMetricBox(
+                        modifier = Modifier.weight(1f),
+                        value = when (dashboardMode) {
+                            DashboardMode.ADMIN -> "Admin"
+                            DashboardMode.VOTER -> "Voter"
+                        },
+                        label = "Role"
                     )
                 }
 
@@ -256,21 +451,88 @@ private fun DashboardHeroCard(
 }
 
 @Composable
+private fun HeroDecorationLayer() {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Surface(
+            modifier = Modifier
+                .size(130.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 42.dp, y = (-58).dp),
+            shape = CircleShape,
+            color = Color.White.copy(alpha = 0.10f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(96.dp)
+                .align(Alignment.BottomStart)
+                .offset(x = (-46).dp, y = 136.dp),
+            shape = CircleShape,
+            color = Color.White.copy(alpha = 0.08f)
+        ) {}
+    }
+}
+
+@Composable
+private fun HeroMetricBox(
+    modifier: Modifier = Modifier,
+    value: String,
+    label: String
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 13.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
 private fun HeroPill(
     label: String,
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
+        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+        )
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onPrimary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -289,40 +551,53 @@ private fun AdminDashboardActions(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        DashboardPrimaryActionButton(
-            text = stringResource(R.string.dashboard_create_election),
-            onClick = { navController.navigate(AppRoutes.CREATE_ELECTION) }
-        )
-
-        DashboardPrimaryActionButton(
-            text = stringResource(R.string.dashboard_qr_checkin),
-            onClick = { navController.navigate(AppRoutes.QR_CHECK_IN) }
-        )
-
-        DashboardPrimaryActionButton(
-            text = stringResource(R.string.dashboard_view_results),
-            onClick = { navController.navigate(AppRoutes.RESULTS) }
-        )
-
-        OutlinedButton(
-            onClick = { navController.navigate(AppRoutes.BLOCKCHAIN_RECORDS) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(18.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(R.string.dashboard_blockchain_records),
-                style = MaterialTheme.typography.labelLarge
+            ActionTile(
+                modifier = Modifier.weight(1f),
+                title = stringResource(R.string.dashboard_create_election),
+                subtitle = "Set up election",
+                icon = "＋",
+                primary = true,
+                onClick = { navController.navigate(AppRoutes.CREATE_ELECTION) }
+            )
+
+            ActionTile(
+                modifier = Modifier.weight(1f),
+                title = stringResource(R.string.dashboard_qr_checkin),
+                subtitle = "Verify voters",
+                icon = "QR",
+                primary = false,
+                onClick = { navController.navigate(AppRoutes.QR_CHECK_IN) }
             )
         }
 
-        TextButton(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(stringResource(R.string.dashboard_logout))
+            ActionTile(
+                modifier = Modifier.weight(1f),
+                title = stringResource(R.string.dashboard_view_results),
+                subtitle = "Winner & totals",
+                icon = "WIN",
+                primary = false,
+                onClick = { navController.navigate(AppRoutes.RESULTS) }
+            )
+
+            ActionTile(
+                modifier = Modifier.weight(1f),
+                title = stringResource(R.string.dashboard_blockchain_records),
+                subtitle = "Audit trail",
+                icon = "TX",
+                primary = false,
+                onClick = { navController.navigate(AppRoutes.BLOCKCHAIN_RECORDS) }
+            )
         }
+
+        LogoutButton(onLogout = onLogout)
     }
 }
 
@@ -342,6 +617,7 @@ private fun VoterDashboardActions(
     ) {
         DashboardPrimaryActionButton(
             text = stringResource(R.string.dashboard_vote_now),
+            icon = "✓",
             onClick = { navController.navigate(AppRoutes.VOTING) }
         )
 
@@ -349,20 +625,103 @@ private fun VoterDashboardActions(
             onClick = { navController.navigate(AppRoutes.RECEIPT) },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(18.dp)
+                .height(56.dp),
+            shape = RoundedCornerShape(18.dp),
+            border = BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.36f)
+            )
         ) {
             Text(
                 text = stringResource(R.string.dashboard_verify_receipt),
-                style = MaterialTheme.typography.labelLarge
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.ExtraBold
             )
         }
 
-        TextButton(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth()
+        LogoutButton(onLogout = onLogout)
+    }
+}
+
+@Composable
+private fun ActionTile(
+    modifier: Modifier = Modifier,
+    title: String,
+    subtitle: String,
+    icon: String,
+    primary: Boolean,
+    onClick: () -> Unit
+) {
+    val accentColor = if (primary) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.secondary
+    }
+
+    Card(
+        modifier = modifier
+            .height(148.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = accentColor.copy(alpha = 0.25f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            accentColor.copy(alpha = 0.14f),
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+                .padding(15.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(stringResource(R.string.dashboard_logout))
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(18.dp),
+                color = accentColor,
+                shadowElevation = 5.dp
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = icon,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
@@ -370,19 +729,38 @@ private fun VoterDashboardActions(
 @Composable
 private fun DashboardPrimaryActionButton(
     text: String,
+    icon: String,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(18.dp),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+            .height(58.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
     ) {
         Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge
+            text = "$icon  $text",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.ExtraBold
+        )
+    }
+}
+
+@Composable
+private fun LogoutButton(
+    onLogout: () -> Unit
+) {
+    TextButton(
+        onClick = onLogout,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(R.string.dashboard_logout),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.error,
+            fontWeight = FontWeight.ExtraBold
         )
     }
 }
@@ -393,13 +771,15 @@ private fun SectionHeading(
     subtitle: String
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            color = MaterialTheme.colorScheme.onBackground,
+            fontWeight = FontWeight.ExtraBold
         )
+
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodyMedium,
@@ -414,29 +794,44 @@ private fun EmptyElectionState(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.86f)
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.26f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
                 text = stringResource(R.string.dashboard_empty_admin_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                fontWeight = FontWeight.ExtraBold
             )
 
             Text(
                 text = stringResource(R.string.dashboard_empty_admin_description),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.84f)
             )
 
-            TextButton(onClick = onCreateElectionClick) {
-                Text(stringResource(R.string.dashboard_create_election))
+            Button(
+                onClick = onCreateElectionClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.dashboard_create_election),
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
         }
     }
@@ -446,10 +841,15 @@ private fun EmptyElectionState(
 private fun VoterEmptyState() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.86f)
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.26f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -457,14 +857,15 @@ private fun VoterEmptyState() {
         ) {
             Text(
                 text = stringResource(R.string.dashboard_empty_voter_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                fontWeight = FontWeight.ExtraBold
             )
 
             Text(
                 text = stringResource(R.string.dashboard_empty_voter_description),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.84f)
             )
         }
     }
@@ -477,7 +878,6 @@ private fun ElectionOverviewCard(
     emphasize: Boolean
 ) {
     val status = dashboardStatusFor(election)
-
     val eligibleCount = election.eligibleVoterIds.size
     val checkedInCount = election.checkedInVoterIds.size
     val voteCount = election.voteCounts.values.sum()
@@ -485,78 +885,80 @@ private fun ElectionOverviewCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (emphasize) {
-                MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (emphasize) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 8.dp else 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 9.dp else 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            if (emphasize) {
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f)
+                            },
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            ElectionCardHeader(
+                title = sectionTitle,
+                subtitle = stringResource(R.string.dashboard_blockchain_election_overview),
+                status = status
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Column(
+                MetricChip(
+                    label = stringResource(R.string.dashboard_candidates),
+                    value = candidateCount.toString(),
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = sectionTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(R.string.dashboard_blockchain_election_overview),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                    strong = emphasize
+                )
 
-                StatusBadge(status = status)
+                MetricChip(
+                    label = stringResource(R.string.dashboard_eligible),
+                    value = eligibleCount.toString(),
+                    modifier = Modifier.weight(1f),
+                    strong = emphasize
+                )
             }
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    MetricChip(
-                        label = stringResource(R.string.dashboard_candidates),
-                        value = candidateCount.toString(),
-                        modifier = Modifier.weight(1f)
-                    )
-                    MetricChip(
-                        label = stringResource(R.string.dashboard_eligible),
-                        value = eligibleCount.toString(),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                MetricChip(
+                    label = stringResource(R.string.dashboard_checked_in),
+                    value = checkedInCount.toString(),
+                    modifier = Modifier.weight(1f),
+                    strong = emphasize
+                )
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    MetricChip(
-                        label = stringResource(R.string.dashboard_checked_in),
-                        value = checkedInCount.toString(),
-                        modifier = Modifier.weight(1f)
-                    )
-                    MetricChip(
-                        label = stringResource(R.string.dashboard_votes),
-                        value = voteCount.toString(),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                MetricChip(
+                    label = stringResource(R.string.dashboard_votes),
+                    value = voteCount.toString(),
+                    modifier = Modifier.weight(1f),
+                    strong = emphasize
+                )
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -565,10 +967,12 @@ private fun ElectionOverviewCard(
                 label = stringResource(R.string.dashboard_election_id),
                 value = election.id
             )
+
             DetailRow(
                 label = stringResource(R.string.dashboard_starts),
                 value = formatDashboardDateTime(election.startTimeMillis)
             )
+
             DetailRow(
                 label = stringResource(R.string.dashboard_ends),
                 value = formatDashboardDateTime(election.endTimeMillis)
@@ -583,55 +987,80 @@ private fun VoterElectionCard(
     emphasize: Boolean
 ) {
     val status = dashboardStatusFor(election)
+    val candidateCount = election.candidates.size
+    val totalVotes = election.voteCounts.values.sum()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (emphasize) {
-                MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (emphasize) {
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 8.dp else 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 9.dp else 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            if (emphasize) {
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.34f)
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f)
+                            },
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            ElectionCardHeader(
+                title = election.title,
+                subtitle = stringResource(R.string.dashboard_review_timing),
+                status = status
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Column(
+                MetricChip(
+                    label = stringResource(R.string.dashboard_candidates),
+                    value = candidateCount.toString(),
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = election.title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(R.string.dashboard_review_timing),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                    strong = emphasize
+                )
 
-                StatusBadge(status = status)
+                MetricChip(
+                    label = stringResource(R.string.dashboard_votes),
+                    value = totalVotes.toString(),
+                    modifier = Modifier.weight(1f),
+                    strong = emphasize
+                )
             }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             DetailRow(
                 label = stringResource(R.string.dashboard_election_id),
                 value = election.id
             )
+
             DetailRow(
                 label = stringResource(R.string.dashboard_starts),
                 value = formatDashboardDateTime(election.startTimeMillis)
             )
+
             DetailRow(
                 label = stringResource(R.string.dashboard_ends),
                 value = formatDashboardDateTime(election.endTimeMillis)
@@ -641,30 +1070,88 @@ private fun VoterElectionCard(
 }
 
 @Composable
+private fun ElectionCardHeader(
+    title: String,
+    subtitle: String,
+    status: DashboardElectionStatus
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        StatusBadge(status = status)
+    }
+}
+
+@Composable
 private fun MetricChip(
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    strong: Boolean
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primaryContainer
+        shape = RoundedCornerShape(20.dp),
+        color = if (strong) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f)
+        },
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)
+        )
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge,
+                color = if (strong) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
+
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = if (strong) {
+                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.76f)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -694,14 +1181,19 @@ private fun StatusBadge(
 
     Surface(
         color = containerColor,
-        shape = RoundedCornerShape(999.dp)
+        shape = RoundedCornerShape(999.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = contentColor.copy(alpha = 0.12f)
+        )
     ) {
         Text(
             text = statusText,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             color = contentColor,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1
         )
     }
 }
@@ -711,19 +1203,31 @@ private fun DetailRow(
     label: String,
     value: String
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f)
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge
-        )
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -738,4 +1242,9 @@ private fun dashboardStatusFor(election: Election): DashboardElectionStatus {
 private fun formatDashboardDateTime(timeInMillis: Long): String {
     val formatter = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
     return formatter.format(Date(timeInMillis))
+}
+
+private fun shortenDashboardText(value: String): String {
+    if (value.length <= 18) return value
+    return "${value.take(10)}...${value.takeLast(8)}"
 }

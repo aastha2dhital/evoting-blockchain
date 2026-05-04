@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +24,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,13 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.navigation.AppRoutes
 
@@ -50,7 +47,7 @@ fun LoginScreen(
     authSessionViewModel: AuthSessionViewModel,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(authSessionViewModel) {
+    LaunchedEffect(Unit) {
         authSessionViewModel.disconnectWallet()
     }
 
@@ -60,15 +57,15 @@ fun LoginScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
                         MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.20f),
-                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.18f)
+                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.30f),
+                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.26f)
                     )
                 )
             )
     ) {
-        DecorativeBackground()
+        CivicBackground()
 
         Column(
             modifier = Modifier
@@ -77,252 +74,164 @@ fun LoginScreen(
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(top = 16.dp, bottom = 122.dp),
+                .padding(top = 16.dp, bottom = 118.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            HomeTopBar()
+            TopBrandBar()
 
-            SearchLikeBar(
-                modifier = Modifier.padding(end = 104.dp)
+            MainHeroCard(
+                onAdminClick = { navController.navigate(AppRoutes.ADMIN_LOGIN) },
+                onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) }
             )
 
-            PremiumHeroCard(
-                onVoteClick = {
-                    navController.navigate(AppRoutes.VOTER_ACCESS)
-                }
+            SectionTitle(
+                title = "Choose your role",
+                subtitle = "Select the correct portal to continue securely."
             )
 
-            SectionHeader(
-                title = stringResource(R.string.login_access_section_title),
-                subtitle = "Secure role-based access for election officials and voters"
+            RoleAccessGrid(
+                onAdminClick = { navController.navigate(AppRoutes.ADMIN_LOGIN) },
+                onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) }
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                AccessTile(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.login_access_admin_title),
-                    subtitle = stringResource(R.string.login_access_admin_subtitle),
-                    icon = stringResource(R.string.admin_avatar_initials),
-                    badge = "Officer",
-                    primary = true,
-                    onClick = {
-                        navController.navigate(AppRoutes.ADMIN_LOGIN)
-                    }
-                )
-
-                AccessTile(
-                    modifier = Modifier.weight(1f),
-                    title = stringResource(R.string.login_access_voter_title),
-                    subtitle = stringResource(R.string.login_access_voter_subtitle),
-                    icon = stringResource(R.string.voter_avatar_initials),
-                    badge = "Citizen",
-                    primary = false,
-                    onClick = {
-                        navController.navigate(AppRoutes.VOTER_ACCESS)
-                    }
-                )
-            }
-
-            SectionHeader(
-                title = stringResource(R.string.login_info_section_title),
-                subtitle = "Every step is designed for transparency, attendance, and verification"
+            SectionTitle(
+                title = "How Vote Nepal works",
+                subtitle = "A simple flow from voter check-in to verified final results."
             )
 
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                FeatureRow(
-                    icon = "QR",
-                    title = stringResource(R.string.login_info_qr_checkin),
-                    description = "Polling officer confirms voter attendance before voting."
-                )
-
-                FeatureRow(
-                    icon = "TX",
-                    title = stringResource(R.string.login_info_vote_receipt),
-                    description = "A blockchain transaction hash is generated after voting."
-                )
-
-                FeatureRow(
-                    icon = "✓",
-                    title = stringResource(R.string.login_info_results),
-                    description = "Election results are shown after the election closes."
-                )
-            }
+            FeatureStack()
         }
 
         BottomHomeBar(
             modifier = Modifier.align(Alignment.BottomCenter),
-            onAdminClick = {
-                navController.navigate(AppRoutes.ADMIN_LOGIN)
-            },
-            onVoterClick = {
-                navController.navigate(AppRoutes.VOTER_ACCESS)
-            }
+            onAdminClick = { navController.navigate(AppRoutes.ADMIN_LOGIN) },
+            onVoterClick = { navController.navigate(AppRoutes.VOTER_ACCESS) }
         )
     }
 }
 
 @Composable
-private fun DecorativeBackground() {
+private fun CivicBackground() {
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier
-                .size(190.dp)
+                .size(220.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 68.dp, y = 80.dp),
+                .offset(x = 82.dp, y = 62.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(158.dp)
+                .size(168.dp)
                 .align(Alignment.TopStart)
-                .offset(x = (-58).dp, y = 236.dp),
+                .offset(x = (-70).dp, y = 260.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f)
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(150.dp)
+                .size(180.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 55.dp, y = (-116).dp),
+                .offset(x = 70.dp, y = (-160).dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f)
-        ) {}
-
-        Surface(
-            modifier = Modifier
-                .size(112.dp)
-                .align(Alignment.BottomStart)
-                .offset(x = (-36).dp, y = (-34).dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.06f)
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.14f)
         ) {}
     }
 }
 
 @Composable
-private fun HomeTopBar() {
-    Row(
+private fun TopBrandBar() {
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+        tonalElevation = 5.dp,
+        shadowElevation = 8.dp,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f)
+        )
     ) {
-        Surface(
-            shape = RoundedCornerShape(999.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-            tonalElevation = 4.dp,
-            shadowElevation = 5.dp,
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.32f)
-            )
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 13.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                CircleIcon(text = "NP")
+                BrandMark(text = "VN")
+
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text = "Vote Nepal",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = "Secure Digital Voting",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
                 Text(
-                    text = "Vote Nepal",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = "Verified",
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    fontWeight = FontWeight.ExtraBold
                 )
             }
         }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            CircleIcon(text = "BC")
-            CircleIcon(text = "?")
-        }
     }
 }
 
 @Composable
-private fun CircleIcon(text: String) {
+private fun BrandMark(text: String) {
     Surface(
-        modifier = Modifier.size(36.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-        )
+        modifier = Modifier.size(42.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.primary,
+        shadowElevation = 5.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
     }
 }
 
 @Composable
-private fun SearchLikeBar(
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-        tonalElevation = 3.dp,
-        shadowElevation = 6.dp,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f)
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "⌕",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.width(9.dp))
-
-            Text(
-                text = stringResource(R.string.login_search_placeholder),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-private fun PremiumHeroCard(
-    onVoteClick: () -> Unit
+private fun MainHeroCard(
+    onAdminClick: () -> Unit,
+    onVoterClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(34.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
     ) {
@@ -332,119 +241,119 @@ private fun PremiumHeroCard(
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.96f),
-                            Color.White,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
+                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.13f)
                         )
                     )
                 )
-                .padding(20.dp)
+                .padding(22.dp)
         ) {
-            HeroDecorations()
+            HeroDecorationLayer()
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(17.dp)
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                    )
+                ) {
+                    Text(
+                        text = "SECURE • VERIFIED • TRANSPARENT",
+                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.Top
                 ) {
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(9.dp)
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(999.dp),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-                            )
-                        ) {
-                            Text(
-                                text = "BLOCKCHAIN + QR CHECK-IN",
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Black,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-
                         Text(
-                            text = stringResource(R.string.login_brand_title),
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.onSurface
+                            text = "Vote Nepal",
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            lineHeight = MaterialTheme.typography.displaySmall.lineHeight
                         )
 
                         Text(
-                            text = "A secure mobile voting prototype for transparent, auditable, and attendance-verified elections.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis
+                            text = "A modern election platform for secure check-in, trusted voting, and clear results.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
                     Surface(
-                        modifier = Modifier.size(68.dp),
-                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.size(78.dp),
+                        shape = RoundedCornerShape(26.dp),
                         color = MaterialTheme.colorScheme.primary,
-                        shadowElevation = 6.dp
+                        shadowElevation = 8.dp
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = "EV",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White
+                                text = "VN",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
                 }
 
+                HeroMetricRow()
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    HeroChip(
-                        modifier = Modifier.weight(1f),
-                        title = "On-chain",
-                        value = "Verified"
-                    )
-                    HeroChip(
-                        modifier = Modifier.weight(1f),
-                        title = "Check-in",
-                        value = "Required"
-                    )
-                    HeroChip(
-                        modifier = Modifier.weight(1f),
-                        title = "Receipt",
-                        value = "Enabled"
-                    )
-                }
+                    Button(
+                        onClick = onVoterClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
+                    ) {
+                        Text(
+                            text = "Continue as Voter",
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
 
-                ElectionCountdownStrip()
-
-                Button(
-                    onClick = onVoteClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.dashboard_vote_now),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black
-                    )
+                    OutlinedButton(
+                        onClick = onAdminClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
+                        )
+                    ) {
+                        Text(
+                            text = "Continue as Admin",
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
@@ -452,22 +361,22 @@ private fun PremiumHeroCard(
 }
 
 @Composable
-private fun HeroDecorations() {
+private fun HeroDecorationLayer() {
     Box(modifier = Modifier.fillMaxWidth()) {
         Surface(
             modifier = Modifier
-                .size(124.dp)
+                .size(130.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 46.dp, y = (-50).dp),
+                .offset(x = 46.dp, y = (-56).dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(84.dp)
+                .size(92.dp)
                 .align(Alignment.BottomStart)
-                .offset(x = (-44).dp, y = 136.dp),
+                .offset(x = (-46).dp, y = 142.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
         ) {}
@@ -475,152 +384,65 @@ private fun HeroDecorations() {
 }
 
 @Composable
-private fun HeroChip(
-    modifier: Modifier = Modifier,
-    title: String,
+private fun HeroMetricRow() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        HeroMetricCard(
+            modifier = Modifier.weight(1f),
+            label = "QR",
+            value = "Check-in"
+        )
+
+        HeroMetricCard(
+            modifier = Modifier.weight(1f),
+            label = "Vote",
+            value = "Verified"
+        )
+
+        HeroMetricCard(
+            modifier = Modifier.weight(1f),
+            label = "Result",
+            value = "Clear"
+        )
+    }
+}
+
+@Composable
+private fun HeroMetricCard(
+    modifier: Modifier,
+    label: String,
     value: String
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White.copy(alpha = 0.86f),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.36f)
         ),
         shadowElevation = 2.dp
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 1
             )
 
             Text(
                 text = value,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-private fun ElectionCountdownStrip() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = Color.White.copy(alpha = 0.88f),
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
-        ),
-        shadowElevation = 3.dp
-    ) {
-        Column(
-            modifier = Modifier.padding(13.dp),
-            verticalArrangement = Arrangement.spacedBy(11.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.login_election_card_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)
-                    )
-                ) {
-                    Text(
-                        text = "LIVE",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                CountdownBox(
-                    modifier = Modifier.weight(1f),
-                    number = "03",
-                    label = stringResource(R.string.login_countdown_days)
-                )
-                CountdownBox(
-                    modifier = Modifier.weight(1f),
-                    number = "02",
-                    label = stringResource(R.string.login_countdown_hours)
-                )
-                CountdownBox(
-                    modifier = Modifier.weight(1f),
-                    number = "38",
-                    label = stringResource(R.string.login_countdown_minutes)
-                )
-                CountdownBox(
-                    modifier = Modifier.weight(1f),
-                    number = "12",
-                    label = stringResource(R.string.login_countdown_seconds)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CountdownBox(
-    modifier: Modifier = Modifier,
-    number: String,
-    label: String
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(15.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f)
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 9.dp, horizontal = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = number,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -629,39 +451,70 @@ private fun CountdownBox(
 }
 
 @Composable
-private fun SectionHeader(
+private fun SectionTitle(
     title: String,
     subtitle: String
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Black,
+            fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
             text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 @Composable
-private fun AccessTile(
-    modifier: Modifier = Modifier,
+private fun RoleAccessGrid(
+    onAdminClick: () -> Unit,
+    onVoterClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        RoleAccessCard(
+            modifier = Modifier.weight(1f),
+            title = "Admin Portal",
+            subtitle = "Create elections, check in voters, and review results.",
+            initials = "AD",
+            badge = "Election Control",
+            usePrimary = true,
+            onClick = onAdminClick
+        )
+
+        RoleAccessCard(
+            modifier = Modifier.weight(1f),
+            title = "Voter Portal",
+            subtitle = "Choose your voter profile and cast your vote securely.",
+            initials = "VT",
+            badge = "Secure Voting",
+            usePrimary = false,
+            onClick = onVoterClick
+        )
+    }
+}
+
+@Composable
+private fun RoleAccessCard(
+    modifier: Modifier,
     title: String,
     subtitle: String,
-    icon: String,
+    initials: String,
     badge: String,
-    primary: Boolean,
+    usePrimary: Boolean,
     onClick: () -> Unit
 ) {
-    val accentColor = if (primary) {
+    val accentColor = if (usePrimary) {
         MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.secondary
@@ -669,13 +522,13 @@ private fun AccessTile(
 
     Card(
         modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = accentColor.copy(alpha = 0.20f)
+            color = accentColor.copy(alpha = 0.25f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
     ) {
@@ -685,69 +538,90 @@ private fun AccessTile(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            accentColor.copy(alpha = 0.14f),
+                            accentColor.copy(alpha = 0.16f),
                             MaterialTheme.colorScheme.surface
                         )
                     )
                 )
-                .padding(horizontal = 14.dp, vertical = 16.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(11.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Surface(
                 shape = RoundedCornerShape(999.dp),
-                color = accentColor.copy(alpha = 0.12f),
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = accentColor.copy(alpha = 0.18f)
-                )
+                color = accentColor.copy(alpha = 0.12f)
             ) {
                 Text(
                     text = badge,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Black,
-                    color = accentColor
+                    color = accentColor,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
             Surface(
-                modifier = Modifier.size(60.dp),
-                shape = CircleShape,
-                color = accentColor
+                modifier = Modifier.size(64.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = accentColor,
+                shadowElevation = 5.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = icon,
+                        text = initials,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
+                        fontWeight = FontWeight.ExtraBold,
                         color = Color.White
                     )
                 }
             }
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
 
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+            )
         }
+    }
+}
+
+@Composable
+private fun FeatureStack() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        FeatureRow(
+            icon = "QR",
+            title = "QR Check-in",
+            description = "Verify eligible voters before the ballot opens."
+        )
+
+        FeatureRow(
+            icon = "VOTE",
+            title = "Trusted Vote",
+            description = "Cast one secure vote and receive a transaction receipt."
+        )
+
+        FeatureRow(
+            icon = "WIN",
+            title = "Clear Results",
+            description = "View the winner, total votes, and vote share clearly."
+        )
     }
 }
 
@@ -761,13 +635,13 @@ private fun FeatureRow(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.36f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Row(
             modifier = Modifier
@@ -775,19 +649,19 @@ private fun FeatureRow(
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.52f),
-                            Color.White,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.30f)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.48f),
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.32f)
                         )
                     )
                 )
-                .padding(14.dp),
+                .padding(15.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(13.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Surface(
-                modifier = Modifier.size(52.dp),
-                shape = RoundedCornerShape(17.dp),
+                modifier = Modifier.size(54.dp),
+                shape = RoundedCornerShape(19.dp),
                 color = MaterialTheme.colorScheme.primary,
                 shadowElevation = 4.dp
             ) {
@@ -795,8 +669,8 @@ private fun FeatureRow(
                     Text(
                         text = icon,
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Black,
-                        color = Color.White
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -808,7 +682,7 @@ private fun FeatureRow(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Black,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
@@ -819,21 +693,6 @@ private fun FeatureRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-            }
-
-            Surface(
-                modifier = Modifier.size(32.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "›",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
             }
         }
     }
@@ -853,13 +712,13 @@ private fun BottomHomeBar(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(30.dp),
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
             shadowElevation = 18.dp,
             tonalElevation = 6.dp,
             border = BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f)
             )
         ) {
             Row(
@@ -868,9 +727,9 @@ private fun BottomHomeBar(
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.34f),
-                                Color.White,
-                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.24f)
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.40f),
+                                MaterialTheme.colorScheme.surface,
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.30f)
                             )
                         )
                     )
@@ -880,31 +739,26 @@ private fun BottomHomeBar(
             ) {
                 BottomItem(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.login_bottom_home),
+                    label = "Home",
                     icon = "⌂",
                     selected = true,
                     onClick = {}
                 )
+
                 BottomItem(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.login_bottom_admin),
+                    label = "Admin",
                     icon = "A",
                     selected = false,
                     onClick = onAdminClick
                 )
+
                 BottomItem(
                     modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.login_bottom_voter),
+                    label = "Voter",
                     icon = "V",
                     selected = false,
                     onClick = onVoterClick
-                )
-                BottomItem(
-                    modifier = Modifier.weight(1f),
-                    label = stringResource(R.string.login_bottom_profile),
-                    icon = "●",
-                    selected = false,
-                    onClick = {}
                 )
             }
         }
@@ -924,7 +778,7 @@ private fun BottomItem(
             .clickable { onClick() }
             .padding(horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Surface(
             shape = RoundedCornerShape(999.dp),
@@ -938,7 +792,7 @@ private fun BottomItem(
                 text = icon,
                 modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight.ExtraBold,
                 color = if (selected) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -951,7 +805,7 @@ private fun BottomItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
             color = if (selected) {
                 MaterialTheme.colorScheme.onSurface
             } else {
