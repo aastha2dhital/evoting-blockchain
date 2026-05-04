@@ -1,5 +1,6 @@
 package com.example.evotingmobileapp.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,13 +47,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.data.VoteValidationResult
@@ -84,36 +84,26 @@ fun VotingScreen(
     val selectedElection = elections.find { it.id == selectedElectionId }
     val voterWalletAddress = authUiState.walletAddress.trim()
 
-    val noElectionSelectedText = stringResource(R.string.voting_status_no_election_selected)
-    val closedStatusText = stringResource(R.string.voting_status_closed)
-    val activeStatusText = stringResource(R.string.voting_status_active)
-    val notStartedStatusText = stringResource(R.string.voting_status_not_started)
-    val selectElectionFirstText = stringResource(R.string.voting_access_select_election_first)
-    val noActiveSessionText = stringResource(R.string.voting_access_no_active_session)
-    val readyToVoteText = stringResource(R.string.voting_access_ready)
-    val noActiveSessionSnackbar = stringResource(R.string.voting_error_no_active_session)
-    val selectCandidateSnackbar = stringResource(R.string.voting_error_select_candidate)
-    val blockchainVoteFailedText = stringResource(R.string.voting_error_blockchain_vote_failed)
-    val voteSuccessSnackbar = stringResource(R.string.voting_success_vote_recorded)
-
     val votingAccessMatchesCurrentSelection =
         selectedElection != null &&
                 votingAccessUiState.electionId == selectedElection.id &&
                 votingAccessUiState.voterId.equals(voterWalletAddress, ignoreCase = true)
 
     val votingAccessText = when {
-        selectedElection == null -> selectElectionFirstText
+        selectedElection == null -> "Select an election to continue."
 
-        !authUiState.canAccessVoter() || voterWalletAddress.isBlank() -> noActiveSessionText
+        !authUiState.canAccessVoter() || voterWalletAddress.isBlank() ->
+            "No active voter wallet session found."
 
         votingAccessUiState.isLoading &&
-                votingAccessUiState.electionId == selectedElection.id -> votingAccessUiState.message
-            .ifBlank { "Checking voting access..." }
+                votingAccessUiState.electionId == selectedElection.id ->
+            votingAccessUiState.message.ifBlank { "Checking voting access..." }
 
-        votingAccessMatchesCurrentSelection && votingAccessUiState.canVote -> readyToVoteText
+        votingAccessMatchesCurrentSelection && votingAccessUiState.canVote ->
+            "Ready to vote. Eligibility and check-in are confirmed."
 
-        votingAccessMatchesCurrentSelection -> votingAccessUiState.message
-            .ifBlank { "Voting access could not be confirmed." }
+        votingAccessMatchesCurrentSelection ->
+            votingAccessUiState.message.ifBlank { "Voting access could not be confirmed." }
 
         else -> "Checking voting access..."
     }
@@ -169,125 +159,30 @@ fun VotingScreen(
         }
     }
 
-    fun getElectionStatusText(): String {
-        val election = selectedElection ?: return noElectionSelectedText
-        return when {
-            election.isClosed() -> closedStatusText
-            election.isActive() -> activeStatusText
-            else -> notStartedStatusText
-        }
-    }
-
     val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.24f),
             MaterialTheme.colorScheme.background,
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
-            MaterialTheme.colorScheme.background
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.14f)
         )
     )
 
     if (showVoteSuccessDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                // Keep the success confirmation visible until the voter chooses an action.
-            },
-            title = {
-                Text(
-                    text = "Vote Recorded on Blockchain",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.70f)
-                    ) {
-                        Text(
-                            text = "✓ Your vote has been submitted successfully.",
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
+        VoteSuccessDialog(
+            transactionHash = successReceiptTransactionHash,
+            onViewReceipt = {
+                showVoteSuccessDialog = false
 
-                    Text(
-                        text = voteSuccessSnackbar,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                if (successReceiptTransactionHash.isNotBlank()) {
+                    navController.navigate(
+                        AppRoutes.receiptRoute(successReceiptTransactionHash)
                     )
-
-                    Text(
-                        text = "The transaction has been sent to the blockchain and can be checked using the receipt hash.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    if (successReceiptTransactionHash.isNotBlank()) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(14.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.80f)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    text = "Transaction Receipt",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-
-                                Text(
-                                    text = shortenWalletAddress(successReceiptTransactionHash),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Text(
-                        text = "Please save or verify this receipt for audit purposes.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                } else {
+                    navController.navigate(AppRoutes.RECEIPT)
                 }
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showVoteSuccessDialog = false
-
-                        if (successReceiptTransactionHash.isNotBlank()) {
-                            navController.navigate(
-                                AppRoutes.receiptRoute(successReceiptTransactionHash)
-                            )
-                        } else {
-                            navController.navigate(AppRoutes.RECEIPT)
-                        }
-                    },
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text(text = stringResource(R.string.voting_view_receipt_button))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showVoteSuccessDialog = false
-                    }
-                ) {
-                    Text(text = stringResource(R.string.voting_stay_on_page_button))
-                }
+            onStay = {
+                showVoteSuccessDialog = false
             }
         )
     }
@@ -330,7 +225,7 @@ fun VotingScreen(
                 ElectionVotingCard(
                     electionTitle = election.title,
                     electionId = election.id,
-                    electionStatus = getElectionStatusText(),
+                    electionStatus = getElectionStatusText(election),
                     votingAccessText = votingAccessText,
                     votingAccessSuccess = votingAccessSuccess,
                     candidates = election.candidates,
@@ -342,11 +237,15 @@ fun VotingScreen(
                     },
                     isBusy = isBusy,
                     isSubmittingVote = isSubmittingVote,
-                    canSubmitVote = votingAccessSuccess && selectedCandidate.isNotBlank() && !isSubmittingVote,
+                    canSubmitVote = votingAccessSuccess &&
+                            selectedCandidate.isNotBlank() &&
+                            !isSubmittingVote,
                     onSubmitVote = {
                         if (!authUiState.canAccessVoter() || voterWalletAddress.isBlank()) {
                             coroutineScope.launch {
-                                snackBarHostState.showSnackbar(noActiveSessionSnackbar)
+                                snackBarHostState.showSnackbar(
+                                    "No active voter session found. Return to Voter Access first."
+                                )
                             }
                             return@ElectionVotingCard
                         }
@@ -360,7 +259,7 @@ fun VotingScreen(
 
                         if (selectedCandidate.isBlank()) {
                             coroutineScope.launch {
-                                snackBarHostState.showSnackbar(selectCandidateSnackbar)
+                                snackBarHostState.showSnackbar("Select a candidate first.")
                             }
                             return@ElectionVotingCard
                         }
@@ -383,7 +282,7 @@ fun VotingScreen(
                             val finalResult = result.getOrElse { exception ->
                                 VoteValidationResult(
                                     success = false,
-                                    message = exception.message ?: blockchainVoteFailedText
+                                    message = exception.message ?: "Blockchain vote submission failed."
                                 )
                             }
 
@@ -411,7 +310,7 @@ fun VotingScreen(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Text(
-                    text = stringResource(R.string.voting_back_button),
+                    text = "Back",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium
                 )
@@ -421,52 +320,178 @@ fun VotingScreen(
 }
 
 @Composable
-private fun VotingHeaderCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(54.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "✓",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-
+private fun VoteSuccessDialog(
+    transactionHash: String,
+    onViewReceipt: () -> Unit,
+    onStay: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {
+            // Keep confirmation visible until the voter chooses an action.
+        },
+        title = {
+            Text(
+                text = "Vote recorded",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        },
+        text = {
             Column(
-                modifier = Modifier.padding(start = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = stringResource(R.string.voting_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.70f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Your vote was submitted successfully.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+
+                        Text(
+                            text = "A blockchain receipt is now available for verification.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f)
+                        )
+                    }
+                }
+
+                if (transactionHash.isNotBlank()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.80f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "Transaction hash",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Text(
+                                text = shortenLongValue(transactionHash),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
 
                 Text(
-                    text = stringResource(R.string.voting_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "Open the receipt screen to verify and save the transaction hash.",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        },
+        confirmButton = {
+            Button(
+                onClick = onViewReceipt,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(text = "View receipt")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onStay) {
+                Text(text = "Stay here")
+            }
         }
+    )
+}
+
+@Composable
+private fun VotingHeaderCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.size(56.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "SV",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Text(
+                        text = "SecureVote Nepal",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "Voter ballot",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                HeaderChip(text = "VOTER")
+            }
+
+            Text(
+                text = "Choose an election, confirm voting access, and submit your ballot to the blockchain.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeaderChip(text: String) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     }
 }
 
@@ -479,33 +504,30 @@ private fun WalletSummaryCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SectionTitle(
-                title = stringResource(R.string.voting_wallet_identity_title),
+                title = "Wallet identity",
                 subtitle = if (hasActiveWallet) {
-                    stringResource(
-                        R.string.voting_active_session,
-                        shortenWalletAddress(voterWalletAddress)
-                    )
+                    "Active voter session: ${shortenLongValue(voterWalletAddress)}"
                 } else {
-                    stringResource(R.string.voting_no_active_wallet_session)
+                    "No voter wallet is currently active."
                 }
             )
 
-            StatusBadge(
+            StatusPanel(
                 text = if (hasActiveWallet) {
-                    shortenWalletAddress(voterWalletAddress)
+                    shortenLongValue(voterWalletAddress)
                 } else {
-                    stringResource(R.string.voting_wallet_placeholder)
+                    "Return to Voter Access to select a voter wallet."
                 },
                 positive = hasActiveWallet
             )
@@ -522,31 +544,31 @@ private fun ElectionSelectionCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SectionTitle(
-                title = stringResource(R.string.voting_select_election_title),
-                subtitle = stringResource(R.string.voting_select_election_subtitle)
+                title = "Select election",
+                subtitle = "Choose the election you are eligible to vote in."
             )
 
             if (elections.isEmpty()) {
-                StatusBadge(
-                    text = stringResource(R.string.voting_no_elections),
+                StatusPanel(
+                    text = "No elections are available yet.",
                     positive = false
                 )
             } else {
                 elections.forEach { election ->
-                    ChoiceRow(
+                    SelectableRow(
                         title = election.title,
-                        subtitle = stringResource(R.string.voting_election_id, election.id),
+                        subtitle = "Election ID: ${election.id}",
                         selected = selectedElectionId == election.id,
                         onSelected = { onElectionSelected(election.id) },
                         enabled = !isBusy
@@ -574,11 +596,11 @@ private fun ElectionVotingCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -586,7 +608,7 @@ private fun ElectionVotingCard(
         ) {
             SectionTitle(
                 title = electionTitle,
-                subtitle = stringResource(R.string.voting_election_review_subtitle)
+                subtitle = "Review the ballot before submitting your vote."
             )
 
             Row(
@@ -595,62 +617,78 @@ private fun ElectionVotingCard(
             ) {
                 SmallInfoPill(
                     modifier = Modifier.weight(1f),
-                    text = electionStatus
+                    label = "Status",
+                    value = electionStatus
                 )
+
                 SmallInfoPill(
                     modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.voting_election_id, electionId)
+                    label = "Election",
+                    value = electionId
                 )
             }
 
-            StatusBadge(
+            StatusPanel(
                 text = votingAccessText,
                 positive = votingAccessSuccess
             )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)
+            )
 
             Text(
-                text = stringResource(R.string.voting_candidates_title),
+                text = "Candidates",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            candidates.forEachIndexed { index, candidate ->
-                ChoiceRow(
-                    title = candidate,
-                    subtitle = stringResource(R.string.voting_candidate_select_subtitle),
-                    selected = selectedCandidate == candidate,
-                    onSelected = { onCandidateSelected(candidate) },
-                    enabled = !isBusy,
-                    leadingSymbol = candidateSymbolFor(candidate, index)
+            if (candidates.isEmpty()) {
+                StatusPanel(
+                    text = "No candidates have been added to this election.",
+                    positive = false
                 )
+            } else {
+                candidates.forEachIndexed { index, candidate ->
+                    SelectableRow(
+                        title = candidate,
+                        subtitle = "Tap to select this candidate.",
+                        selected = selectedCandidate == candidate,
+                        onSelected = { onCandidateSelected(candidate) },
+                        enabled = !isBusy,
+                        leadingText = candidateSymbolFor(candidate, index)
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.height(2.dp))
 
             Button(
                 onClick = onSubmitVote,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .height(54.dp),
                 enabled = canSubmitVote,
                 shape = RoundedCornerShape(18.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
             ) {
                 Text(
                     text = if (isSubmittingVote) {
-                        stringResource(R.string.voting_submitting_vote_button)
+                        "Submitting vote..."
                     } else {
-                        stringResource(R.string.voting_submit_vote_button)
+                        "Submit vote"
                     },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
             }
+
+            Text(
+                text = "After submission, this wallet cannot vote again in the same election.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -679,67 +717,56 @@ private fun SectionTitle(
 }
 
 @Composable
-private fun ChoiceRow(
+private fun SelectableRow(
     title: String,
     subtitle: String,
     selected: Boolean,
     onSelected: () -> Unit,
     enabled: Boolean,
-    leadingSymbol: String? = null
+    leadingText: String? = null
 ) {
     val containerColor = if (selected) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
     } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f)
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.60f)
     }
 
-    val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimaryContainer
+    val border = if (selected) {
+        BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f))
     } else {
-        MaterialTheme.colorScheme.onSurface
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f))
     }
 
-    Card(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled) { onSelected() },
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (selected) 3.dp else 1.dp
-        )
+        shape = RoundedCornerShape(20.dp),
+        color = containerColor,
+        border = border
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            leadingSymbol?.let { symbol ->
+            leadingText?.let { text ->
                 Surface(
-                    modifier = Modifier.size(54.dp),
-                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = if (selected) {
-                        MaterialTheme.colorScheme.primary
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                     } else {
-                        MaterialTheme.colorScheme.surface
-                    },
-                    shadowElevation = if (selected) 4.dp else 1.dp
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.82f)
+                    }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            text = symbol,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Black,
-                            textAlign = TextAlign.Center,
-                            color = if (selected) {
-                                MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            }
+                            text = text,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -759,7 +786,7 @@ private fun ChoiceRow(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = contentColor,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -767,7 +794,7 @@ private fun ChoiceRow(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.78f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -776,14 +803,14 @@ private fun ChoiceRow(
             if (selected) {
                 Surface(
                     shape = RoundedCornerShape(999.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
                 ) {
                     Text(
                         text = "Selected",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -792,18 +819,18 @@ private fun ChoiceRow(
 }
 
 @Composable
-private fun StatusBadge(
+private fun StatusPanel(
     text: String,
     positive: Boolean
 ) {
     val containerColor = if (positive) {
-        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.76f)
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.62f)
     } else {
-        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.76f)
+        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.66f)
     }
 
     val contentColor = if (positive) {
-        MaterialTheme.colorScheme.onSecondaryContainer
+        MaterialTheme.colorScheme.onPrimaryContainer
     } else {
         MaterialTheme.colorScheme.onTertiaryContainer
     }
@@ -818,7 +845,7 @@ private fun StatusBadge(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
             style = MaterialTheme.typography.bodyMedium,
             color = contentColor,
-            textAlign = TextAlign.Start
+            fontWeight = FontWeight.Medium
         )
     }
 }
@@ -826,44 +853,62 @@ private fun StatusBadge(
 @Composable
 private fun SmallInfoPill(
     modifier: Modifier = Modifier,
-    text: String
+    label: String,
+    value: String
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
     ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            textAlign = TextAlign.Center
-        )
-    }
-}
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.78f),
+                textAlign = TextAlign.Center
+            )
 
-private fun candidateSymbolFor(candidateName: String, index: Int): String {
-    val lowerName = candidateName.lowercase()
-
-    return when {
-        "tree" in lowerName || "green" in lowerName -> "🌳"
-        "sun" in lowerName || "light" in lowerName -> "☀️"
-        "mountain" in lowerName || "himal" in lowerName -> "🏔️"
-        "dove" in lowerName || "peace" in lowerName -> "🕊️"
-        "star" in lowerName -> "⭐"
-        "rose" in lowerName || "flower" in lowerName -> "🌹"
-        "book" in lowerName || "education" in lowerName -> "📘"
-        "wheel" in lowerName || "cycle" in lowerName -> "⚙️"
-        else -> {
-            val symbols = listOf("🌳", "☀️", "🏔️", "🕊️", "⭐", "🌹", "📘", "⚙️", "🛡️", "🏛️")
-            symbols[index % symbols.size]
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
 
-private fun shortenWalletAddress(address: String): String {
-    if (address.length <= 18) return address
-    return "${address.take(10)}...${address.takeLast(8)}"
+private fun getElectionStatusText(election: Election): String {
+    return when {
+        election.isClosed() -> "Closed"
+        election.isActive() -> "Active"
+        else -> "Not started"
+    }
+}
+
+private fun candidateSymbolFor(candidateName: String, index: Int): String {
+    val cleanedName = candidateName.trim()
+
+    if (cleanedName.isNotBlank()) {
+        val firstLetter = cleanedName.first().uppercaseChar()
+        if (firstLetter.isLetterOrDigit()) {
+            return firstLetter.toString()
+        }
+    }
+
+    return (index + 1).toString()
+}
+
+private fun shortenLongValue(value: String): String {
+    if (value.length <= 18) return value
+    return "${value.take(10)}...${value.takeLast(8)}"
 }
