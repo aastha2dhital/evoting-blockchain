@@ -192,37 +192,77 @@ fun VotingScreen(
             },
             title = {
                 Text(
-                    text = "Vote Submitted Successfully",
+                    text = "Vote Recorded on Blockchain",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.primary
                 )
             },
             text = {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = voteSuccessSnackbar,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    if (successReceiptTransactionHash.isNotBlank()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.70f)
+                    ) {
                         Text(
-                            text = "Receipt: ${shortenWalletAddress(successReceiptTransactionHash)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "✓ Your vote has been submitted successfully.",
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
 
                     Text(
-                        text = "You can now open the receipt screen to verify the transaction hash on-chain.",
+                        text = voteSuccessSnackbar,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = "The transaction has been sent to the blockchain and can be checked using the receipt hash.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    if (successReceiptTransactionHash.isNotBlank()) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.80f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = "Transaction Receipt",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                Text(
+                                    text = shortenWalletAddress(successReceiptTransactionHash),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = "Please save or verify this receipt for audit purposes.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         showVoteSuccessDialog = false
 
@@ -233,7 +273,8 @@ fun VotingScreen(
                         } else {
                             navController.navigate(AppRoutes.RECEIPT)
                         }
-                    }
+                    },
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text("View Receipt")
                 }
@@ -244,7 +285,7 @@ fun VotingScreen(
                         showVoteSuccessDialog = false
                     }
                 ) {
-                    Text("Stay Here")
+                    Text("Stay on Voting Page")
                 }
             }
         )
