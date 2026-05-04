@@ -559,7 +559,7 @@ private fun AdminDashboardActions(
                 modifier = Modifier.weight(1f),
                 title = stringResource(R.string.dashboard_create_election),
                 subtitle = "Set up election",
-                icon = "＋",
+                icon = "+",
                 primary = true,
                 onClick = { navController.navigate(AppRoutes.CREATE_ELECTION) }
             )
@@ -617,7 +617,7 @@ private fun VoterDashboardActions(
     ) {
         DashboardPrimaryActionButton(
             text = stringResource(R.string.dashboard_vote_now),
-            icon = "✓",
+            icon = "\u2713",
             onClick = { navController.navigate(AppRoutes.VOTING) }
         )
 
