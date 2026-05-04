@@ -34,7 +34,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -82,7 +81,7 @@ fun ResultsScreen(
         }
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarHostState = SnackbarHostState()
     val coroutineScope = rememberCoroutineScope()
     var closingElectionId by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -350,6 +349,7 @@ private fun ElectionResultCard(
                             CandidateResultCard(
                                 rank = index + 1,
                                 candidate = candidate,
+                                candidateSymbol = candidateSymbolFor(candidate, index),
                                 voteCount = voteCount,
                                 percentage = percentage,
                                 isWinner = isWinner,
@@ -706,6 +706,7 @@ private fun WinnerStatTile(
 private fun CandidateResultCard(
     rank: Int,
     candidate: String,
+    candidateSymbol: String,
     voteCount: Int,
     percentage: Float,
     isWinner: Boolean,
@@ -728,7 +729,7 @@ private fun CandidateResultCard(
                 MaterialTheme.colorScheme.surfaceVariant
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isWinner) 4.dp else 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isWinner) 5.dp else 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -740,24 +741,26 @@ private fun CandidateResultCard(
                 verticalAlignment = Alignment.Top
             ) {
                 Surface(
-                    modifier = Modifier.size(38.dp),
-                    shape = CircleShape,
+                    modifier = Modifier.size(58.dp),
+                    shape = RoundedCornerShape(20.dp),
                     color = if (isWinner) {
                         MaterialTheme.colorScheme.primary
                     } else {
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)
-                    }
+                        MaterialTheme.colorScheme.surface
+                    },
+                    shadowElevation = if (isWinner) 5.dp else 1.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            text = rank.toString(),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.ExtraBold,
+                            text = candidateSymbol,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Black,
                             color = if (isWinner) {
                                 MaterialTheme.colorScheme.onPrimary
                             } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            }
+                                MaterialTheme.colorScheme.primary
+                            },
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
@@ -767,7 +770,7 @@ private fun CandidateResultCard(
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text(
-                        text = candidate,
+                        text = "#$rank • $candidate",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
@@ -779,17 +782,39 @@ private fun CandidateResultCard(
                         }
                     )
 
-                    if (isWinner) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isWinner) {
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            ) {
+                                Text(
+                                    text = if (isTie) {
+                                        "Joint winner"
+                                    } else {
+                                        stringResource(R.string.results_winner_badge)
+                                    },
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+
                         Surface(
                             shape = RoundedCornerShape(999.dp),
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.82f)
                         ) {
                             Text(
-                                text = if (isTie) "TIED HIGHEST" else stringResource(R.string.results_winner_badge),
+                                text = stringResource(R.string.results_vote_share, percentageText),
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.ExtraBold
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }
@@ -830,19 +855,6 @@ private fun CandidateResultCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer
-                ) {
-                    Text(
-                        text = stringResource(R.string.results_vote_share, percentageText),
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
                 Text(
                     text = if (isWinner) "Highest result" else "Candidate result",
                     style = MaterialTheme.typography.labelMedium,
@@ -973,6 +985,25 @@ private fun rememberWinnerSummary(election: Election): WinnerSummary {
         winningVotes = winningVotes,
         totalVotes = totalVotes
     )
+}
+
+private fun candidateSymbolFor(candidateName: String, index: Int): String {
+    val lowerName = candidateName.lowercase()
+
+    return when {
+        "tree" in lowerName || "green" in lowerName -> "🌳"
+        "sun" in lowerName || "light" in lowerName -> "☀️"
+        "mountain" in lowerName || "himal" in lowerName -> "🏔️"
+        "dove" in lowerName || "peace" in lowerName -> "🕊️"
+        "star" in lowerName -> "⭐"
+        "rose" in lowerName || "flower" in lowerName -> "🌹"
+        "book" in lowerName || "education" in lowerName -> "📘"
+        "wheel" in lowerName || "cycle" in lowerName -> "⚙️"
+        else -> {
+            val symbols = listOf("🌳", "☀️", "🏔️", "🕊️", "⭐", "🌹", "📘", "⚙️", "🛡️", "🏛️")
+            symbols[index % symbols.size]
+        }
+    }
 }
 
 private fun voteWord(count: Int): String {

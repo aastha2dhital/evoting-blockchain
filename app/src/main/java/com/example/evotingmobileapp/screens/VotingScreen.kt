@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.R
@@ -616,13 +617,14 @@ private fun ElectionVotingCard(
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            candidates.forEach { candidate ->
+            candidates.forEachIndexed { index, candidate ->
                 ChoiceRow(
                     title = candidate,
                     subtitle = stringResource(R.string.voting_candidate_select_subtitle),
                     selected = selectedCandidate == candidate,
                     onSelected = { onCandidateSelected(candidate) },
-                    enabled = !isBusy
+                    enabled = !isBusy,
+                    leadingSymbol = candidateSymbolFor(candidate, index)
                 )
             }
 
@@ -682,7 +684,8 @@ private fun ChoiceRow(
     subtitle: String,
     selected: Boolean,
     onSelected: () -> Unit,
-    enabled: Boolean
+    enabled: Boolean,
+    leadingSymbol: String? = null
 ) {
     val containerColor = if (selected) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
@@ -712,8 +715,36 @@ private fun ChoiceRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            leadingSymbol?.let { symbol ->
+                Surface(
+                    modifier = Modifier.size(54.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+                    shadowElevation = if (selected) 4.dp else 1.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = symbol,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center,
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            }
+                        )
+                    }
+                }
+            }
+
             RadioButton(
                 selected = selected,
                 onClick = onSelected,
@@ -721,21 +752,40 @@ private fun ChoiceRow(
             )
 
             Column(
-                modifier = Modifier.padding(start = 8.dp),
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = contentColor
+                    color = contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = contentColor.copy(alpha = 0.78f)
+                    color = contentColor.copy(alpha = 0.78f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
+            }
+
+            if (selected) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = "Selected",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black
+                    )
+                }
             }
         }
     }
@@ -791,6 +841,25 @@ private fun SmallInfoPill(
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+private fun candidateSymbolFor(candidateName: String, index: Int): String {
+    val lowerName = candidateName.lowercase()
+
+    return when {
+        "tree" in lowerName || "green" in lowerName -> "🌳"
+        "sun" in lowerName || "light" in lowerName -> "☀️"
+        "mountain" in lowerName || "himal" in lowerName -> "🏔️"
+        "dove" in lowerName || "peace" in lowerName -> "🕊️"
+        "star" in lowerName -> "⭐"
+        "rose" in lowerName || "flower" in lowerName -> "🌹"
+        "book" in lowerName || "education" in lowerName -> "📘"
+        "wheel" in lowerName || "cycle" in lowerName -> "⚙️"
+        else -> {
+            val symbols = listOf("🌳", "☀️", "🏔️", "🕊️", "⭐", "🌹", "📘", "⚙️", "🛡️", "🏛️")
+            symbols[index % symbols.size]
+        }
     }
 }
 
