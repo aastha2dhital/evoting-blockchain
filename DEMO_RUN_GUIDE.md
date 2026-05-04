@@ -1,4 +1,4 @@
-\# EVotingMobileApp Demo Run Guide
+﻿\# EVotingMobileApp Demo Run Guide
 
 
 
@@ -272,7 +272,7 @@ Use this flow:
 
 
 
-1\. Admin login.
+1. Admin completes demo OTP verification.
 
 2\. Create election.
 
@@ -375,4 +375,5 @@ The QR check-in flow is a prototype check-in mechanism and not a national identi
 
 
 Advanced privacy features such as zero-knowledge proofs are outside this version scope.
+
 

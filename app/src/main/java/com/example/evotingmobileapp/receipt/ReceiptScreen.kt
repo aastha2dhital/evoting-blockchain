@@ -1,5 +1,9 @@
 package com.example.evotingmobileapp.receipt
 
+import android.content.Intent
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,11 +38,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -51,8 +57,15 @@ import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.admin.AdminViewModel
 import com.example.evotingmobileapp.blockchain.OnChainTransactionVerification
 import com.example.evotingmobileapp.model.VoteReceipt
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.EnumMap
 import java.util.Locale
 
 @Composable
@@ -86,6 +99,24 @@ fun ReceiptScreen(
     }
 
     val enterHashError = stringResource(R.string.receipt_error_enter_hash)
+
+    val receiptQrScanLauncher = rememberLauncherForActivityResult(
+        contract = ScanContract()
+    ) { result ->
+        val scannedContent = result.contents?.trim().orEmpty()
+
+        if (scannedContent.isBlank()) {
+            inputError = "Receipt QR scan cancelled or no readable transaction hash was found."
+        } else {
+            val extractedHash = extractTransactionHashFromQr(scannedContent)
+
+            transactionHashInput = extractedHash
+            inputError = null
+            hasAttemptedVerification = false
+            lastSubmittedTransactionHash = ""
+            adminViewModel.clearOnChainVerification()
+        }
+    }
 
     LaunchedEffect(initialTransactionHash) {
         val hash = initialTransactionHash?.trim().orEmpty()
@@ -171,6 +202,37 @@ fun ReceiptScreen(
                     hasAttemptedVerification = false
                     lastSubmittedTransactionHash = ""
                     adminViewModel.clearOnChainVerification()
+                },
+                onScanQr = {
+                    val options = ScanOptions().apply {
+                        setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                        setPrompt("Scan transaction hash QR code")
+                        setBeepEnabled(true)
+                        setOrientationLocked(false)
+                        setBarcodeImageEnabled(false)
+                    }
+
+                    receiptQrScanLauncher.launch(options)
+                },
+                onShareHash = {
+                    val hashToShare = transactionHashInput.trim()
+
+                    if (hashToShare.isBlank()) {
+                        inputError = enterHashError
+                    } else {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_SUBJECT, "EVoting transaction receipt")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "SecureVote Nepal transaction receipt hash:\n$hashToShare\n\nVerify this hash in the EVoting receipt verification screen."
+                            )
+                        }
+
+                        context.startActivity(
+                            Intent.createChooser(shareIntent, "Share transaction hash")
+                        )
+                    }
                 },
                 onVerify = {
                     if (trimmedHash.isBlank()) {
@@ -352,6 +414,8 @@ private fun VerificationInputCard(
     verificationInProgress: Boolean,
     onValueChanged: (String) -> Unit,
     onClear: () -> Unit,
+    onScanQr: () -> Unit,
+    onShareHash: () -> Unit,
     onVerify: () -> Unit
 ) {
     Card(
@@ -398,6 +462,39 @@ private fun VerificationInputCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
+                    onClick = onScanQr,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    enabled = !verificationInProgress
+                ) {
+                    Text(
+                        text = "Scan TX QR",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = onShareHash,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(54.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    enabled = !verificationInProgress && transactionHashInput.trim().isNotBlank()
+                ) {
+                    Text(
+                        text = "Share Hash",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
                     onClick = onClear,
                     modifier = Modifier
                         .weight(1f)
@@ -433,6 +530,10 @@ private fun VerificationInputCard(
 
 @Composable
 private fun HashPreviewPanel(hash: String) {
+    val qrBitmap = remember(hash) {
+        generateTransactionHashQrBitmap(hash)
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -440,7 +541,7 @@ private fun HashPreviewPanel(hash: String) {
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "Hash ready for verification",
@@ -456,6 +557,29 @@ private fun HashPreviewPanel(hash: String) {
                 fontFamily = FontFamily.Monospace,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+
+            Surface(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                shape = RoundedCornerShape(22.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 3.dp
+            ) {
+                Image(
+                    bitmap = qrBitmap.asImageBitmap(),
+                    contentDescription = "Transaction hash QR code",
+                    modifier = Modifier
+                        .size(184.dp)
+                        .padding(14.dp)
+                )
+            }
+
+            Text(
+                text = "Scan this QR from another device to verify the same blockchain transaction hash.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -1001,6 +1125,43 @@ private fun PillColumn(
             }
         }
     }
+}
+
+private fun generateTransactionHashQrBitmap(content: String, size: Int = 900): Bitmap {
+    val hints = EnumMap<EncodeHintType, Any>(EncodeHintType::class.java).apply {
+        put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M)
+        put(EncodeHintType.MARGIN, 2)
+        put(EncodeHintType.CHARACTER_SET, "UTF-8")
+    }
+
+    val bitMatrix = QRCodeWriter().encode(
+        content,
+        BarcodeFormat.QR_CODE,
+        size,
+        size,
+        hints
+    )
+
+    val pixels = IntArray(size * size)
+
+    for (y in 0 until size) {
+        for (x in 0 until size) {
+            pixels[y * size + x] = if (bitMatrix[x, y]) {
+                android.graphics.Color.BLACK
+            } else {
+                android.graphics.Color.WHITE
+            }
+        }
+    }
+
+    return Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888).apply {
+        setPixels(pixels, 0, size, 0, 0, size, size)
+    }
+}
+
+private fun extractTransactionHashFromQr(rawContent: String): String {
+    val transactionHashPattern = Regex("0x[a-fA-F0-9]{64}")
+    return transactionHashPattern.find(rawContent.trim())?.value ?: rawContent.trim()
 }
 
 private fun formatTimestamp(timestamp: Long): String {
