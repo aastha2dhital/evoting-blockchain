@@ -3,6 +3,7 @@ package com.example.evotingmobileapp.screens
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,9 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -41,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -84,12 +88,22 @@ fun ResultsScreen(
 
     val closeElectionFailedMessage = stringResource(R.string.results_close_failed)
 
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.26f),
+            MaterialTheme.colorScheme.background
+        )
+    )
+
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
+                .background(backgroundBrush)
                 .padding(innerPadding)
                 .statusBarsPadding()
                 .navigationBarsPadding(),
@@ -320,7 +334,7 @@ private fun ElectionResultCard(
                                 election.voteCounts[candidate] ?: 0
                             }.thenBy { candidate -> candidate.lowercase(Locale.getDefault()) }
                         )
-                        .forEach { candidate ->
+                        .forEachIndexed { index, candidate ->
                             val voteCount = election.voteCounts[candidate] ?: 0
                             val percentage = if (totalVotes > 0) {
                                 (voteCount.toFloat() / totalVotes.toFloat()) * 100f
@@ -334,10 +348,12 @@ private fun ElectionResultCard(
                                     }
 
                             CandidateResultCard(
+                                rank = index + 1,
                                 candidate = candidate,
                                 voteCount = voteCount,
                                 percentage = percentage,
-                                isWinner = isWinner
+                                isWinner = isWinner,
+                                isTie = winnerSummary.isTie
                             )
                         }
                 }
@@ -398,33 +414,50 @@ private fun SummaryPanel(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         SummaryTile(
-            text = stringResource(R.string.results_status_summary, statusText)
+            label = "Election status",
+            value = stringResource(R.string.results_status_summary, statusText)
         )
 
         SummaryTile(
-            text = stringResource(R.string.results_turnout_summary, turnoutText)
+            label = "Turnout",
+            value = stringResource(R.string.results_turnout_summary, turnoutText)
         )
 
         SummaryTile(
-            text = stringResource(R.string.results_total_votes_summary, totalVotes)
+            label = "Total votes",
+            value = stringResource(R.string.results_total_votes_summary, totalVotes)
         )
     }
 }
 
 @Composable
-private fun SummaryTile(text: String) {
+private fun SummaryTile(
+    label: String,
+    value: String
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceVariant
     ) {
-        Text(
-            text = text,
+        Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold
-        )
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
     }
 }
 
@@ -481,7 +514,7 @@ private fun LockedResultsPanel() {
             )
 
             Text(
-                text = stringResource(R.string.results_pill_locking),
+                text = "Turnout can be checked while voting is open, but candidate results stay locked until the election is closed.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.82f)
             )
@@ -534,42 +567,136 @@ private fun WinnerPanel(
         )
     }
 
+    val containerColor = if (winnerSummary.hasVotes) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val contentColor = if (winnerSummary.hasVotes) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (winnerSummary.hasVotes) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Surface(
+                modifier = Modifier.size(62.dp),
+                shape = CircleShape,
+                color = if (winnerSummary.hasVotes) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.outlineVariant
+                }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (winnerSummary.hasVotes) "★" else "—",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (winnerSummary.hasVotes) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = contentColor,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = contentColor,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            if (winnerSummary.hasVotes) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    WinnerStatTile(
+                        modifier = Modifier.weight(1f),
+                        label = "Winning votes",
+                        value = winnerSummary.winningVotes.toString()
+                    )
+
+                    WinnerStatTile(
+                        modifier = Modifier.weight(1f),
+                        label = "Total votes",
+                        value = winnerSummary.totalVotes.toString()
+                    )
+                }
+
+                Text(
+                    text = if (winnerSummary.isTie) {
+                        "This election ended in a tie, so multiple candidates share the highest vote count."
+                    } else {
+                        "${winnerSummary.winnerNames.first()} won with ${winnerSummary.winningVotes} ${voteWord(winnerSummary.winningVotes)}."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = contentColor.copy(alpha = 0.82f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WinnerStatTile(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = title,
+                text = value,
                 style = MaterialTheme.typography.titleLarge,
-                color = if (winnerSummary.hasVotes) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center
             )
 
             Text(
-                text = message,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (winnerSummary.hasVotes) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                fontWeight = FontWeight.SemiBold
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -577,10 +704,12 @@ private fun WinnerPanel(
 
 @Composable
 private fun CandidateResultCard(
+    rank: Int,
     candidate: String,
     voteCount: Int,
     percentage: Float,
-    isWinner: Boolean
+    isWinner: Boolean,
+    isTie: Boolean
 ) {
     val progress by animateFloatAsState(
         targetValue = (percentage / 100f).coerceIn(0f, 1f),
@@ -610,6 +739,29 @@ private fun CandidateResultCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
+                Surface(
+                    modifier = Modifier.size(38.dp),
+                    shape = CircleShape,
+                    color = if (isWinner) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)
+                    }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = rank.toString(),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (isWinner) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                }
+
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -633,7 +785,7 @@ private fun CandidateResultCard(
                             color = MaterialTheme.colorScheme.primary
                         ) {
                             Text(
-                                text = stringResource(R.string.results_winner_badge),
+                                text = if (isTie) "TIED HIGHEST" else stringResource(R.string.results_winner_badge),
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimary,
@@ -643,12 +795,24 @@ private fun CandidateResultCard(
                     }
                 }
 
-                Text(
-                    text = stringResource(R.string.results_vote_count, voteCount),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                ) {
+                    Text(
+                        text = voteCount.toString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = voteWord(voteCount),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
             LinearProgressIndicator(
@@ -661,16 +825,29 @@ private fun CandidateResultCard(
                 trackColor = MaterialTheme.colorScheme.surface
             )
 
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Text(
+                        text = stringResource(R.string.results_vote_share, percentageText),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
                 Text(
-                    text = stringResource(R.string.results_vote_share, percentageText),
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    fontWeight = FontWeight.Bold
+                    text = if (isWinner) "Highest result" else "Candidate result",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -796,4 +973,8 @@ private fun rememberWinnerSummary(election: Election): WinnerSummary {
         winningVotes = winningVotes,
         totalVotes = totalVotes
     )
+}
+
+private fun voteWord(count: Int): String {
+    return if (count == 1) "vote" else "votes"
 }
