@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -91,8 +90,8 @@ fun DashboardScreen(
     }
 
     val subtitle = when (dashboardMode) {
-        DashboardMode.ADMIN -> stringResource(R.string.dashboard_admin_subtitle)
-        DashboardMode.VOTER -> stringResource(R.string.dashboard_voter_subtitle)
+        DashboardMode.ADMIN -> "Manage elections, check-ins, results, and blockchain records."
+        DashboardMode.VOTER -> "Review available elections and continue to verified voting."
     }
 
     val onLogout = {
@@ -112,10 +111,9 @@ fun DashboardScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f),
                             MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.28f),
-                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.24f)
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.14f)
                         )
                     )
                 )
@@ -160,7 +158,7 @@ fun DashboardScreen(
                         } else {
                             SectionHeading(
                                 title = stringResource(R.string.dashboard_latest_overview_title),
-                                subtitle = "Current election status, turnout, and blockchain-linked progress."
+                                subtitle = "Latest election summary."
                             )
 
                             ElectionOverviewCard(
@@ -173,7 +171,7 @@ fun DashboardScreen(
                         if (elections.isNotEmpty()) {
                             SectionHeading(
                                 title = stringResource(R.string.dashboard_all_elections_title),
-                                subtitle = stringResource(R.string.dashboard_all_elections_subtitle)
+                                subtitle = "All created elections."
                             )
 
                             elections
@@ -199,7 +197,7 @@ fun DashboardScreen(
                         } else {
                             SectionHeading(
                                 title = stringResource(R.string.dashboard_available_elections_title),
-                                subtitle = stringResource(R.string.dashboard_available_elections_subtitle)
+                                subtitle = "Election currently available to voters."
                             )
 
                             VoterElectionCard(
@@ -232,29 +230,29 @@ private fun DashboardBackground() {
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier
-                .size(220.dp)
+                .size(210.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 80.dp, y = 30.dp),
+                .offset(x = 82.dp, y = 34.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.09f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(160.dp)
+                .size(150.dp)
                 .align(Alignment.TopStart)
-                .offset(x = (-64).dp, y = 250.dp),
+                .offset(x = (-62).dp, y = 260.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.09f)
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(180.dp)
+                .size(165.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 70.dp, y = (-110).dp),
+                .offset(x = 66.dp, y = (-110).dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.09f)
         ) {}
     }
 }
@@ -267,12 +265,12 @@ private fun DashboardTopBar(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-        tonalElevation = 5.dp,
-        shadowElevation = 8.dp,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+        tonalElevation = 4.dp,
+        shadowElevation = 7.dp,
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
         )
     ) {
         Row(
@@ -293,11 +291,11 @@ private fun DashboardTopBar(
                     Box(contentAlignment = Alignment.Center) {
                         Text(
                             text = when (dashboardMode) {
-                                DashboardMode.ADMIN -> stringResource(R.string.admin_avatar_initials)
-                                DashboardMode.VOTER -> stringResource(R.string.voter_avatar_initials)
+                                DashboardMode.ADMIN -> "AD"
+                                DashboardMode.VOTER -> "VT"
                             },
                             style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     }
@@ -306,12 +304,14 @@ private fun DashboardTopBar(
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
                         text = when (dashboardMode) {
-                            DashboardMode.ADMIN -> stringResource(R.string.login_admin_title)
-                            DashboardMode.VOTER -> stringResource(R.string.login_voter_title)
+                            DashboardMode.ADMIN -> "Admin Dashboard"
+                            DashboardMode.VOTER -> "Voter Dashboard"
                         },
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Text(
@@ -331,10 +331,11 @@ private fun DashboardTopBar(
 
             Surface(
                 shape = RoundedCornerShape(999.dp),
-                color = when (dashboardMode) {
-                    DashboardMode.ADMIN -> MaterialTheme.colorScheme.primaryContainer
-                    DashboardMode.VOTER -> MaterialTheme.colorScheme.secondaryContainer
-                }
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                )
             ) {
                 Text(
                     text = when (dashboardMode) {
@@ -343,11 +344,8 @@ private fun DashboardTopBar(
                     },
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    color = when (dashboardMode) {
-                        DashboardMode.ADMIN -> MaterialTheme.colorScheme.onPrimaryContainer
-                        DashboardMode.VOTER -> MaterialTheme.colorScheme.onSecondaryContainer
-                    },
-                    fontWeight = FontWeight.ExtraBold
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Black
                 )
             }
         }
@@ -362,62 +360,66 @@ private fun DashboardHeroCard(
     latestElectionTitle: String?,
     dashboardMode: DashboardMode
 ) {
-    val gradient = Brush.linearGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.secondary,
-            MaterialTheme.colorScheme.tertiary
-        )
-    )
-
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(34.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 11.dp),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
         )
     ) {
         Box(
             modifier = Modifier
-                .background(brush = gradient)
-                .padding(24.dp)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.76f),
+                            Color.White,
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.34f)
+                        )
+                    )
+                )
+                .padding(22.dp)
         ) {
             HeroDecorationLayer()
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                verticalArrangement = Arrangement.spacedBy(17.dp)
             ) {
                 Surface(
                     shape = RoundedCornerShape(999.dp),
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                    )
                 ) {
                     Text(
                         text = when (dashboardMode) {
                             DashboardMode.ADMIN -> "CONTROL CENTER"
-                            DashboardMode.VOTER -> "VOTER CONTROL"
+                            DashboardMode.VOTER -> "VOTER ACCESS"
                         },
                         modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.ExtraBold
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black
                     )
                 }
 
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.ExtraBold
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Black
                 )
 
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.92f)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(
@@ -455,20 +457,20 @@ private fun HeroDecorationLayer() {
     Box(modifier = Modifier.fillMaxWidth()) {
         Surface(
             modifier = Modifier
-                .size(130.dp)
+                .size(126.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 42.dp, y = (-58).dp),
+                .offset(x = 44.dp, y = (-56).dp),
             shape = CircleShape,
-            color = Color.White.copy(alpha = 0.10f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(96.dp)
+                .size(90.dp)
                 .align(Alignment.BottomStart)
-                .offset(x = (-46).dp, y = 136.dp),
+                .offset(x = (-44).dp, y = 128.dp),
             shape = CircleShape,
-            color = Color.White.copy(alpha = 0.08f)
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f)
         ) {}
     }
 }
@@ -482,11 +484,12 @@ private fun HeroMetricBox(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f),
+        color = Color.White.copy(alpha = 0.86f),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)
-        )
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.24f)
+        ),
+        shadowElevation = 2.dp
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 13.dp),
@@ -495,8 +498,8 @@ private fun HeroMetricBox(
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -504,7 +507,7 @@ private fun HeroMetricBox(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -519,17 +522,17 @@ private fun HeroPill(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
         )
     ) {
         Text(
             text = label,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onPrimary,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -544,7 +547,7 @@ private fun AdminDashboardActions(
 ) {
     SectionHeading(
         title = stringResource(R.string.dashboard_quick_actions_title),
-        subtitle = stringResource(R.string.dashboard_admin_actions_subtitle)
+        subtitle = "Main election controls."
     )
 
     Column(
@@ -558,7 +561,7 @@ private fun AdminDashboardActions(
             ActionTile(
                 modifier = Modifier.weight(1f),
                 title = stringResource(R.string.dashboard_create_election),
-                subtitle = "Set up election",
+                subtitle = "New election",
                 icon = "+",
                 primary = true,
                 onClick = { navController.navigate(AppRoutes.CREATE_ELECTION) }
@@ -567,7 +570,7 @@ private fun AdminDashboardActions(
             ActionTile(
                 modifier = Modifier.weight(1f),
                 title = stringResource(R.string.dashboard_qr_checkin),
-                subtitle = "Verify voters",
+                subtitle = "Check voters",
                 icon = "QR",
                 primary = false,
                 onClick = { navController.navigate(AppRoutes.QR_CHECK_IN) }
@@ -581,7 +584,7 @@ private fun AdminDashboardActions(
             ActionTile(
                 modifier = Modifier.weight(1f),
                 title = stringResource(R.string.dashboard_view_results),
-                subtitle = "Winner & totals",
+                subtitle = "Winner totals",
                 icon = "WIN",
                 primary = false,
                 onClick = { navController.navigate(AppRoutes.RESULTS) }
@@ -608,7 +611,7 @@ private fun VoterDashboardActions(
 ) {
     SectionHeading(
         title = stringResource(R.string.dashboard_quick_actions_title),
-        subtitle = stringResource(R.string.dashboard_voter_actions_subtitle)
+        subtitle = "Continue to voting or verify a receipt."
     )
 
     Column(
@@ -617,7 +620,7 @@ private fun VoterDashboardActions(
     ) {
         DashboardPrimaryActionButton(
             text = stringResource(R.string.dashboard_vote_now),
-            icon = "\u2713",
+            icon = "OK",
             onClick = { navController.navigate(AppRoutes.VOTING) }
         )
 
@@ -629,13 +632,13 @@ private fun VoterDashboardActions(
             shape = RoundedCornerShape(18.dp),
             border = BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.36f)
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.34f)
             )
         ) {
             Text(
                 text = stringResource(R.string.dashboard_verify_receipt),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.Black
             )
         }
 
@@ -660,7 +663,7 @@ private fun ActionTile(
 
     Card(
         modifier = modifier
-            .height(148.dp)
+            .height(138.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
@@ -668,9 +671,9 @@ private fun ActionTile(
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = accentColor.copy(alpha = 0.25f)
+            color = accentColor.copy(alpha = 0.23f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
             modifier = Modifier
@@ -678,7 +681,7 @@ private fun ActionTile(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            accentColor.copy(alpha = 0.14f),
+                            accentColor.copy(alpha = 0.12f),
                             MaterialTheme.colorScheme.surface
                         )
                     )
@@ -687,7 +690,7 @@ private fun ActionTile(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Surface(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(46.dp),
                 shape = RoundedCornerShape(18.dp),
                 color = accentColor,
                 shadowElevation = 5.dp
@@ -696,7 +699,7 @@ private fun ActionTile(
                     Text(
                         text = icon,
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimary,
                         textAlign = TextAlign.Center
                     )
@@ -708,7 +711,7 @@ private fun ActionTile(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Black,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -743,7 +746,7 @@ private fun DashboardPrimaryActionButton(
         Text(
             text = "$icon  $text",
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.Black
         )
     }
 }
@@ -760,7 +763,7 @@ private fun LogoutButton(
             text = stringResource(R.string.dashboard_logout),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.error,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.Black
         )
     }
 }
@@ -777,7 +780,7 @@ private fun SectionHeading(
             text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.Black
         )
 
         Text(
@@ -796,29 +799,38 @@ private fun EmptyElectionState(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.86f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.26f)
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.24f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.38f),
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
                 text = stringResource(R.string.dashboard_empty_admin_title),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                fontWeight = FontWeight.ExtraBold
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Black
             )
 
             Text(
                 text = stringResource(R.string.dashboard_empty_admin_description),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.84f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Button(
@@ -830,7 +842,7 @@ private fun EmptyElectionState(
             ) {
                 Text(
                     text = stringResource(R.string.dashboard_create_election),
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.Black
                 )
             }
         }
@@ -843,29 +855,38 @@ private fun VoterEmptyState() {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.86f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.26f)
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.24f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.36f),
+                            MaterialTheme.colorScheme.surface
+                        )
+                    )
+                )
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = stringResource(R.string.dashboard_empty_voter_title),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                fontWeight = FontWeight.ExtraBold
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Black
             )
 
             Text(
                 text = stringResource(R.string.dashboard_empty_voter_description),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.84f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -892,12 +913,12 @@ private fun ElectionOverviewCard(
         border = BorderStroke(
             width = 1.dp,
             color = if (emphasize) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.23f)
             } else {
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.26f)
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 9.dp else 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 8.dp else 4.dp)
     ) {
         Column(
             modifier = Modifier
@@ -906,9 +927,9 @@ private fun ElectionOverviewCard(
                     Brush.verticalGradient(
                         colors = listOf(
                             if (emphasize) {
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f)
                             } else {
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f)
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
                             },
                             MaterialTheme.colorScheme.surface
                         )
@@ -919,7 +940,7 @@ private fun ElectionOverviewCard(
         ) {
             ElectionCardHeader(
                 title = sectionTitle,
-                subtitle = stringResource(R.string.dashboard_blockchain_election_overview),
+                subtitle = "Blockchain election overview",
                 status = status
             )
 
@@ -999,12 +1020,12 @@ private fun VoterElectionCard(
         border = BorderStroke(
             width = 1.dp,
             color = if (emphasize) {
-                MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
+                MaterialTheme.colorScheme.secondary.copy(alpha = 0.23f)
             } else {
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.26f)
             }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 9.dp else 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (emphasize) 8.dp else 4.dp)
     ) {
         Column(
             modifier = Modifier
@@ -1013,9 +1034,9 @@ private fun VoterElectionCard(
                     Brush.verticalGradient(
                         colors = listOf(
                             if (emphasize) {
-                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.34f)
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.30f)
                             } else {
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.36f)
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.28f)
                             },
                             MaterialTheme.colorScheme.surface
                         )
@@ -1088,7 +1109,7 @@ private fun ElectionCardHeader(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1115,13 +1136,13 @@ private fun MetricChip(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
         color = if (strong) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.70f)
         } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.82f)
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f)
         },
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.20f)
         )
     ) {
         Column(
@@ -1136,7 +1157,7 @@ private fun MetricChip(
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 },
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1192,7 +1213,7 @@ private fun StatusBadge(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
             style = MaterialTheme.typography.labelMedium,
             color = contentColor,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Black,
             maxLines = 1
         )
     }
@@ -1206,7 +1227,7 @@ private fun DetailRow(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.58f)
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.52f)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
@@ -1216,7 +1237,7 @@ private fun DetailRow(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.ExtraBold
+                fontWeight = FontWeight.Black
             )
 
             Text(

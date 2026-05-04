@@ -57,10 +57,9 @@ fun LoginScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.42f),
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f),
                         MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.30f),
-                        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.26f)
+                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.18f)
                     )
                 )
             )
@@ -74,7 +73,7 @@ fun LoginScreen(
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(top = 16.dp, bottom = 118.dp),
+                .padding(top = 16.dp, bottom = 116.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             TopBrandBar()
@@ -85,9 +84,9 @@ fun LoginScreen(
                 onObserverClick = { navController.navigate(AppRoutes.OBSERVER_TURNOUT) }
             )
 
-            SectionTitle(
-                title = "Choose your role",
-                subtitle = "Select the correct portal to continue securely."
+            SectionHeader(
+                title = "Access portals",
+                subtitle = "Choose the correct role to continue."
             )
 
             RoleAccessGrid(
@@ -96,9 +95,9 @@ fun LoginScreen(
                 onObserverClick = { navController.navigate(AppRoutes.OBSERVER_TURNOUT) }
             )
 
-            SectionTitle(
-                title = "How SecureVote Nepal works",
-                subtitle = "A simple flow from voter check-in to verified final results."
+            SectionHeader(
+                title = "Election flow",
+                subtitle = "Check in, vote, verify, and review results."
             )
 
             FeatureStack()
@@ -120,27 +119,27 @@ private fun CivicBackground() {
             modifier = Modifier
                 .size(220.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 82.dp, y = 62.dp),
+                .offset(x = 84.dp, y = 58.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(168.dp)
+                .size(170.dp)
                 .align(Alignment.TopStart)
-                .offset(x = (-70).dp, y = 260.dp),
+                .offset(x = (-74).dp, y = 270.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(180.dp)
+                .size(160.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 70.dp, y = (-160).dp),
+                .offset(x = 66.dp, y = (-150).dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.14f)
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f)
         ) {}
     }
 }
@@ -150,12 +149,12 @@ private fun TopBrandBar() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-        tonalElevation = 5.dp,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f),
+        tonalElevation = 4.dp,
         shadowElevation = 8.dp,
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.42f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
         )
     ) {
         Row(
@@ -167,35 +166,43 @@ private fun TopBrandBar() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                BrandMark(text = "VN")
+                BrandMark(text = "SV")
 
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
                         text = "SecureVote Nepal",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Text(
-                        text = "Secure Digital Voting",
+                        text = "Blockchain voting prototype",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
 
             Surface(
                 shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                )
             ) {
                 Text(
-                    text = "Verified",
+                    text = "Nepal",
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontWeight = FontWeight.ExtraBold
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Black
                 )
             }
         }
@@ -214,7 +221,7 @@ private fun BrandMark(text: String) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onPrimary
             )
         }
@@ -235,7 +242,7 @@ private fun MainHeroCard(
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.20f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
     ) {
@@ -245,10 +252,9 @@ private fun MainHeroCard(
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
                             MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
-                            MaterialTheme.colorScheme.tertiary.copy(alpha = 0.13f)
+                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f)
                         )
                     )
                 )
@@ -262,18 +268,18 @@ private fun MainHeroCard(
             ) {
                 Surface(
                     shape = RoundedCornerShape(999.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
                     border = BorderStroke(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                     )
                 ) {
                     Text(
-                        text = "SECURE • VERIFIED • TRANSPARENT",
+                        text = "SECURE  VERIFIED  TRANSPARENT",
                         modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -287,31 +293,30 @@ private fun MainHeroCard(
                         verticalArrangement = Arrangement.spacedBy(9.dp)
                     ) {
                         Text(
-                            text = "SecureVote Nepal",
-                            style = MaterialTheme.typography.displaySmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            lineHeight = MaterialTheme.typography.displaySmall.lineHeight
+                            text = "Digital voting with verified access",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Text(
-                            text = "A modern election platform for secure check-in, trusted voting, observer turnout, and clear blockchain-backed results.",
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = "Create elections, check in voters, cast votes, and verify receipts using a local blockchain prototype.",
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
                     Surface(
-                        modifier = Modifier.size(78.dp),
+                        modifier = Modifier.size(76.dp),
                         shape = RoundedCornerShape(26.dp),
                         color = MaterialTheme.colorScheme.primary,
                         shadowElevation = 8.dp
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
-                                text = "VN",
+                                text = "SV",
                                 style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Black,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
@@ -320,67 +325,62 @@ private fun MainHeroCard(
 
                 HeroMetricRow()
 
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                Button(
+                    onClick = onVoterClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
                 ) {
-                    Button(
-                        onClick = onVoterClick,
+                    Text(
+                        text = "Continue as Voter",
+                        fontWeight = FontWeight.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onAdminClick,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
+                            .weight(1f)
+                            .height(54.dp),
                         shape = RoundedCornerShape(18.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.40f)
+                        )
                     ) {
                         Text(
-                            text = "Continue as Voter",
-                            fontWeight = FontWeight.ExtraBold,
+                            text = "Admin",
+                            fontWeight = FontWeight.Black,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    OutlinedButton(
+                        onClick = onObserverClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(54.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.42f)
+                        )
                     ) {
-                        OutlinedButton(
-                            onClick = onAdminClick,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
-                            )
-                        ) {
-                            Text(
-                                text = "Admin OTP",
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-
-                        OutlinedButton(
-                            onClick = onObserverClick,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(56.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            border = BorderStroke(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.46f)
-                            )
-                        ) {
-                            Text(
-                                text = "Observer View",
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                        Text(
+                            text = "Observer",
+                            fontWeight = FontWeight.Black,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -393,20 +393,20 @@ private fun HeroDecorationLayer() {
     Box(modifier = Modifier.fillMaxWidth()) {
         Surface(
             modifier = Modifier
-                .size(130.dp)
+                .size(126.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 46.dp, y = (-56).dp),
+                .offset(x = 48.dp, y = (-58).dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)
         ) {}
 
         Surface(
             modifier = Modifier
                 .size(92.dp)
                 .align(Alignment.BottomStart)
-                .offset(x = (-46).dp, y = 142.dp),
+                .offset(x = (-46).dp, y = 140.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f)
         ) {}
     }
 }
@@ -426,13 +426,13 @@ private fun HeroMetricRow() {
         HeroMetricCard(
             modifier = Modifier.weight(1f),
             label = "Vote",
-            value = "Verified"
+            value = "On-chain"
         )
 
         HeroMetricCard(
             modifier = Modifier.weight(1f),
-            label = "Observe",
-            value = "Turnout"
+            label = "Result",
+            value = "Verified"
         )
     }
 }
@@ -446,10 +446,10 @@ private fun HeroMetricCard(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.36f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
         ),
         shadowElevation = 2.dp
     ) {
@@ -462,7 +462,7 @@ private fun HeroMetricCard(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 maxLines = 1
             )
 
@@ -479,17 +479,15 @@ private fun HeroMetricCard(
 }
 
 @Composable
-private fun SectionTitle(
+private fun SectionHeader(
     title: String,
     subtitle: String
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Black,
             color = MaterialTheme.colorScheme.onBackground
         )
 
@@ -517,20 +515,20 @@ private fun RoleAccessGrid(
         ) {
             RoleAccessCard(
                 modifier = Modifier.weight(1f),
-                title = "Admin Portal",
-                subtitle = "Use OTP verification to create elections, check in voters, and review admin controls.",
+                title = "Admin",
+                subtitle = "Create elections and manage check-ins.",
                 initials = "AD",
-                badge = "Election Control",
+                badge = "Email OTP",
                 usePrimary = true,
                 onClick = onAdminClick
             )
 
             RoleAccessCard(
                 modifier = Modifier.weight(1f),
-                title = "Voter Portal",
-                subtitle = "Choose your voter profile, complete check-in, and cast your vote securely.",
+                title = "Voter",
+                subtitle = "Check in and cast one verified vote.",
                 initials = "VT",
-                badge = "Secure Voting",
+                badge = "Ballot",
                 usePrimary = false,
                 onClick = onVoterClick
             )
@@ -538,10 +536,10 @@ private fun RoleAccessGrid(
 
         RoleAccessCard(
             modifier = Modifier.fillMaxWidth(),
-            title = "Observer View",
-            subtitle = "Read-only turnout and results visibility without election creation, voting, check-in, or admin controls.",
+            title = "Observer",
+            subtitle = "View public turnout and closed-election results.",
             initials = "OB",
-            badge = "Public Turnout",
+            badge = "Read only",
             usePrimary = false,
             onClick = onObserverClick
         )
@@ -572,7 +570,7 @@ private fun RoleAccessCard(
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = accentColor.copy(alpha = 0.25f)
+            color = accentColor.copy(alpha = 0.24f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 7.dp)
     ) {
@@ -582,33 +580,33 @@ private fun RoleAccessCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            accentColor.copy(alpha = 0.16f),
+                            accentColor.copy(alpha = 0.12f),
                             MaterialTheme.colorScheme.surface
                         )
                     )
                 )
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(11.dp)
         ) {
             Surface(
                 shape = RoundedCornerShape(999.dp),
-                color = accentColor.copy(alpha = 0.12f)
+                color = accentColor.copy(alpha = 0.10f)
             ) {
                 Text(
                     text = badge,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = accentColor,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Black,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
             Surface(
-                modifier = Modifier.size(64.dp),
-                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier.size(60.dp),
+                shape = RoundedCornerShape(23.dp),
                 color = accentColor,
                 shadowElevation = 5.dp
             ) {
@@ -616,7 +614,7 @@ private fun RoleAccessCard(
                     Text(
                         text = initials,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         color = Color.White
                     )
                 }
@@ -625,10 +623,10 @@ private fun RoleAccessCard(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -637,7 +635,7 @@ private fun RoleAccessCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                maxLines = 4,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -646,38 +644,36 @@ private fun RoleAccessCard(
 
 @Composable
 private fun FeatureStack() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         FeatureRow(
-            icon = "QR",
-            title = "QR Check-in",
-            description = "Verify eligible voters before the ballot opens."
+            label = "01",
+            title = "QR check-in",
+            description = "Only eligible checked-in voters can continue."
         )
 
         FeatureRow(
-            icon = "VOTE",
-            title = "Trusted Vote",
-            description = "Cast one secure vote and receive a transaction receipt with QR sharing."
+            label = "02",
+            title = "Blockchain vote",
+            description = "Votes are submitted to the deployed smart contract."
         )
 
         FeatureRow(
-            icon = "OBS",
-            title = "Observer Turnout",
-            description = "Allow observers to view turnout and closed-election results without admin access."
+            label = "03",
+            title = "Receipt verification",
+            description = "Transaction hashes can be checked after voting."
         )
 
         FeatureRow(
-            icon = "WIN",
-            title = "Clear Results",
-            description = "View the winner, total votes, and vote share clearly after election closure."
+            label = "04",
+            title = "Final results",
+            description = "Results are shown clearly after election closure."
         )
     }
 }
 
 @Composable
 private fun FeatureRow(
-    icon: String,
+    label: String,
     title: String,
     description: String
 ) {
@@ -689,7 +685,7 @@ private fun FeatureRow(
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.36f)
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
@@ -699,9 +695,9 @@ private fun FeatureRow(
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.48f),
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.36f),
                             MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.32f)
+                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f)
                         )
                     )
                 )
@@ -710,16 +706,16 @@ private fun FeatureRow(
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Surface(
-                modifier = Modifier.size(54.dp),
+                modifier = Modifier.size(52.dp),
                 shape = RoundedCornerShape(19.dp),
                 color = MaterialTheme.colorScheme.primary,
                 shadowElevation = 4.dp
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = icon,
+                        text = label,
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
@@ -732,7 +728,7 @@ private fun FeatureRow(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
@@ -769,7 +765,7 @@ private fun BottomHomeBar(
             tonalElevation = 6.dp,
             border = BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.34f)
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.30f)
             )
         ) {
             Row(
@@ -778,9 +774,9 @@ private fun BottomHomeBar(
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.40f),
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.32f),
                                 MaterialTheme.colorScheme.surface,
-                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.30f)
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.22f)
                             )
                         )
                     )
@@ -791,7 +787,6 @@ private fun BottomHomeBar(
                 BottomItem(
                     modifier = Modifier.weight(1f),
                     label = "Home",
-                    icon = "⌂",
                     selected = true,
                     onClick = {}
                 )
@@ -799,7 +794,6 @@ private fun BottomHomeBar(
                 BottomItem(
                     modifier = Modifier.weight(1f),
                     label = "Admin",
-                    icon = "A",
                     selected = false,
                     onClick = onAdminClick
                 )
@@ -807,7 +801,6 @@ private fun BottomHomeBar(
                 BottomItem(
                     modifier = Modifier.weight(1f),
                     label = "Voter",
-                    icon = "V",
                     selected = false,
                     onClick = onVoterClick
                 )
@@ -815,7 +808,6 @@ private fun BottomHomeBar(
                 BottomItem(
                     modifier = Modifier.weight(1f),
                     label = "Observer",
-                    icon = "O",
                     selected = false,
                     onClick = onObserverClick
                 )
@@ -828,7 +820,6 @@ private fun BottomHomeBar(
 private fun BottomItem(
     modifier: Modifier = Modifier,
     label: String,
-    icon: String,
     selected: Boolean,
     onClick: () -> Unit
 ) {
@@ -848,10 +839,10 @@ private fun BottomItem(
             }
         ) {
             Text(
-                text = icon,
+                text = label.take(1),
                 modifier = Modifier.padding(horizontal = 13.dp, vertical = 5.dp),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Black,
                 color = if (selected) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -864,7 +855,7 @@ private fun BottomItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+            fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
             color = if (selected) {
                 MaterialTheme.colorScheme.onSurface
             } else {

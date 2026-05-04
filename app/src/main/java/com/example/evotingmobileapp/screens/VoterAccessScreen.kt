@@ -2,8 +2,10 @@
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,14 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.evotingmobileapp.BuildConfig
-import com.example.evotingmobileapp.R
 import com.example.evotingmobileapp.auth.AuthSessionViewModel
 import com.example.evotingmobileapp.blockchain.DemoVoterProfile
 import com.example.evotingmobileapp.blockchain.DemoWallets
@@ -68,8 +68,26 @@ fun VoterAccessScreen(
     var selectedVoterIndex by rememberSaveable { mutableIntStateOf(0) }
     var qrRefreshKey by rememberSaveable { mutableIntStateOf(0) }
 
-    val demoVoters = DemoWallets.voters
-    val selectedVoter = demoVoters.getOrElse(selectedVoterIndex) { demoVoters.first() }
+    val voters = DemoWallets.voters
+
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.24f),
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.16f)
+        )
+    )
+
+    if (voters.isEmpty()) {
+        EmptyVoterAccessState(
+            navController = navController,
+            backgroundBrush = backgroundBrush
+        )
+        return
+    }
+
+    val safeSelectedIndex = selectedVoterIndex.coerceIn(0, voters.lastIndex)
+    val selectedVoter = voters[safeSelectedIndex]
     val voterWalletAddress = selectedVoter.address
 
     val secureQrPass = remember(voterWalletAddress, qrRefreshKey) {
@@ -79,14 +97,6 @@ fun VoterAccessScreen(
     val qrBitmap = remember(secureQrPass.content) {
         generateWalletQrBitmap(secureQrPass.content)
     }
-
-    val backgroundBrush = Brush.verticalGradient(
-        colors = listOf(
-            MaterialTheme.colorScheme.background,
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.34f),
-            MaterialTheme.colorScheme.background
-        )
-    )
 
     Box(
         modifier = Modifier
@@ -106,10 +116,10 @@ fun VoterAccessScreen(
             VoterAccessHeader()
 
             VoterSelectorCard(
-                voters = demoVoters,
-                selectedIndex = selectedVoterIndex,
-                onVoterSelected = {
-                    selectedVoterIndex = it
+                voters = voters,
+                selectedIndex = safeSelectedIndex,
+                onVoterSelected = { index ->
+                    selectedVoterIndex = index
                     qrRefreshKey += 1
                 }
             )
@@ -137,10 +147,10 @@ fun VoterAccessScreen(
                 }
             )
 
-            QuickInfoRow()
+            SecuritySummaryRow()
 
             if (BuildConfig.ENABLE_DEMO_WALLET_SHORTCUTS) {
-                DemoModeNote()
+                LocalWalletNotice()
             }
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -149,53 +159,159 @@ fun VoterAccessScreen(
 }
 
 @Composable
+private fun EmptyVoterAccessState(
+    navController: NavHostController,
+    backgroundBrush: Brush
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundBrush)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(18.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(22.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SecureVoteMark(
+                    initials = "SV",
+                    modifier = Modifier.size(58.dp)
+                )
+
+                Text(
+                    text = "No voter wallets found",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "Add voter wallet details to continue with the check-in flow.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                OutlinedButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text(
+                        text = "Back to homepage",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun VoterAccessHeader() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                modifier = Modifier.size(54.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(contentAlignment = Alignment.Center) {
+                SecureVoteMark(
+                    initials = "SV",
+                    modifier = Modifier.size(56.dp)
+                )
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     Text(
-                        text = stringResource(R.string.voter_avatar_initials),
+                        text = "SecureVote Nepal",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
                     )
+
+                    Text(
+                        text = "Voter access",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
+
+                HeaderChip(text = "QR PASS")
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.voter_portal_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = stringResource(R.string.voter_chip_qr),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Text(
+                text = "Select a registered voter, generate a time-limited QR pass, then continue to the voting area.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
+    }
+}
+
+@Composable
+private fun SecureVoteMark(
+    initials: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeaderChip(text: String) {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     }
 }
 
@@ -217,17 +333,9 @@ private fun VoterSelectorCard(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = stringResource(R.string.voter_select_demo_voter_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Text(
-                text = stringResource(R.string.voter_select_demo_voter_message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+            SectionHeader(
+                title = "Choose registered voter",
+                subtitle = "This selects the wallet that will be used for the voter session."
             )
 
             voters.forEachIndexed { index, voter ->
@@ -242,22 +350,56 @@ private fun VoterSelectorCard(
 }
 
 @Composable
+private fun SectionHeader(
+    title: String,
+    subtitle: String
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
 private fun VoterChoiceRow(
     voter: DemoVoterProfile,
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val containerColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.54f)
+    }
+
+    val border = if (selected) {
+        BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f))
+    } else {
+        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f))
+    }
+
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f)
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f)
-        }
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        color = containerColor,
+        border = border
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             RadioButton(
@@ -269,7 +411,7 @@ private fun VoterChoiceRow(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
                     text = voter.label,
@@ -286,6 +428,21 @@ private fun VoterChoiceRow(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+
+            if (selected) {
+                Surface(
+                    shape = RoundedCornerShape(999.dp),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = "Selected",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }
@@ -299,7 +456,7 @@ private fun VoterQrPassCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -315,32 +472,38 @@ private fun VoterQrPassCard(
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.78f)
             ) {
                 Text(
-                    text = "${stringResource(R.string.voter_qr_badge)} • ${voter.label}",
+                    text = "CHECK-IN PASS",
                     modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.dp),
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
 
-            Text(
-                text = stringResource(R.string.voter_qr_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Scan this QR at the polling desk",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
 
-            Text(
-                text = "This QR pass is time-limited and includes a one-time nonce for prototype anti-replay protection.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
+                Text(
+                    text = "The pass is linked to the selected wallet and expires after 2 minutes.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
 
             Surface(
-                shape = RoundedCornerShape(26.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
             ) {
                 Box(
                     modifier = Modifier.padding(16.dp),
@@ -348,13 +511,16 @@ private fun VoterQrPassCard(
                 ) {
                     Image(
                         bitmap = qrBitmap.asImageBitmap(),
-                        contentDescription = stringResource(R.string.voter_qr_title),
-                        modifier = Modifier.size(198.dp)
+                        contentDescription = "Voter check-in QR pass",
+                        modifier = Modifier.size(202.dp)
                     )
                 }
             }
 
-            WalletAddressBox(voterWalletAddress = voter.address)
+            WalletAddressBox(
+                voterLabel = voter.label,
+                voterWalletAddress = voter.address
+            )
 
             SecureQrDetailsBox(secureQrPass = secureQrPass)
 
@@ -377,20 +543,28 @@ private fun VoterQrPassCard(
 
 @Composable
 private fun WalletAddressBox(
+    voterLabel: String,
     voterWalletAddress: String
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.50f)
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.44f)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(
-                text = stringResource(R.string.label_wallet_address),
+                text = "Selected voter",
                 style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Text(
+                text = voterLabel,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -398,7 +572,9 @@ private fun WalletAddressBox(
             Text(
                 text = shortenWalletAddress(voterWalletAddress),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -410,28 +586,34 @@ private fun SecureQrDetailsBox(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.52f)
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(
-                text = "Secure QR payload",
+                text = "Pass security",
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
 
             Text(
-                text = "Valid for 2 minutes from refresh.",
+                text = "Time-limited QR with a refreshed session token.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
 
             Text(
-                text = "Nonce: ${secureQrPass.nonce.take(8)}...",
+                text = "Valid for ${getQrValidityMinutes()} minutes from refresh.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+
+            Text(
+                text = "Bound wallet: ${shortenWalletAddress(secureQrPass.walletAddress)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
@@ -457,19 +639,26 @@ private fun ContinueAsVoterCard(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = stringResource(R.string.voter_continue_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+            SectionHeader(
+                title = "Continue to voting",
+                subtitle = "Use the selected wallet for the voter dashboard and ballot submission."
             )
 
-            Text(
-                text = "${voter.label} • ${shortenWalletAddress(voter.address)}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.56f)
+            ) {
+                Text(
+                    text = "${voter.label}  |  ${shortenWalletAddress(voter.address)}",
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
 
             Button(
                 onClick = onContinue,
@@ -479,7 +668,7 @@ private fun ContinueAsVoterCard(
                 shape = RoundedCornerShape(18.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.action_continue_as_voter),
+                    text = "Continue as voter",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -493,7 +682,7 @@ private fun ContinueAsVoterCard(
                 shape = RoundedCornerShape(18.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.action_back_to_homepage),
+                    text = "Back to homepage",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -503,19 +692,21 @@ private fun ContinueAsVoterCard(
 }
 
 @Composable
-private fun QuickInfoRow() {
+private fun SecuritySummaryRow() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         MiniInfoTile(
             modifier = Modifier.weight(1f),
-            title = stringResource(R.string.voter_chip_qr)
+            title = "QR check-in",
+            subtitle = "Required before vote"
         )
 
         MiniInfoTile(
             modifier = Modifier.weight(1f),
-            title = stringResource(R.string.voter_chip_receipt)
+            title = "Receipt",
+            subtitle = "Hash after voting"
         )
     }
 }
@@ -523,32 +714,45 @@ private fun QuickInfoRow() {
 @Composable
 private fun MiniInfoTile(
     modifier: Modifier = Modifier,
-    title: String
+    title: String,
+    subtitle: String
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.62f)
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
     ) {
-        Text(
-            text = title,
+        Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 13.dp),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            textAlign = TextAlign.Center
-        )
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.78f),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
 @Composable
-private fun DemoModeNote() {
+private fun LocalWalletNotice() {
     Surface(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
     ) {
         Text(
-            text = stringResource(R.string.voter_demo_mode),
+            text = "Local test wallets are enabled for this prototype build. Do not use these wallets outside the local Hardhat demonstration.",
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -625,4 +829,8 @@ private fun generateWalletQrBitmap(content: String, size: Int = 900): Bitmap {
 private fun shortenWalletAddress(address: String): String {
     if (address.length <= 18) return address
     return "${address.take(10)}...${address.takeLast(8)}"
+}
+
+private fun getQrValidityMinutes(): Int {
+    return (CHECK_IN_QR_VALIDITY_MILLIS / 60_000L).toInt()
 }
