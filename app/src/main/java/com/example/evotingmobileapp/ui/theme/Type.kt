@@ -19,56 +19,56 @@ val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = SecureVoteFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 42.sp,
-        lineHeight = 50.sp,
-        letterSpacing = (-1.0).sp
+        fontSize = 44.sp,
+        lineHeight = 52.sp,
+        letterSpacing = (-1.10).sp
     ),
 
     displayMedium = TextStyle(
         fontFamily = SecureVoteFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 44.sp,
-        letterSpacing = (-0.75).sp
+        fontSize = 38.sp,
+        lineHeight = 46.sp,
+        letterSpacing = (-0.85).sp
     ),
 
     displaySmall = TextStyle(
         fontFamily = SecureVoteFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = (-0.55).sp
+        fontSize = 33.sp,
+        lineHeight = 41.sp,
+        letterSpacing = (-0.60).sp
     ),
 
     headlineLarge = TextStyle(
         fontFamily = SecureVoteFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
-        lineHeight = 38.sp,
+        fontSize = 31.sp,
+        lineHeight = 39.sp,
         letterSpacing = (-0.45).sp
     ),
 
     headlineMedium = TextStyle(
         fontFamily = SecureVoteFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        lineHeight = 34.sp,
-        letterSpacing = (-0.30).sp
+        fontSize = 27.sp,
+        lineHeight = 35.sp,
+        letterSpacing = (-0.35).sp
     ),
 
     headlineSmall = TextStyle(
         fontFamily = SecureVoteFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 23.sp,
-        lineHeight = 30.sp,
-        letterSpacing = (-0.20).sp
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        lineHeight = 31.sp,
+        letterSpacing = (-0.22).sp
     ),
 
     titleLarge = TextStyle(
         fontFamily = SecureVoteFontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 21.sp,
-        lineHeight = 28.sp,
+        lineHeight = 29.sp,
         letterSpacing = (-0.12).sp
     ),
 
@@ -117,7 +117,7 @@ val Typography = Typography(
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
-        letterSpacing = 0.10.sp
+        letterSpacing = 0.12.sp
     ),
 
     labelMedium = TextStyle(
@@ -125,7 +125,7 @@ val Typography = Typography(
         fontWeight = FontWeight.SemiBold,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.09.sp
+        letterSpacing = 0.10.sp
     ),
 
     labelSmall = TextStyle(
@@ -133,6 +133,6 @@ val Typography = Typography(
         fontWeight = FontWeight.SemiBold,
         fontSize = 11.sp,
         lineHeight = 14.sp,
-        letterSpacing = 0.09.sp
+        letterSpacing = 0.10.sp
     )
 )

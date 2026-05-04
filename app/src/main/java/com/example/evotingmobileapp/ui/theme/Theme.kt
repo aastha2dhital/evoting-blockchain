@@ -19,7 +19,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = Color.White,
     primaryContainer = CivicBlueLight,
     onPrimaryContainer = CivicBlueDark,
-    inversePrimary = Color(0xFFAFC4FF),
+    inversePrimary = Color(0xFFB9CCFF),
 
     secondary = ElectionRed,
     onSecondary = Color.White,
@@ -27,7 +27,7 @@ private val LightColorScheme = lightColorScheme(
     onSecondaryContainer = ElectionRedDark,
 
     tertiary = BallotGold,
-    onTertiary = Color.White,
+    onTertiary = Color(0xFF241A00),
     tertiaryContainer = BallotGoldLight,
     onTertiaryContainer = BallotGoldDark,
 
@@ -46,7 +46,7 @@ private val LightColorScheme = lightColorScheme(
     onErrorContainer = ErrorRedDark,
 
     outline = BorderSoft,
-    outlineVariant = Color(0xFFE5ECF7),
+    outlineVariant = Color(0xFFE3EAF6),
 
     scrim = Color.Black,
     inverseSurface = Ink900,
@@ -55,8 +55,8 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFAFC4FF),
-    onPrimary = Color(0xFF082767),
+    primary = Color(0xFFB8C9FF),
+    onPrimary = Color(0xFF06215C),
     primaryContainer = CivicBlueDark,
     onPrimaryContainer = CivicBlueLight,
     inversePrimary = CivicBlue,
@@ -91,15 +91,15 @@ private val DarkColorScheme = darkColorScheme(
     scrim = Color.Black,
     inverseSurface = Color(0xFFE7ECF6),
     inverseOnSurface = Ink900,
-    surfaceTint = Color(0xFFAFC4FF)
+    surfaceTint = Color(0xFFB8C9FF)
 )
 
 private val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(18.dp),
-    large = RoundedCornerShape(26.dp),
-    extraLarge = RoundedCornerShape(34.dp)
+    small = RoundedCornerShape(14.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(36.dp)
 )
 
 @Composable
