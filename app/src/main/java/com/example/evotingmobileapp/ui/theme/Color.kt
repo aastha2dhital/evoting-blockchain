@@ -2,32 +2,34 @@ package com.example.evotingmobileapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// SecureVote Nepal core identity
-val CivicBlue = Color(0xFF123B8C)
-val CivicBlueDark = Color(0xFF06215C)
-val CivicBlueLight = Color(0xFFE7EEFF)
+// Premium SecureVote palette
+// Direction: deep civic purple + teal + amber + warm glass surfaces
 
-val RoyalBlue = Color(0xFF1D4ED8)
-val RoyalBlueDark = Color(0xFF0F2F8F)
-val RoyalBlueLight = Color(0xFFDDE8FF)
+val RoyalIndigo = Color(0xFF3B238C)
+val RoyalIndigoDark = Color(0xFF21104F)
+val RoyalIndigoDeep = Color(0xFF160A36)
+val RoyalIndigoLight = Color(0xFFE8DEFF)
 
-// Nepal-inspired civic accent
-val ElectionRed = Color(0xFFD7263D)
-val ElectionRedDark = Color(0xFF8F1324)
-val ElectionRedLight = Color(0xFFFFE8EC)
+val ElectricViolet = Color(0xFF6C43FF)
+val ElectricVioletDark = Color(0xFF4520B8)
+val ElectricVioletLight = Color(0xFFF0E9FF)
 
-val BallotGold = Color(0xFFE0A42F)
-val BallotGoldDark = Color(0xFF835400)
-val BallotGoldLight = Color(0xFFFFF1D2)
+val EmeraldTeal = Color(0xFF009688)
+val EmeraldTealDark = Color(0xFF005C53)
+val EmeraldTealLight = Color(0xFFD9F8F2)
 
-// Trust / success / verification tones
-val TrustTeal = Color(0xFF0D9488)
-val TrustTealDark = Color(0xFF075F59)
-val TrustTealLight = Color(0xFFDDF7F4)
+val WarmAmber = Color(0xFFF3A833)
+val WarmAmberDark = Color(0xFF865400)
+val WarmAmberLight = Color(0xFFFFEBC2)
 
-val SuccessGreen = Color(0xFF168A55)
-val SuccessGreenDark = Color(0xFF0E5F3C)
-val SuccessGreenLight = Color(0xFFE0F7EA)
+val CivicRose = Color(0xFFD64D7F)
+val CivicRoseDark = Color(0xFF8B1E49)
+val CivicRoseLight = Color(0xFFFFE4EF)
+
+// Feedback colours
+val SuccessGreen = Color(0xFF12805C)
+val SuccessGreenDark = Color(0xFF0A573D)
+val SuccessGreenLight = Color(0xFFDDF8EC)
 
 val WarningAmber = Color(0xFFD97706)
 val WarningAmberDark = Color(0xFF92400E)
@@ -37,72 +39,101 @@ val ErrorRed = Color(0xFFBA1A1A)
 val ErrorRedDark = Color(0xFF8C1111)
 val ErrorRedLight = Color(0xFFFFDAD6)
 
-// Neutral ink system
-val Ink950 = Color(0xFF07111F)
-val Ink900 = Color(0xFF101827)
-val Ink850 = Color(0xFF172033)
-val Ink800 = Color(0xFF1E293B)
-val Ink700 = Color(0xFF334155)
-val Ink600 = Color(0xFF475569)
-val Ink500 = Color(0xFF64748B)
-val Ink400 = Color(0xFF94A3B8)
+// Text / ink
+val Ink950 = Color(0xFF080716)
+val Ink900 = Color(0xFF111026)
+val Ink850 = Color(0xFF17142F)
+val Ink800 = Color(0xFF221D3E)
+val Ink700 = Color(0xFF342E55)
+val Ink600 = Color(0xFF514B6A)
+val Ink500 = Color(0xFF716A86)
+val Ink400 = Color(0xFF9B94AE)
 
-// Light surfaces
+// Rich light-mode surfaces
+val AppBackground = Color(0xFFF1ECFF)
+val AppBackgroundWarm = Color(0xFFFFF7EA)
+
+val CardSurface = Color(0xFFFFFAF2)
+val CardSurfaceTinted = Color(0xFFF7F0FF)
+val CardSurfaceStrong = Color(0xFFF0E6FF)
+
+val GlassSurface = Color(0xFFF5EEFF)
+val LavenderMist = Color(0xFFEFE5FF)
+val TealMist = Color(0xFFE3FAF5)
+val AmberMist = Color(0xFFFFF0CB)
+val RoseMist = Color(0xFFFFE8F0)
+
 val PaperWhite = Color(0xFFFFFFFF)
-val SnowBackground = Color(0xFFF6F8FE)
-val WarmBackground = Color(0xFFFFFBF5)
-val FrostSurface = Color(0xFFEEF4FF)
-val CardSurface = Color(0xFFFFFFFF)
-val ElevatedSurface = Color(0xFFFAFCFF)
-val SoftBlueSurface = Color(0xFFF1F6FF)
-val SoftGoldSurface = Color(0xFFFFF8E8)
-val SoftRedSurface = Color(0xFFFFF1F3)
 
-val BorderSoft = Color(0xFFD8E2F0)
-val BorderWarm = Color(0xFFE9DCC7)
-val BorderStrong = Color(0xFFB8C6DC)
+val BorderSoft = Color(0xFFD1C4EE)
+val BorderWarm = Color(0xFFE7D3A8)
+val BorderStrong = Color(0xFFAC98DD)
 
-// Dark surfaces
-val DarkBackground = Color(0xFF070B16)
-val DarkSurface = Color(0xFF101728)
-val DarkSurfaceVariant = Color(0xFF1A2338)
-val DarkElevatedSurface = Color(0xFF162033)
-val DarkCardSurface = Color(0xFF121B2E)
-val DarkBorder = Color(0xFF33415F)
+// Dark mode surfaces
+val DarkBackground = Color(0xFF080713)
+val DarkSurface = Color(0xFF151326)
+val DarkSurfaceVariant = Color(0xFF242038)
+val DarkElevatedSurface = Color(0xFF1B1830)
+val DarkBorder = Color(0xFF48405F)
 
 val TextPrimaryLight = Ink950
 val TextSecondaryLight = Ink600
 
-val TextPrimaryDark = Color(0xFFF8FAFC)
-val TextSecondaryDark = Color(0xFFC9D4E8)
+val TextPrimaryDark = Color(0xFFFAF7FF)
+val TextSecondaryDark = Color(0xFFDCD3F2)
 
-val LavenderPrimary = CivicBlue
-val LavenderPrimaryDark = CivicBlueDark
-val LavenderPrimaryLight = CivicBlueLight
+// Compatibility aliases used by existing app code
+val CivicBlue = RoyalIndigo
+val CivicBlueDark = RoyalIndigoDark
+val CivicBlueLight = RoyalIndigoLight
 
-val LavenderSecondary = ElectionRed
-val LavenderSecondaryDark = ElectionRedDark
-val LavenderSecondaryLight = ElectionRedLight
+val ElectionRed = CivicRose
+val ElectionRedDark = CivicRoseDark
+val ElectionRedLight = CivicRoseLight
 
-val LavenderTertiary = BallotGold
-val LavenderTertiaryDark = BallotGoldDark
-val LavenderTertiaryLight = BallotGoldLight
+val BallotGold = WarmAmber
+val BallotGoldDark = WarmAmberDark
+val BallotGoldLight = WarmAmberLight
 
-val SoftBackground = SnowBackground
+val TrustTeal = EmeraldTeal
+val TrustTealDark = EmeraldTealDark
+val TrustTealLight = EmeraldTealLight
+
+val SnowBackground = AppBackground
+val WarmBackground = AppBackgroundWarm
+val FrostSurface = LavenderMist
+val ElevatedSurface = CardSurfaceStrong
+val SoftBlueSurface = GlassSurface
+val SoftGoldSurface = AmberMist
+val SoftRedSurface = RoseMist
+
+val LavenderPrimary = RoyalIndigo
+val LavenderPrimaryDark = RoyalIndigoDark
+val LavenderPrimaryLight = RoyalIndigoLight
+
+val LavenderSecondary = EmeraldTeal
+val LavenderSecondaryDark = EmeraldTealDark
+val LavenderSecondaryLight = EmeraldTealLight
+
+val LavenderTertiary = WarmAmber
+val LavenderTertiaryDark = WarmAmberDark
+val LavenderTertiaryLight = WarmAmberLight
+
+val SoftBackground = AppBackground
 val SoftSurface = CardSurface
-val SoftSurfaceVariant = FrostSurface
+val SoftSurfaceVariant = LavenderMist
 
-val Purple80 = CivicBlueLight
-val PurpleGrey80 = ElectionRedLight
-val Pink80 = BallotGoldLight
+val Purple80 = RoyalIndigoLight
+val PurpleGrey80 = EmeraldTealLight
+val Pink80 = WarmAmberLight
 
-val Purple40 = CivicBlueDark
-val PurpleGrey40 = ElectionRedDark
-val Pink40 = BallotGoldDark
+val Purple40 = RoyalIndigoDark
+val PurpleGrey40 = EmeraldTealDark
+val Pink40 = WarmAmberDark
 
-val VotingBlue = CivicBlue
-val VotingBlueDark = CivicBlueDark
-val VotingSky = CivicBlueLight
+val VotingBlue = RoyalIndigo
+val VotingBlueDark = RoyalIndigoDark
+val VotingSky = RoyalIndigoLight
 
-val AccentGold = BallotGold
-val AccentGoldDark = BallotGoldDark
+val AccentGold = WarmAmber
+val AccentGoldDark = WarmAmberDark

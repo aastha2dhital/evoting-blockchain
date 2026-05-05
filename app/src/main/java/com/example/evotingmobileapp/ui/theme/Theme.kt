@@ -15,29 +15,31 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 private val LightColorScheme = lightColorScheme(
-    primary = CivicBlue,
+    primary = RoyalIndigo,
     onPrimary = Color.White,
-    primaryContainer = CivicBlueLight,
-    onPrimaryContainer = CivicBlueDark,
-    inversePrimary = Color(0xFFB9CCFF),
+    primaryContainer = RoyalIndigoLight,
+    onPrimaryContainer = RoyalIndigoDark,
+    inversePrimary = Color(0xFFCBBEFF),
 
-    secondary = ElectionRed,
+    secondary = EmeraldTeal,
     onSecondary = Color.White,
-    secondaryContainer = ElectionRedLight,
-    onSecondaryContainer = ElectionRedDark,
+    secondaryContainer = EmeraldTealLight,
+    onSecondaryContainer = EmeraldTealDark,
 
-    tertiary = BallotGold,
-    onTertiary = Color(0xFF241A00),
-    tertiaryContainer = BallotGoldLight,
-    onTertiaryContainer = BallotGoldDark,
+    tertiary = WarmAmber,
+    onTertiary = Color(0xFF2B1A00),
+    tertiaryContainer = WarmAmberLight,
+    onTertiaryContainer = WarmAmberDark,
 
-    background = SnowBackground,
+    background = AppBackground,
     onBackground = TextPrimaryLight,
 
+    // Important: not pure white anymore
     surface = CardSurface,
     onSurface = TextPrimaryLight,
 
-    surfaceVariant = FrostSurface,
+    // Important: more visible than before
+    surfaceVariant = LavenderMist,
     onSurfaceVariant = TextSecondaryLight,
 
     error = ErrorRed,
@@ -46,30 +48,30 @@ private val LightColorScheme = lightColorScheme(
     onErrorContainer = ErrorRedDark,
 
     outline = BorderSoft,
-    outlineVariant = Color(0xFFE3EAF6),
+    outlineVariant = BorderStrong.copy(alpha = 0.42f),
 
     scrim = Color.Black,
     inverseSurface = Ink900,
     inverseOnSurface = Color.White,
-    surfaceTint = CivicBlue
+    surfaceTint = ElectricViolet
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFB8C9FF),
-    onPrimary = Color(0xFF06215C),
-    primaryContainer = CivicBlueDark,
-    onPrimaryContainer = CivicBlueLight,
-    inversePrimary = CivicBlue,
+    primary = Color(0xFFCBBEFF),
+    onPrimary = Color(0xFF1D0D49),
+    primaryContainer = RoyalIndigoDark,
+    onPrimaryContainer = RoyalIndigoLight,
+    inversePrimary = RoyalIndigo,
 
-    secondary = Color(0xFFFFB3BF),
-    onSecondary = Color(0xFF5C0618),
-    secondaryContainer = ElectionRedDark,
-    onSecondaryContainer = ElectionRedLight,
+    secondary = Color(0xFF78E6D7),
+    onSecondary = Color(0xFF003E37),
+    secondaryContainer = EmeraldTealDark,
+    onSecondaryContainer = EmeraldTealLight,
 
-    tertiary = Color(0xFFFFD78A),
+    tertiary = Color(0xFFFFD58A),
     onTertiary = Color(0xFF4A3000),
-    tertiaryContainer = BallotGoldDark,
-    onTertiaryContainer = BallotGoldLight,
+    tertiaryContainer = WarmAmberDark,
+    onTertiaryContainer = WarmAmberLight,
 
     background = DarkBackground,
     onBackground = TextPrimaryDark,
@@ -86,20 +88,20 @@ private val DarkColorScheme = darkColorScheme(
     onErrorContainer = ErrorRedLight,
 
     outline = DarkBorder,
-    outlineVariant = Color(0xFF2C354E),
+    outlineVariant = Color(0xFF3A3452),
 
     scrim = Color.Black,
-    inverseSurface = Color(0xFFE7ECF6),
+    inverseSurface = Color(0xFFF1ECFF),
     inverseOnSurface = Ink900,
-    surfaceTint = Color(0xFFB8C9FF)
+    surfaceTint = Color(0xFFCBBEFF)
 )
 
 private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(36.dp)
+    extraSmall = RoundedCornerShape(10.dp),
+    small = RoundedCornerShape(16.dp),
+    medium = RoundedCornerShape(24.dp),
+    large = RoundedCornerShape(32.dp),
+    extraLarge = RoundedCornerShape(42.dp)
 )
 
 @Composable
