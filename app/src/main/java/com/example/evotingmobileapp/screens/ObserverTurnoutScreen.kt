@@ -1,19 +1,23 @@
 package com.example.evotingmobileapp.screens
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +27,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -34,7 +39,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,6 +52,21 @@ import com.example.evotingmobileapp.model.Election
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private val ObserverNavy = Color(0xFF07133A)
+private val ObserverDeepBlue = Color(0xFF102A70)
+private val ObserverIndigo = Color(0xFF4F32F6)
+private val ObserverPurple = Color(0xFF7C3AED)
+private val ObserverBlue = Color(0xFF1479FF)
+private val ObserverTeal = Color(0xFF00B8A9)
+private val ObserverCoral = Color(0xFFFF5C7A)
+private val ObserverAmber = Color(0xFFFFB020)
+private val ObserverGreen = Color(0xFF17C964)
+private val ObserverCard = Color(0xFFF6F8FF)
+private val ObserverPanel = Color(0xFFEAF1FF)
+private val ObserverInk = Color(0xFF081229)
+private val ObserverMuted = Color(0xFF59627E)
+private val ObserverLine = Color(0xFFD6DDF4)
 
 private data class ObserverWinnerSummary(
     val winnerNames: List<String>,
@@ -81,20 +103,24 @@ fun ObserverTurnoutScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.24f),
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.14f)
+                        ObserverNavy,
+                        ObserverDeepBlue,
+                        Color(0xFF3155D8),
+                        Color(0xFFD8ECFF)
                     )
                 )
             )
     ) {
+        ObserverDecorativeBackground()
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 18.dp, vertical = 16.dp),
+                .padding(horizontal = 18.dp)
+                .padding(top = 16.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             ObserverHeroCard(
@@ -102,6 +128,8 @@ fun ObserverTurnoutScreen(
                 activeCount = elections.count { it.isActive(now) },
                 closedCount = elections.count { it.isClosed(now) }
             )
+
+            ObserverReadOnlyNotice()
 
             if (elections.isEmpty()) {
                 EmptyObserverState()
@@ -115,45 +143,58 @@ fun ObserverTurnoutScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Text(
-                        text = "Back",
-                        fontWeight = FontWeight.SemiBold
-                    )
+            ObserverFooterActions(
+                onBack = { navController.popBackStack() },
+                onRefresh = {
+                    adminViewModel.refreshBlockchainData()
+                    elections.forEach { election ->
+                        adminViewModel.loadTurnoutCount(election.id)
+                    }
                 }
-
-                Button(
-                    onClick = {
-                        adminViewModel.refreshBlockchainData()
-                        elections.forEach { election ->
-                            adminViewModel.loadTurnoutCount(election.id)
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
-                ) {
-                    Text(
-                        text = "Refresh",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+}
+
+@Composable
+private fun ObserverDecorativeBackground() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier
+                .size(230.dp)
+                .offset(x = (-90).dp, y = 40.dp),
+            shape = CircleShape,
+            color = ObserverTeal.copy(alpha = 0.16f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(190.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 72.dp, y = 88.dp),
+            shape = CircleShape,
+            color = ObserverCoral.copy(alpha = 0.16f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(180.dp)
+                .align(Alignment.CenterEnd)
+                .offset(x = 98.dp, y = 36.dp),
+            shape = CircleShape,
+            color = ObserverAmber.copy(alpha = 0.14f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(280.dp)
+                .align(Alignment.BottomStart)
+                .offset(x = (-130).dp, y = 110.dp),
+            shape = CircleShape,
+            color = ObserverPurple.copy(alpha = 0.15f)
+        ) {}
     }
 }
 
@@ -165,89 +206,119 @@ private fun ObserverHeroCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.95f),
+                            Color(0xFFEFF4FF).copy(alpha = 0.92f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(32.dp)
+                )
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                modifier = Modifier
+                    .size(100.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 28.dp, y = (-32).dp),
+                shape = CircleShape,
+                color = ObserverTeal.copy(alpha = 0.12f)
+            ) {}
+
+            Surface(
+                modifier = Modifier
+                    .size(78.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 30.dp, y = 24.dp),
+                shape = CircleShape,
+                color = ObserverCoral.copy(alpha = 0.10f)
+            ) {}
+
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Surface(
-                    modifier = Modifier.size(56.dp),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Surface(
+                        modifier = Modifier.size(58.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        color = ObserverIndigo,
+                        shadowElevation = 8.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "SV",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
                         Text(
-                            text = "SV",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
+                            text = "SecureVote Nepal",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = ObserverIndigo,
                             fontWeight = FontWeight.Bold
                         )
+
+                        Text(
+                            text = "Public turnout monitor",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = ObserverInk,
+                            fontWeight = FontWeight.Black
+                        )
                     }
+
+                    HeaderChip(text = "OBSERVER")
                 }
 
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
+                Text(
+                    text = "Read-only public visibility for turnout and closed election summaries. Admin-only actions are not available here.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ObserverMuted
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        text = "SecureVote Nepal",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
+                    ObserverMetricTile(
+                        modifier = Modifier.weight(1f),
+                        label = "Elections",
+                        value = electionCount.toString(),
+                        accent = ObserverBlue
                     )
 
-                    Text(
-                        text = "Public turnout monitor",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
+                    ObserverMetricTile(
+                        modifier = Modifier.weight(1f),
+                        label = "Active",
+                        value = activeCount.toString(),
+                        accent = ObserverTeal
+                    )
+
+                    ObserverMetricTile(
+                        modifier = Modifier.weight(1f),
+                        label = "Closed",
+                        value = closedCount.toString(),
+                        accent = ObserverCoral
                     )
                 }
-
-                HeaderChip(text = "OBSERVER")
-            }
-
-            Text(
-                text = "Read-only public visibility for turnout and closed election summaries. Admin-only actions are not available here.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ObserverMetricTile(
-                    modifier = Modifier.weight(1f),
-                    label = "Elections",
-                    value = electionCount.toString()
-                )
-
-                ObserverMetricTile(
-                    modifier = Modifier.weight(1f),
-                    label = "Active",
-                    value = activeCount.toString()
-                )
-
-                ObserverMetricTile(
-                    modifier = Modifier.weight(1f),
-                    label = "Closed",
-                    value = closedCount.toString()
-                )
             }
         }
     }
@@ -257,14 +328,15 @@ private fun ObserverHeroCard(
 private fun HeaderChip(text: String) {
     Surface(
         shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
+        color = ObserverCoral.copy(alpha = 0.14f),
+        border = BorderStroke(1.dp, ObserverCoral.copy(alpha = 0.30f))
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            fontWeight = FontWeight.Bold
+            color = ObserverCoral,
+            fontWeight = FontWeight.Black
         )
     }
 }
@@ -273,12 +345,14 @@ private fun HeaderChip(text: String) {
 private fun ObserverMetricTile(
     modifier: Modifier = Modifier,
     label: String,
-    value: String
+    value: String,
+    accent: Color
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+        shape = RoundedCornerShape(20.dp),
+        color = accent.copy(alpha = 0.10f),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.20f))
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
@@ -288,8 +362,8 @@ private fun ObserverMetricTile(
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold,
+                color = ObserverInk,
+                fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -297,11 +371,62 @@ private fun ObserverMetricTile(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
-                fontWeight = FontWeight.SemiBold,
+                color = ObserverMuted,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+    }
+}
+
+@Composable
+private fun ObserverReadOnlyNotice() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.18f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.22f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Surface(
+                modifier = Modifier.size(42.dp),
+                shape = CircleShape,
+                color = ObserverTeal.copy(alpha = 0.20f),
+                border = BorderStroke(1.dp, ObserverTeal.copy(alpha = 0.42f))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "✓",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                Text(
+                    text = "Transparent observer mode",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
+                )
+
+                Text(
+                    text = "This page refreshes blockchain election data and shows turnout without allowing voting, check-in, or admin changes.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.84f)
+                )
+            }
         }
     }
 }
@@ -341,72 +466,63 @@ private fun ObserverElectionCard(
 
     val winnerSummary = calculateObserverWinnerSummary(election)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.14f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(15.dp)
+    ModernObserverCard {
+        ObserverElectionHeader(
+            election = election,
+            statusText = statusText,
+            closed = closed,
+            active = active
+        )
+
+        HorizontalDivider(color = ObserverLine.copy(alpha = 0.80f))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            ObserverElectionHeader(
-                election = election,
-                statusText = statusText,
-                closed = closed
+            TurnoutTile(
+                modifier = Modifier.weight(1f),
+                label = "Eligible",
+                value = eligibleCount.toString(),
+                detail = "registered",
+                accent = ObserverBlue
             )
 
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)
+            TurnoutTile(
+                modifier = Modifier.weight(1f),
+                label = "Checked-in",
+                value = checkedInCount.toString(),
+                detail = "${formatPercent(checkInPercent)}%",
+                accent = ObserverTeal
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                TurnoutTile(
-                    modifier = Modifier.weight(1f),
-                    label = "Eligible",
-                    value = eligibleCount.toString(),
-                    detail = "registered"
-                )
-
-                TurnoutTile(
-                    modifier = Modifier.weight(1f),
-                    label = "Checked-in",
-                    value = checkedInCount.toString(),
-                    detail = "${formatPercent(checkInPercent)}%"
-                )
-
-                TurnoutTile(
-                    modifier = Modifier.weight(1f),
-                    label = "Votes",
-                    value = votesCast.toString(),
-                    detail = "${formatPercent(turnoutPercent)}%"
-                )
-            }
-
-            TurnoutSummaryPanel(
-                checkedInCount = checkedInCount,
-                eligibleCount = eligibleCount,
-                votesCast = votesCast
+            TurnoutTile(
+                modifier = Modifier.weight(1f),
+                label = "Votes",
+                value = votesCast.toString(),
+                detail = "${formatPercent(turnoutPercent)}%",
+                accent = ObserverCoral
             )
+        }
 
-            if (closed) {
-                ResultPreviewPanel(
-                    voteCounts = election.voteCounts,
-                    winnerSummary = winnerSummary
-                )
-            } else {
-                HiddenResultsPanel()
-            }
+        TurnoutProgressPanel(
+            checkedInPercent = checkInPercent,
+            turnoutPercent = turnoutPercent
+        )
+
+        TurnoutSummaryPanel(
+            checkedInCount = checkedInCount,
+            eligibleCount = eligibleCount,
+            votesCast = votesCast
+        )
+
+        if (closed) {
+            ResultPreviewPanel(
+                voteCounts = election.voteCounts,
+                winnerSummary = winnerSummary
+            )
+        } else {
+            HiddenResultsPanel()
         }
     }
 }
@@ -415,7 +531,8 @@ private fun ObserverElectionCard(
 private fun ObserverElectionHeader(
     election: Election,
     statusText: String,
-    closed: Boolean
+    closed: Boolean,
+    active: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -423,16 +540,32 @@ private fun ObserverElectionHeader(
         verticalAlignment = Alignment.Top
     ) {
         Surface(
-            modifier = Modifier.size(50.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer
+            modifier = Modifier.size(54.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = when {
+                closed -> ObserverGreen.copy(alpha = 0.14f)
+                active -> ObserverTeal.copy(alpha = 0.14f)
+                else -> ObserverAmber.copy(alpha = 0.16f)
+            },
+            border = BorderStroke(
+                1.dp,
+                when {
+                    closed -> ObserverGreen.copy(alpha = 0.30f)
+                    active -> ObserverTeal.copy(alpha = 0.30f)
+                    else -> ObserverAmber.copy(alpha = 0.32f)
+                }
+            )
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
-                    text = election.id,
+                    text = election.id.take(3).uppercase(Locale.getDefault()),
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
+                    color = when {
+                        closed -> ObserverGreen
+                        active -> ObserverTeal
+                        else -> ObserverAmber
+                    },
+                    fontWeight = FontWeight.Black,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -447,8 +580,8 @@ private fun ObserverElectionHeader(
             Text(
                 text = election.title,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
+                color = ObserverInk,
+                fontWeight = FontWeight.Black,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -456,7 +589,7 @@ private fun ObserverElectionHeader(
             Text(
                 text = "${formatDate(election.startTimeMillis)} to ${formatDate(election.endTimeMillis)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = ObserverMuted,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -464,7 +597,8 @@ private fun ObserverElectionHeader(
 
         StatusChip(
             text = statusText,
-            closed = closed
+            closed = closed,
+            active = active
         )
     }
 }
@@ -472,30 +606,26 @@ private fun ObserverElectionHeader(
 @Composable
 private fun StatusChip(
     text: String,
-    closed: Boolean
+    closed: Boolean,
+    active: Boolean
 ) {
-    val containerColor = if (closed) {
-        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.82f)
-    } else {
-        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.82f)
-    }
-
-    val contentColor = if (closed) {
-        MaterialTheme.colorScheme.onSecondaryContainer
-    } else {
-        MaterialTheme.colorScheme.onTertiaryContainer
+    val accent = when {
+        closed -> ObserverGreen
+        active -> ObserverTeal
+        else -> ObserverAmber
     }
 
     Surface(
         shape = RoundedCornerShape(999.dp),
-        color = containerColor
+        color = accent.copy(alpha = 0.13f),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.30f))
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = contentColor
+            fontWeight = FontWeight.Black,
+            color = accent
         )
     }
 }
@@ -505,12 +635,14 @@ private fun TurnoutTile(
     modifier: Modifier = Modifier,
     label: String,
     value: String,
-    detail: String
+    detail: String,
+    accent: Color
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.68f)
+        color = accent.copy(alpha = 0.10f),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.20f))
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
@@ -520,16 +652,16 @@ private fun TurnoutTile(
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
+                color = ObserverInk,
+                fontWeight = FontWeight.Black,
                 maxLines = 1
             )
 
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
+                color = ObserverMuted,
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -537,11 +669,96 @@ private fun TurnoutTile(
             Text(
                 text = detail,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.76f),
+                color = accent,
+                fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
+    }
+}
+
+@Composable
+private fun TurnoutProgressPanel(
+    checkedInPercent: Double,
+    turnoutPercent: Double
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = ObserverIndigo.copy(alpha = 0.10f),
+        border = BorderStroke(1.dp, ObserverIndigo.copy(alpha = 0.20f))
+    ) {
+        Column(
+            modifier = Modifier.padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Live turnout progress",
+                style = MaterialTheme.typography.titleSmall,
+                color = ObserverInk,
+                fontWeight = FontWeight.Black
+            )
+
+            ProgressLine(
+                label = "QR check-in rate",
+                percent = checkedInPercent,
+                accent = ObserverTeal
+            )
+
+            ProgressLine(
+                label = "Vote submission rate",
+                percent = turnoutPercent,
+                accent = ObserverCoral
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProgressLine(
+    label: String,
+    percent: Double,
+    accent: Color
+) {
+    val progressTarget = (percent / 100.0).coerceIn(0.0, 1.0).toFloat()
+    val progress by animateFloatAsState(
+        targetValue = progressTarget,
+        label = "observerTurnoutProgress"
+    )
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = ObserverInk,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "${formatPercent(percent)}%",
+                style = MaterialTheme.typography.labelLarge,
+                color = accent,
+                fontWeight = FontWeight.Black
+            )
+        }
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(9.dp)
+                .clip(RoundedCornerShape(999.dp)),
+            color = accent,
+            trackColor = Color.White.copy(alpha = 0.78f)
+        )
     }
 }
 
@@ -554,7 +771,8 @@ private fun TurnoutSummaryPanel(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.46f)
+        color = ObserverTeal.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, ObserverTeal.copy(alpha = 0.24f))
     ) {
         Column(
             modifier = Modifier.padding(15.dp),
@@ -563,21 +781,21 @@ private fun TurnoutSummaryPanel(
             Text(
                 text = "Turnout summary",
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.Bold
+                color = ObserverInk,
+                fontWeight = FontWeight.Black
             )
 
             Text(
                 text = "Checked-in voters: $checkedInCount of $eligibleCount. Votes cast: $votesCast of $eligibleCount.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.SemiBold
+                color = ObserverInk,
+                fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = "Observer mode is read-only and does not provide admin, check-in, voting, or closing controls.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.82f)
+                color = ObserverMuted
             )
         }
     }
@@ -588,15 +806,48 @@ private fun HiddenResultsPanel() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.72f)
+        color = ObserverAmber.copy(alpha = 0.13f),
+        border = BorderStroke(1.dp, ObserverAmber.copy(alpha = 0.26f))
     ) {
-        Text(
-            text = "Candidate results remain hidden until this election is closed.",
+        Row(
             modifier = Modifier.padding(15.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.SemiBold
-        )
+            horizontalArrangement = Arrangement.spacedBy(11.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Surface(
+                modifier = Modifier.size(34.dp),
+                shape = CircleShape,
+                color = ObserverAmber.copy(alpha = 0.18f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "!",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = ObserverAmber,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Results hidden",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = ObserverInk,
+                    fontWeight = FontWeight.Black
+                )
+
+                Text(
+                    text = "Candidate results remain hidden until this election is closed.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ObserverMuted,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 }
 
@@ -607,70 +858,129 @@ private fun ResultPreviewPanel(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.76f)
+        shape = RoundedCornerShape(24.dp),
+        color = ObserverIndigo.copy(alpha = 0.10f),
+        border = BorderStroke(1.dp, ObserverIndigo.copy(alpha = 0.22f))
     ) {
         Column(
             modifier = Modifier.padding(15.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "Closed election result",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleMedium,
+                color = ObserverInk,
+                fontWeight = FontWeight.Black
             )
 
-            when {
-                voteCounts.isEmpty() -> {
-                    Text(
-                        text = "No vote totals are available yet.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+            WinnerObserverPanel(winnerSummary = winnerSummary)
 
-                !winnerSummary.hasVotes -> {
-                    Text(
-                        text = "No votes were recorded for this election.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.SemiBold
+            if (voteCounts.isEmpty()) {
+                Text(
+                    text = "No vote totals are available yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ObserverMuted,
+                    fontWeight = FontWeight.SemiBold
+                )
+            } else {
+                voteCounts.entries
+                    .sortedWith(
+                        compareByDescending<Map.Entry<String, Int>> { it.value }
+                            .thenBy { it.key.lowercase(Locale.getDefault()) }
                     )
-                }
+                    .forEachIndexed { index, entry ->
+                        ResultPreviewRow(
+                            rank = index + 1,
+                            candidate = entry.key,
+                            votes = entry.value,
+                            isWinner = winnerSummary.hasVotes &&
+                                    winnerSummary.winnerNames.any {
+                                        it.equals(entry.key, ignoreCase = true)
+                                    },
+                            isTie = winnerSummary.isTie
+                        )
+                    }
+            }
+        }
+    }
+}
 
-                winnerSummary.isTie -> {
-                    Text(
-                        text = "${winnerSummary.winnerNames.joinToString(", ")} tied with ${winnerSummary.winningVotes} ${voteWord(winnerSummary.winningVotes)} each.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+@Composable
+private fun WinnerObserverPanel(
+    winnerSummary: ObserverWinnerSummary
+) {
+    val message = when {
+        !winnerSummary.hasVotes ->
+            "No votes were recorded for this election."
 
-                else -> {
+        winnerSummary.isTie ->
+            "${winnerSummary.winnerNames.joinToString(", ")} tied with ${winnerSummary.winningVotes} ${voteWord(winnerSummary.winningVotes)} each."
+
+        else ->
+            "${winnerSummary.winnerNames.first()} won with ${winnerSummary.winningVotes} ${voteWord(winnerSummary.winningVotes)}."
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = if (winnerSummary.hasVotes) {
+            ObserverGreen.copy(alpha = 0.13f)
+        } else {
+            ObserverPanel.copy(alpha = 0.86f)
+        },
+        border = BorderStroke(
+            1.dp,
+            if (winnerSummary.hasVotes) {
+                ObserverGreen.copy(alpha = 0.30f)
+            } else {
+                ObserverLine.copy(alpha = 0.72f)
+            }
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(11.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                modifier = Modifier.size(42.dp),
+                shape = CircleShape,
+                color = if (winnerSummary.hasVotes) ObserverGreen else ObserverIndigo.copy(alpha = 0.14f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "${winnerSummary.winnerNames.first()} won with ${winnerSummary.winningVotes} ${voteWord(winnerSummary.winningVotes)}.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.Bold
+                        text = if (winnerSummary.hasVotes) "1" else "-",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (winnerSummary.hasVotes) Color.White else ObserverIndigo,
+                        fontWeight = FontWeight.Black
                     )
                 }
             }
 
-            voteCounts.entries
-                .sortedWith(
-                    compareByDescending<Map.Entry<String, Int>> { it.value }
-                        .thenBy { it.key.lowercase(Locale.getDefault()) }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = if (winnerSummary.isTie) {
+                        "Joint winners"
+                    } else if (winnerSummary.hasVotes) {
+                        "Winner"
+                    } else {
+                        "No winner yet"
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    color = ObserverInk,
+                    fontWeight = FontWeight.Black
                 )
-                .forEachIndexed { index, entry ->
-                    ResultPreviewRow(
-                        rank = index + 1,
-                        candidate = entry.key,
-                        votes = entry.value
-                    )
-                }
+
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ObserverMuted,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
@@ -679,42 +989,66 @@ private fun ResultPreviewPanel(
 private fun ResultPreviewRow(
     rank: Int,
     candidate: String,
-    votes: Int
+    votes: Int,
+    isWinner: Boolean,
+    isTie: Boolean
 ) {
-    Row(
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        shape = RoundedCornerShape(18.dp),
+        color = if (isWinner) ObserverGreen.copy(alpha = 0.10f) else Color.White.copy(alpha = 0.76f),
+        border = BorderStroke(
+            1.dp,
+            if (isWinner) ObserverGreen.copy(alpha = 0.26f) else ObserverLine.copy(alpha = 0.72f)
+        )
     ) {
-        Surface(
-            modifier = Modifier.size(32.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            Surface(
+                modifier = Modifier.size(34.dp),
+                shape = CircleShape,
+                color = if (isWinner) ObserverGreen else ObserverIndigo.copy(alpha = 0.12f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = rank.toString(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isWinner) Color.White else ObserverIndigo,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = rank.toString(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    text = candidate,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ObserverInk,
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = if (isWinner) {
+                        if (isTie) "Joint winner" else "Winner"
+                    } else {
+                        "$votes ${voteWord(votes)}"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isWinner) ObserverGreen else ObserverMuted,
                     fontWeight = FontWeight.Bold
                 )
             }
-        }
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = candidate,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
 
             Text(
-                text = "$votes ${voteWord(votes)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f)
+                text = "$votes",
+                style = MaterialTheme.typography.titleMedium,
+                color = ObserverIndigo,
+                fontWeight = FontWeight.Black
             )
         }
     }
@@ -722,30 +1056,24 @@ private fun ResultPreviewRow(
 
 @Composable
 private fun EmptyObserverState() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-    ) {
+    ModernObserverCard {
         Column(
-            modifier = Modifier.padding(22.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Surface(
                 modifier = Modifier.size(58.dp),
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = ObserverIndigo.copy(alpha = 0.12f),
+                border = BorderStroke(1.dp, ObserverIndigo.copy(alpha = 0.22f))
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = "OBS",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold
+                        color = ObserverIndigo,
+                        fontWeight = FontWeight.Black
                     )
                 }
             }
@@ -753,18 +1081,77 @@ private fun EmptyObserverState() {
             Text(
                 text = "No elections available",
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold,
+                color = ObserverInk,
+                fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center
             )
 
             Text(
                 text = "Once an election is created, public turnout summaries will appear here.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = ObserverMuted,
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+private fun ObserverFooterActions(
+    onBack: () -> Unit,
+    onRefresh: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedButton(
+            onClick = onBack,
+            modifier = Modifier
+                .weight(1f)
+                .height(54.dp),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Text(
+                text = "Back",
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        Button(
+            onClick = onRefresh,
+            modifier = Modifier
+                .weight(1f)
+                .height(54.dp),
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = ObserverCoral),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 5.dp)
+        ) {
+            Text(
+                text = "Refresh",
+                fontWeight = FontWeight.Black
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModernObserverCard(
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(containerColor = ObserverCard.copy(alpha = 0.96f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(15.dp),
+            content = content
+        )
     }
 }
 

@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -72,6 +73,18 @@ import java.security.SecureRandom
 
 private const val OTP_VALIDITY_MILLIS = 5 * 60 * 1000L
 private const val OTP_RESEND_COOLDOWN_MILLIS = 30 * 1000L
+
+private val AdminNavy = Color(0xFF07133A)
+private val AdminIndigo = Color(0xFF4F32F6)
+private val AdminPurple = Color(0xFF7C3AED)
+private val AdminBlue = Color(0xFF1479FF)
+private val AdminTeal = Color(0xFF00B8A9)
+private val AdminCoral = Color(0xFFFF5C7A)
+private val AdminAmber = Color(0xFFFFB020)
+private val AdminPanel = Color(0xFFEFF4FF)
+private val AdminCard = Color(0xFFF5F8FF)
+private val AdminInk = Color(0xFF0A102C)
+private val AdminMuted = Color(0xFF5B6380)
 
 @Composable
 fun AdminLoginScreen(
@@ -318,9 +331,10 @@ fun AdminLoginScreen(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f),
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.14f)
+                        AdminNavy,
+                        Color(0xFF172B78),
+                        Color(0xFF3155D8),
+                        Color(0xFFD8ECFF)
                     )
                 )
             )
@@ -381,29 +395,38 @@ private fun AdminDecorativeBackground() {
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier
-                .size(190.dp)
+                .size(280.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 70.dp, y = 78.dp),
+                .offset(x = 96.dp, y = (-46).dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            color = AdminPurple.copy(alpha = 0.42f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(230.dp)
+                .align(Alignment.TopStart)
+                .offset(x = (-94).dp, y = 190.dp),
+            shape = CircleShape,
+            color = AdminTeal.copy(alpha = 0.34f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(210.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 78.dp, y = (-110).dp),
+            shape = CircleShape,
+            color = AdminAmber.copy(alpha = 0.30f)
         ) {}
 
         Surface(
             modifier = Modifier
                 .size(150.dp)
-                .align(Alignment.TopStart)
-                .offset(x = (-62).dp, y = 300.dp),
+                .align(Alignment.CenterEnd)
+                .offset(x = 78.dp, y = 80.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.07f)
-        ) {}
-
-        Surface(
-            modifier = Modifier
-                .size(140.dp)
-                .align(Alignment.BottomEnd)
-                .offset(x = 54.dp, y = (-70).dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.10f)
+            color = AdminCoral.copy(alpha = 0.20f)
         ) {}
     }
 }
@@ -417,12 +440,12 @@ private fun AdminTopBar() {
     ) {
         Surface(
             shape = RoundedCornerShape(999.dp),
-            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
-            tonalElevation = 2.dp,
-            shadowElevation = 3.dp,
+            color = Color.White.copy(alpha = 0.92f),
+            tonalElevation = 6.dp,
+            shadowElevation = 12.dp,
             border = BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.26f)
+                color = Color.White.copy(alpha = 0.65f)
             )
         ) {
             Row(
@@ -435,8 +458,8 @@ private fun AdminTopBar() {
                 Text(
                     text = "SecureVote Nepal",
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Black,
+                    color = AdminInk,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -445,18 +468,19 @@ private fun AdminTopBar() {
 
         Surface(
             shape = RoundedCornerShape(999.dp),
-            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.74f),
+            color = Color.White.copy(alpha = 0.92f),
+            shadowElevation = 8.dp,
             border = BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                color = Color.White.copy(alpha = 0.65f)
             )
         ) {
             Text(
                 text = "ADMIN",
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                fontWeight = FontWeight.Black,
+                color = AdminIndigo
             )
         }
     }
@@ -465,20 +489,24 @@ private fun AdminTopBar() {
 @Composable
 private fun AdminCircleIcon(text: String) {
     Surface(
-        modifier = Modifier.size(36.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-        )
+        modifier = Modifier.size(38.dp),
+        shape = RoundedCornerShape(15.dp),
+        color = Color.Transparent,
+        shadowElevation = 7.dp
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.background(
+                Brush.linearGradient(
+                    colors = listOf(AdminIndigo, AdminBlue, AdminPurple)
+                )
+            ),
+            contentAlignment = Alignment.Center
+        ) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                color = Color.White,
                 textAlign = TextAlign.Center
             )
         }
@@ -489,15 +517,15 @@ private fun AdminCircleIcon(text: String) {
 private fun AdminHeroCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = AdminPanel
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+            color = Color.White.copy(alpha = 0.70f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 18.dp)
     ) {
         Box(
             modifier = Modifier
@@ -505,9 +533,9 @@ private fun AdminHeroCard() {
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.86f),
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.36f)
+                            Color(0xFFE6E2FF),
+                            Color(0xFFE8F6FF),
+                            Color(0xFFE0FFF8)
                         )
                     )
                 )
@@ -530,49 +558,56 @@ private fun AdminHeroCard() {
                     ) {
                         Surface(
                             shape = RoundedCornerShape(999.dp),
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                            color = AdminIndigo.copy(alpha = 0.12f),
                             border = BorderStroke(
                                 width = 1.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                                color = AdminIndigo.copy(alpha = 0.24f)
                             )
                         ) {
                             Text(
                                 text = "SECURE POLLING OFFICER ACCESS",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                fontWeight = FontWeight.Black,
+                                color = AdminIndigo
                             )
                         }
 
                         Text(
                             text = "Admin Control Portal",
                             style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            fontWeight = FontWeight.Black,
+                            color = AdminInk
                         )
 
                         Text(
                             text = "Create elections, manage QR check-ins, monitor turnout, and close results from a protected admin session.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = AdminMuted,
                             maxLines = 4,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
 
                     Surface(
-                        modifier = Modifier.size(64.dp),
-                        shape = RoundedCornerShape(22.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        shadowElevation = 4.dp
+                        modifier = Modifier.size(68.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        color = Color.Transparent,
+                        shadowElevation = 10.dp
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.background(
+                                Brush.linearGradient(
+                                    colors = listOf(AdminIndigo, AdminBlue, AdminPurple)
+                                )
+                            ),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
                                 text = "AD",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
                             )
                         }
                     }
@@ -585,19 +620,22 @@ private fun AdminHeroCard() {
                     AdminHeroChip(
                         modifier = Modifier.weight(1f),
                         title = "Firebase",
-                        value = "Login"
+                        value = "Login",
+                        accent = AdminIndigo
                     )
 
                     AdminHeroChip(
                         modifier = Modifier.weight(1f),
                         title = "Email",
-                        value = "OTP"
+                        value = "OTP",
+                        accent = AdminTeal
                     )
 
                     AdminHeroChip(
                         modifier = Modifier.weight(1f),
                         title = "Wallet",
-                        value = "Admin"
+                        value = "Admin",
+                        accent = AdminCoral
                     )
                 }
             }
@@ -610,20 +648,20 @@ private fun AdminHeroDecorations() {
     Box(modifier = Modifier.fillMaxWidth()) {
         Surface(
             modifier = Modifier
-                .size(118.dp)
+                .size(138.dp)
                 .align(Alignment.TopEnd)
-                .offset(x = 46.dp, y = (-50).dp),
+                .offset(x = 52.dp, y = (-62).dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+            color = AdminPurple.copy(alpha = 0.14f)
         ) {}
 
         Surface(
             modifier = Modifier
-                .size(82.dp)
+                .size(104.dp)
                 .align(Alignment.BottomStart)
-                .offset(x = (-42).dp, y = 98.dp),
+                .offset(x = (-46).dp, y = 128.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
+            color = AdminTeal.copy(alpha = 0.14f)
         ) {}
     }
 }
@@ -632,17 +670,18 @@ private fun AdminHeroDecorations() {
 private fun AdminHeroChip(
     modifier: Modifier = Modifier,
     title: String,
-    value: String
+    value: String,
+    accent: Color
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+        color = Color.White.copy(alpha = 0.66f),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+            color = accent.copy(alpha = 0.24f)
         ),
-        shadowElevation = 1.dp
+        shadowElevation = 3.dp
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
@@ -653,7 +692,7 @@ private fun AdminHeroChip(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = AdminMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -661,8 +700,8 @@ private fun AdminHeroChip(
             Text(
                 text = value,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Black,
+                color = accent,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -692,24 +731,24 @@ private fun AdminEmailOtpCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)
+            containerColor = AdminCard
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.30f)
+            color = Color.White.copy(alpha = 0.70f)
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
     ) {
         Column(
             modifier = Modifier
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.26f),
-                            MaterialTheme.colorScheme.surface
+                            AdminIndigo.copy(alpha = 0.16f),
+                            AdminCard,
+                            AdminTeal.copy(alpha = 0.12f)
                         )
                     )
                 )
@@ -770,7 +809,8 @@ private fun AdminEmailOtpCard(
                         Text(
                             text = if (passwordVisible) "HIDE" else "SHOW",
                             style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Black,
+                            color = AdminIndigo
                         )
                     }
                 },
@@ -794,9 +834,13 @@ private fun AdminEmailOtpCard(
                     enabled = !isBusy,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
+                        .height(58.dp),
                     shape = RoundedCornerShape(20.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AdminIndigo,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
                 ) {
                     Text(
                         text = if (isBusy) {
@@ -805,13 +849,13 @@ private fun AdminEmailOtpCard(
                             "Sign in and send OTP"
                         },
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Black
                     )
                 }
             }
 
             HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)
+                color = AdminIndigo.copy(alpha = 0.16f)
             )
 
             OutlinedButton(
@@ -822,15 +866,15 @@ private fun AdminEmailOtpCard(
                     .height(52.dp),
                 shape = RoundedCornerShape(18.dp),
                 border = BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.36f)
+                    width = 1.5.dp,
+                    color = AdminIndigo.copy(alpha = 0.36f)
                 )
             ) {
                 Text(
                     text = "Back to home",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.Black,
+                    color = AdminIndigo
                 )
             }
         }
@@ -848,32 +892,32 @@ private fun SectionTitle(
     ) {
         Surface(
             shape = RoundedCornerShape(999.dp),
-            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
+            color = AdminIndigo.copy(alpha = 0.12f),
             border = BorderStroke(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                color = AdminIndigo.copy(alpha = 0.24f)
             )
         ) {
             Text(
                 text = label,
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                fontWeight = FontWeight.Black,
+                color = AdminIndigo
             )
         }
 
         Text(
             text = title,
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = FontWeight.Black,
+            color = AdminInk
         )
 
         Text(
             text = subtitle,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = AdminMuted
         )
     }
 }
@@ -907,14 +951,18 @@ private fun OtpEntrySection(
             enabled = !isBusy,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(58.dp),
             shape = RoundedCornerShape(20.dp),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AdminIndigo,
+                contentColor = Color.White
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
         ) {
             Text(
                 text = "Verify OTP and continue",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Black
             )
         }
 
@@ -926,15 +974,15 @@ private fun OtpEntrySection(
                 .height(52.dp),
             shape = RoundedCornerShape(18.dp),
             border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.28f)
+                width = 1.5.dp,
+                color = AdminTeal.copy(alpha = 0.46f)
             )
         ) {
             Text(
                 text = "Resend OTP",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
+                fontWeight = FontWeight.Black,
+                color = AdminTeal
             )
         }
     }
@@ -951,7 +999,8 @@ private fun AdminStepRow(otpSent: Boolean) {
             label = "1",
             title = "Firebase",
             value = "Credentials",
-            active = true
+            active = true,
+            accent = AdminIndigo
         )
 
         AdminStepChip(
@@ -959,7 +1008,8 @@ private fun AdminStepRow(otpSent: Boolean) {
             label = "2",
             title = "Email",
             value = "OTP",
-            active = otpSent
+            active = otpSent,
+            accent = AdminTeal
         )
     }
 }
@@ -970,22 +1020,23 @@ private fun AdminStepChip(
     label: String,
     title: String,
     value: String,
-    active: Boolean
+    active: Boolean,
+    accent: Color
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(18.dp),
         color = if (active) {
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.66f)
+            accent.copy(alpha = 0.13f)
         } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.66f)
+            Color.White.copy(alpha = 0.56f)
         },
         border = BorderStroke(
             width = 1.dp,
             color = if (active) {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
+                accent.copy(alpha = 0.26f)
             } else {
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.16f)
+                AdminMuted.copy(alpha = 0.12f)
             }
         )
     ) {
@@ -997,22 +1048,14 @@ private fun AdminStepChip(
             Surface(
                 modifier = Modifier.size(28.dp),
                 shape = CircleShape,
-                color = if (active) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                }
+                color = if (active) accent else AdminMuted.copy(alpha = 0.14f)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (active) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
+                        fontWeight = FontWeight.Black,
+                        color = if (active) Color.White else AdminMuted
                     )
                 }
             }
@@ -1022,7 +1065,7 @@ private fun AdminStepChip(
                     text = title,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = AdminMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1030,8 +1073,8 @@ private fun AdminStepChip(
                 Text(
                     text = value,
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Black,
+                    color = AdminInk,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -1046,15 +1089,15 @@ private fun StatusPanel(
     isError: Boolean
 ) {
     val containerColor = if (isError) {
-        MaterialTheme.colorScheme.errorContainer
+        AdminCoral.copy(alpha = 0.14f)
     } else {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.50f)
+        AdminIndigo.copy(alpha = 0.11f)
     }
 
     val contentColor = if (isError) {
-        MaterialTheme.colorScheme.onErrorContainer
+        AdminCoral
     } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
+        AdminIndigo
     }
 
     Surface(
@@ -1063,18 +1106,14 @@ private fun StatusPanel(
         color = containerColor,
         border = BorderStroke(
             width = 1.dp,
-            color = if (isError) {
-                MaterialTheme.colorScheme.error.copy(alpha = 0.20f)
-            } else {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
-            }
+            color = contentColor.copy(alpha = 0.22f)
         )
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = contentColor,
+            color = if (isError) AdminInk else contentColor,
             fontWeight = FontWeight.Medium
         )
     }

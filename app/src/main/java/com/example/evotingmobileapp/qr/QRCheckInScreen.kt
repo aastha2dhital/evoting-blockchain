@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -48,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,6 +69,21 @@ import kotlinx.coroutines.withContext
 
 private const val SECURE_CHECK_IN_PREFIX = "SecureVoteCheckIn"
 private const val QR_CLOCK_SKEW_TOLERANCE_MILLIS = 5 * 60 * 1000L
+
+private val QrNavy = Color(0xFF07133A)
+private val QrDeepBlue = Color(0xFF102A70)
+private val QrIndigo = Color(0xFF4F32F6)
+private val QrPurple = Color(0xFF7C3AED)
+private val QrBlue = Color(0xFF1479FF)
+private val QrTeal = Color(0xFF00B8A9)
+private val QrCoral = Color(0xFFFF5C7A)
+private val QrAmber = Color(0xFFFFB020)
+private val QrGreen = Color(0xFF17C964)
+private val QrCard = Color(0xFFF6F8FF)
+private val QrPanel = Color(0xFFEAF1FF)
+private val QrInk = Color(0xFF081229)
+private val QrMuted = Color(0xFF59627E)
+private val QrLine = Color(0xFFD6DDF4)
 
 @Composable
 fun QRCheckInScreen(
@@ -152,29 +170,33 @@ fun QRCheckInScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color.Transparent
     ) { innerPadding ->
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.26f),
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.16f)
+                            QrNavy,
+                            QrDeepBlue,
+                            Color(0xFF3155D8),
+                            Color(0xFFD8ECFF)
                         )
                     )
                 )
+                .padding(innerPadding)
         ) {
+            QRDecorativeBackground()
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .statusBarsPadding()
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 18.dp, vertical = 16.dp),
+                    .padding(horizontal = 18.dp)
+                    .padding(top = 16.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 QRHeroCard(
@@ -183,7 +205,14 @@ fun QRCheckInScreen(
                     walletAddress = voterWalletAddress
                 )
 
-                StepCard(
+                QRProgressCard(
+                    hasElection = selectedElection != null,
+                    hasWallet = voterWalletAddress.trim().isNotBlank(),
+                    hasValidStatus = statusMessage.isNotBlank() && statusIsPositive,
+                    isCheckingIn = isCheckingIn
+                )
+
+                ModernStepCard(
                     step = "01",
                     title = "Select election",
                     subtitle = "Choose the election where this voter is being checked in."
@@ -210,14 +239,14 @@ fun QRCheckInScreen(
                     }
                 }
 
-                StepCard(
+                ModernStepCard(
                     step = "02",
                     title = "Load voter wallet",
-                    subtitle = "Scan the voter QR pass or select a registered test wallet."
+                    subtitle = "Scan the voter QR pass or select a registered demo voter."
                 ) {
                     InfoPanel(
                         title = "QR pass required",
-                        message = "The voter should open Voter Access and show the current check-in QR pass.",
+                        message = "The voter should open Voter Access and show the current two-minute check-in QR pass.",
                         positive = true
                     )
 
@@ -232,7 +261,7 @@ fun QRCheckInScreen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !isCheckingIn,
-                        shape = RoundedCornerShape(18.dp)
+                        shape = RoundedCornerShape(20.dp)
                     )
 
                     Row(
@@ -248,13 +277,14 @@ fun QRCheckInScreen(
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(52.dp),
+                                .height(54.dp),
                             enabled = !isCheckingIn,
-                            shape = RoundedCornerShape(18.dp)
+                            shape = RoundedCornerShape(20.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = QrIndigo)
                         ) {
                             Text(
-                                text = "Use registered voter",
-                                fontWeight = FontWeight.SemiBold,
+                                text = "Use voter",
+                                fontWeight = FontWeight.Black,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -265,14 +295,18 @@ fun QRCheckInScreen(
                                 voterWalletAddress = ""
                                 lastScannedValue = ""
                                 statusMessage = ""
+                                statusIsPositive = false
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(52.dp),
+                                .height(54.dp),
                             enabled = !isCheckingIn,
-                            shape = RoundedCornerShape(18.dp)
+                            shape = RoundedCornerShape(20.dp)
                         ) {
-                            Text(text = "Clear")
+                            Text(
+                                text = "Clear",
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
 
@@ -293,15 +327,16 @@ fun QRCheckInScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(54.dp),
+                            .height(58.dp),
                         enabled = !isCheckingIn,
-                        shape = RoundedCornerShape(18.dp),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
+                        shape = RoundedCornerShape(21.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = QrTeal),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
                     ) {
                         Text(
                             text = "Scan voter QR pass",
                             style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Black
                         )
                     }
 
@@ -319,7 +354,7 @@ fun QRCheckInScreen(
 
                     InfoPanel(
                         title = "Prototype note",
-                        message = "This build validates expiry and repeated scans during the current admin session. A production version should use signed QR passes and persistent replay protection.",
+                        message = "This build validates QR expiry and repeated scans during the current admin session. A production version should use signed QR passes and persistent replay protection.",
                         positive = false
                     )
                 }
@@ -407,13 +442,52 @@ fun QRCheckInScreen(
                 ) {
                     Text(
                         text = "Back to admin dashboard",
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun QRDecorativeBackground() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Surface(
+            modifier = Modifier
+                .size(230.dp)
+                .offset(x = (-94).dp, y = 42.dp),
+            shape = CircleShape,
+            color = QrTeal.copy(alpha = 0.16f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(190.dp)
+                .align(Alignment.TopEnd)
+                .offset(x = 76.dp, y = 92.dp),
+            shape = CircleShape,
+            color = QrCoral.copy(alpha = 0.16f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(180.dp)
+                .align(Alignment.CenterEnd)
+                .offset(x = 92.dp, y = 36.dp),
+            shape = CircleShape,
+            color = QrAmber.copy(alpha = 0.14f)
+        ) {}
+
+        Surface(
+            modifier = Modifier
+                .size(280.dp)
+                .align(Alignment.BottomStart)
+                .offset(x = (-136).dp, y = 116.dp),
+            shape = CircleShape,
+            color = QrPurple.copy(alpha = 0.15f)
+        ) {}
     }
 }
 
@@ -425,129 +499,169 @@ private fun QRHeroCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(30.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.95f),
+                            Color(0xFFEFF4FF).copy(alpha = 0.92f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(32.dp)
+                )
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                modifier = Modifier
+                    .size(100.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 28.dp, y = (-32).dp),
+                shape = CircleShape,
+                color = QrTeal.copy(alpha = 0.12f)
+            ) {}
+
+            Surface(
+                modifier = Modifier
+                    .size(76.dp)
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 32.dp, y = 22.dp),
+                shape = CircleShape,
+                color = QrCoral.copy(alpha = 0.10f)
+            ) {}
+
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(14.dp),
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        modifier = Modifier.size(58.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        color = QrIndigo,
+                        shadowElevation = 8.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = "SV",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
                     ) {
                         Text(
-                            text = "SV",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            text = "SecureVote Nepal",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = QrIndigo,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "Polling check-in",
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = QrInk,
+                            fontWeight = FontWeight.Black
                         )
                     }
+
+                    AdminChip()
                 }
 
-                Spacer(modifier = Modifier.width(14.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(3.dp)
-                ) {
-                    Text(
-                        text = "SecureVote Nepal",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    Text(
-                        text = "Polling check-in",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(999.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
-                ) {
-                    Text(
-                        text = "ADMIN",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Text(
-                text = "Scan the voter's QR pass, confirm the election, and mark attendance on the blockchain.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                HeroMetric(
-                    label = "Elections",
-                    value = electionCount.toString(),
-                    modifier = Modifier.weight(1f)
+                Text(
+                    text = "Scan the voter QR pass, confirm the election, and mark attendance on the blockchain before voting.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = QrMuted
                 )
 
-                HeroMetric(
-                    label = "Wallet",
-                    value = if (walletAddress.isBlank()) "Pending" else "Ready",
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    HeroMetric(
+                        modifier = Modifier.weight(1f),
+                        label = "Elections",
+                        value = electionCount.toString(),
+                        accent = QrBlue
+                    )
+
+                    HeroMetric(
+                        modifier = Modifier.weight(1f),
+                        label = "Wallet",
+                        value = if (walletAddress.isBlank()) "Pending" else "Ready",
+                        accent = QrTeal
+                    )
+                }
+
+                InfoStrip(
+                    text = selectedElectionTitle ?: "No election selected yet"
                 )
             }
-
-            InfoStrip(
-                text = selectedElectionTitle ?: "No election selected yet"
-            )
         }
     }
 }
 
 @Composable
+private fun AdminChip() {
+    Surface(
+        shape = RoundedCornerShape(999.dp),
+        color = QrCoral.copy(alpha = 0.14f),
+        border = BorderStroke(1.dp, QrCoral.copy(alpha = 0.30f))
+    ) {
+        Text(
+            text = "ADMIN",
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = QrCoral,
+            fontWeight = FontWeight.Black
+        )
+    }
+}
+
+@Composable
 private fun HeroMetric(
+    modifier: Modifier = Modifier,
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    accent: Color
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+        shape = RoundedCornerShape(20.dp),
+        color = accent.copy(alpha = 0.10f),
+        border = BorderStroke(1.dp, accent.copy(alpha = 0.18f))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.SemiBold
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = QrMuted
             )
 
             Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
-                fontWeight = FontWeight.Medium
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                color = QrInk,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -558,14 +672,15 @@ private fun InfoStrip(text: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f)
+        color = Color.White.copy(alpha = 0.72f),
+        border = BorderStroke(1.dp, QrLine.copy(alpha = 0.82f))
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
+            color = QrInk,
+            fontWeight = FontWeight.Bold,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
@@ -573,7 +688,117 @@ private fun InfoStrip(text: String) {
 }
 
 @Composable
-private fun StepCard(
+private fun QRProgressCard(
+    hasElection: Boolean,
+    hasWallet: Boolean,
+    hasValidStatus: Boolean,
+    isCheckingIn: Boolean
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.18f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.22f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Polling officer checklist",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Black,
+                color = Color.White
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ProgressStep(
+                    modifier = Modifier.weight(1f),
+                    number = "1",
+                    label = "Election",
+                    done = hasElection
+                )
+
+                ProgressStep(
+                    modifier = Modifier.weight(1f),
+                    number = "2",
+                    label = "Wallet",
+                    done = hasWallet
+                )
+
+                ProgressStep(
+                    modifier = Modifier.weight(1f),
+                    number = "3",
+                    label = "QR",
+                    done = hasValidStatus
+                )
+
+                ProgressStep(
+                    modifier = Modifier.weight(1f),
+                    number = "4",
+                    label = "Chain",
+                    done = isCheckingIn
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProgressStep(
+    modifier: Modifier = Modifier,
+    number: String,
+    label: String,
+    done: Boolean
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = if (done) QrGreen.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.12f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (done) QrGreen.copy(alpha = 0.50f) else Color.White.copy(alpha = 0.18f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Surface(
+                modifier = Modifier.size(28.dp),
+                shape = CircleShape,
+                color = if (done) QrGreen else Color.White.copy(alpha = 0.16f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (done) "✓" else number,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.92f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModernStepCard(
     step: String,
     title: String,
     subtitle: String,
@@ -581,11 +806,10 @@ private fun StepCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(containerColor = QrCard.copy(alpha = 0.96f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.35f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -597,15 +821,16 @@ private fun StepCard(
                 verticalAlignment = Alignment.Top
             ) {
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
+                    shape = RoundedCornerShape(17.dp),
+                    color = QrIndigo,
+                    shadowElevation = 4.dp
                 ) {
                     Text(
                         text = step,
                         modifier = Modifier.padding(horizontal = 13.dp, vertical = 9.dp),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.SemiBold
+                        color = Color.White,
+                        fontWeight = FontWeight.Black
                     )
                 }
 
@@ -616,21 +841,19 @@ private fun StepCard(
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.Black,
+                        color = QrInk
                     )
 
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = QrMuted
                     )
                 }
             }
 
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)
-            )
+            HorizontalDivider(color = QrLine.copy(alpha = 0.78f))
 
             content()
         }
@@ -644,33 +867,53 @@ private fun ElectionChoiceCard(
     enabled: Boolean,
     onSelected: () -> Unit
 ) {
+    val accentColor = when {
+        election.isActive() -> QrGreen
+        election.isClosed() -> QrCoral
+        else -> QrAmber
+    }
+
     val containerColor = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f)
+        QrIndigo.copy(alpha = 0.12f)
     } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.66f)
+        QrPanel.copy(alpha = 0.86f)
     }
 
     val border = if (selected) {
-        BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f))
+        BorderStroke(1.4.dp, QrIndigo.copy(alpha = 0.50f))
     } else {
-        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.10f))
+        BorderStroke(1.dp, QrLine.copy(alpha = 0.72f))
     }
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(enabled = enabled) { onSelected() },
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         color = containerColor,
         border = border
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 9.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Surface(
+                modifier = Modifier.size(50.dp),
+                shape = RoundedCornerShape(17.dp),
+                color = if (selected) QrIndigo else Color.White.copy(alpha = 0.88f),
+                border = BorderStroke(1.dp, if (selected) QrIndigo else QrLine)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "E",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        color = if (selected) Color.White else QrIndigo
+                    )
+                }
+            }
+
             RadioButton(
                 selected = selected,
                 onClick = onSelected,
@@ -679,13 +922,13 @@ private fun ElectionChoiceCard(
 
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Text(
                     text = election.title,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Black,
+                    color = QrInk,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -693,23 +936,31 @@ private fun ElectionChoiceCard(
                 Text(
                     text = "Election ID: ${election.id}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = QrMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = electionStatusText(election),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = accentColor,
+                    fontWeight = FontWeight.Black
                 )
             }
 
             if (selected) {
                 Surface(
                     shape = RoundedCornerShape(999.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                    color = QrGreen.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, QrGreen.copy(alpha = 0.28f))
                 ) {
                     Text(
                         text = "Selected",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
+                        color = QrGreen,
+                        fontWeight = FontWeight.Black
                     )
                 }
             }
@@ -729,28 +980,92 @@ private fun RegisteredVoterQuickSelect(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "Registered test voters",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Registered test voters",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                color = QrIndigo
+            )
 
-        voters.forEach { voter ->
-            OutlinedButton(
-                onClick = { onSelected(voter) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp),
-                enabled = enabled,
-                shape = RoundedCornerShape(16.dp)
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = QrTeal.copy(alpha = 0.12f),
+                border = BorderStroke(1.dp, QrTeal.copy(alpha = 0.22f))
             ) {
                 Text(
-                    text = "${voter.label} | ${shortenWalletAddress(voter.address)}",
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = "${voters.size} wallets",
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                    color = QrTeal
                 )
+            }
+        }
+
+        voters.forEachIndexed { index, voter ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = enabled) { onSelected(voter) },
+                shape = RoundedCornerShape(18.dp),
+                color = Color.White.copy(alpha = 0.78f),
+                border = BorderStroke(1.dp, QrLine.copy(alpha = 0.75f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier.size(38.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        color = QrBlue.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, QrBlue.copy(alpha = 0.20f))
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = (index + 1).toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Black,
+                                color = QrBlue
+                            )
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = voter.label,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Black,
+                            color = QrInk,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            text = shortenWalletAddress(voter.address),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = QrMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Text(
+                        text = "Load",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        color = QrIndigo
+                    )
+                }
             }
         }
     }
@@ -774,58 +1089,100 @@ private fun CheckInActionCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.68f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            QrIndigo.copy(alpha = 0.96f),
+                            QrBlue.copy(alpha = 0.92f),
+                            QrTeal.copy(alpha = 0.82f)
+                        )
+                    ),
+                    shape = RoundedCornerShape(30.dp)
+                )
         ) {
-            Text(
-                text = "Complete check-in",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            SummaryTile(
-                label = "Election",
-                value = electionText
-            )
-
-            SummaryTile(
-                label = "Voter wallet",
-                value = walletText
-            )
-
-            Button(
-                onClick = onCheckIn,
+            Surface(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                enabled = !isCheckingIn,
-                shape = RoundedCornerShape(18.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
-            ) {
-                Text(
-                    text = if (isCheckingIn) {
-                        "Checking in..."
-                    } else {
-                        "Mark voter as checked-in"
-                    },
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                    .size(110.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 42.dp, y = (-34).dp),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.14f)
+            ) {}
 
-            if (statusMessage.isNotBlank()) {
-                StatusPanel(
-                    message = statusMessage,
-                    positive = statusIsPositive
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "FINAL STEP",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.78f),
+                        fontWeight = FontWeight.Black
+                    )
+
+                    Text(
+                        text = "Complete check-in",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Black
+                    )
+
+                    Text(
+                        text = "Confirm the selected election and wallet before writing the check-in status to blockchain.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.82f)
+                    )
+                }
+
+                SummaryTile(
+                    label = "Election",
+                    value = electionText
                 )
+
+                SummaryTile(
+                    label = "Voter wallet",
+                    value = walletText
+                )
+
+                Button(
+                    onClick = onCheckIn,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(58.dp),
+                    enabled = !isCheckingIn,
+                    shape = RoundedCornerShape(21.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = QrCoral,
+                        disabledContainerColor = Color.White.copy(alpha = 0.22f),
+                        disabledContentColor = Color.White.copy(alpha = 0.72f)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
+                ) {
+                    Text(
+                        text = if (isCheckingIn) {
+                            "Checking in..."
+                        } else {
+                            "Mark voter as checked-in"
+                        },
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black
+                    )
+                }
+
+                if (statusMessage.isNotBlank()) {
+                    StatusPanel(
+                        message = statusMessage,
+                        positive = statusIsPositive
+                    )
+                }
             }
         }
     }
@@ -838,8 +1195,9 @@ private fun SummaryTile(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.78f)
+        shape = RoundedCornerShape(18.dp),
+        color = Color.White.copy(alpha = 0.17f),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.22f))
     ) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -848,15 +1206,15 @@ private fun SummaryTile(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold
+                color = Color.White.copy(alpha = 0.80f),
+                fontWeight = FontWeight.Black
             )
 
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -870,39 +1228,51 @@ private fun InfoPanel(
     message: String,
     positive: Boolean
 ) {
-    val containerColor = if (positive) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
-    } else {
-        MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.62f)
-    }
-
-    val contentColor = if (positive) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onTertiaryContainer
-    }
+    val accentColor = if (positive) QrTeal else QrAmber
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = containerColor
+        shape = RoundedCornerShape(20.dp),
+        color = accentColor.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.25f))
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge,
-                color = contentColor,
-                fontWeight = FontWeight.SemiBold
-            )
+            Surface(
+                modifier = Modifier.size(30.dp),
+                shape = CircleShape,
+                color = accentColor.copy(alpha = 0.16f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (positive) "✓" else "!",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black,
+                        color = accentColor
+                    )
+                }
+            }
 
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.86f)
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = QrInk,
+                    fontWeight = FontWeight.Black
+                )
+
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = QrMuted
+                )
+            }
         }
     }
 }
@@ -912,30 +1282,42 @@ private fun StatusPanel(
     message: String,
     positive: Boolean
 ) {
-    val containerColor = if (positive) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.errorContainer
-    }
-
-    val contentColor = if (positive) {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    } else {
-        MaterialTheme.colorScheme.onErrorContainer
-    }
+    val accentColor = if (positive) QrGreen else QrCoral
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = containerColor
+        shape = RoundedCornerShape(20.dp),
+        color = Color.White.copy(alpha = 0.18f),
+        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.42f))
     ) {
-        Text(
-            text = message,
-            modifier = Modifier.padding(14.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = contentColor,
-            fontWeight = FontWeight.Medium
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = CircleShape,
+                color = accentColor.copy(alpha = 0.20f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = if (positive) "✓" else "!",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Black,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
@@ -1025,6 +1407,14 @@ private fun parseSecureCheckInPayload(rawContent: String): SecureCheckInParseRes
             nonce = nonce
         )
     )
+}
+
+private fun electionStatusText(election: Election): String {
+    return when {
+        election.isClosed() -> "Closed"
+        election.isActive() -> "Active"
+        else -> "Not started"
+    }
 }
 
 private fun isValidEthereumAddress(address: String): Boolean {
